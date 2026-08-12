@@ -131,7 +131,7 @@ export default function Home() {
       <main className="gate-page">
         <section className="gate-panel" aria-labelledby="gate-title">
           <p className="gate-kicker">CREOD GAMEBOX</p>
-          <h1 id="gate-title">학생 게임 아카이브</h1>
+          <h1 id="gate-title">크레오디 게임박스</h1>
           <p className="gate-copy">
             수업에서 만든 HTML 게임을 한곳에 모아 언제든 실행할 수 있는 공간입니다.
           </p>
