@@ -1,0 +1,4 @@
+1.kor_name=[버니의 숲 탈출]
+2.eng_name=[Dense Forest Bunny Escape]
+3.maker=[부안 이재]
+3.genre=[*]

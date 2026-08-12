@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>과녁 맞추기 미니 게임</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            text-align: center;
+        }
+        canvas {
+            background: #2e2e2e;
+            border: 4px solid #ffffff;
+            border-radius: 10px;
+            cursor: crosshair;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        .ui {
+            font-size: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>🎯 과녁 맞추기 게임</h1>
+        <div class="ui">
+            <div>점수: <span id="score">0</span></div>
+            <div>남은 시간: <span id="timer">30</span>초</div>
+        </div>
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+
+        let score = 0;
+        let timeLeft = 30;
+        let isPlaying = true;
+
+        // 과녁 객체
+        let target = {
+            x: Math.random() * 500 + 50,
+            y: Math.random() * 300 + 50,
+            radius: 30,
+            color: '#ff4757'
+        };
+
+        // 게임 타이머
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerEl.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                isPlaying = false;
+            }
+        }, 1000);
+
+        // 마우스 클릭 이벤트 (과녁 맞추기)
+        canvas.addEventListener('click', (e) => {
+            if (!isPlaying) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 피타고라스 정리를 이용한 거리 계산
+            const dist = Math.sqrt((mouseX - target.x) ** 2 + (mouseY - target.y) ** 2);
+
+            if (dist <= target.radius) {
+                score += 10;
+                scoreEl.textContent = score;
+                // 과녁 위치 재설정
+                target.x = Math.random() * (canvas.width - 100) + 50;
+                target.y = Math.random() * (canvas.height - 100) + 50;
+                // 난이도 조작 (맞출수록 과녁이 작아짐 - 최소 15px)
+                if (target.radius > 15) target.radius -= 0.5;
+            }
+        });
+
+        // 게임 루프 (화면 렌더링)
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isPlaying) {
+                // 과녁 그리기 (과녁 안의 겹쳐진 원들)
+                // 바깥쪽 빨간색
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff4757';
+                ctx.fill();
+                ctx.closePath();
+
+                // 중간 하얀색
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.radius * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.closePath();
+
+                // 안쪽 빨간색
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff4757';
+                ctx.fill();
+                ctx.closePath();
+            } else {
+                // 게임 종료 화면
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('게임 종료!', canvas.width / 2, canvas.height / 2 - 20);
+                ctx.font = '20px Arial';
+                ctx.fillText(`최종 점수: ${score}점`, canvas.width / 2, canvas.height / 2 + 20);
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        update();
+    </script>
+</body>
+</html>

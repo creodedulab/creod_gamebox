@@ -1,0 +1,4 @@
+1.kor_name=[스페이스 디펜터 캐럿]
+2.eng_name=[Space Defender Carrot]
+3.maker=[전주 김제]
+3.genre=[*]

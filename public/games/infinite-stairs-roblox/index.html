@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>로블록스 무한계단 3D - Ultimate Customization Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js 3D Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #0f172a;
+        }
+
+        .font-roblox {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .key-badge {
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+            transition: all 0.05s ease;
+        }
+        .key-badge:active, .key-active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            display: block;
+            outline: none;
+        }
+
+        #toast {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative overflow-hidden flex flex-col justify-between">
+
+    <!-- 3D Three.js Container -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-yellow-300 border border-yellow-400/50 px-5 py-2 rounded-2xl shadow-2xl text-xs sm:text-sm font-bold flex items-center space-x-2 pointer-events-none opacity-0 -translate-y-10">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-yellow-400"></i>
+        <span id="toast-msg">메시지</span>
+    </div>
+
+    <!-- Top Header Navigation Bar -->
+    <header class="absolute top-0 left-0 right-0 z-40 p-3 sm:p-4 flex justify-between items-center pointer-events-none">
+        <div class="flex items-center space-x-2 bg-black/70 px-3.5 py-1.5 rounded-2xl border border-white/20 shadow-xl pointer-events-auto">
+            <div class="w-7 h-7 bg-red-600 rounded-xl flex items-center justify-center font-black text-white text-xs tracking-tighter shadow">R</div>
+            <span class="font-roblox text-white text-sm sm:text-base tracking-wide">ROBLOX <span class="text-yellow-400">STAIRS</span></span>
+        </div>
+
+        <div class="flex items-center space-x-2.5 pointer-events-auto">
+            <div class="flex items-center space-x-1.5 bg-black/70 px-3.5 py-1.5 rounded-2xl border border-yellow-500/40 shadow-xl">
+                <i class="fa-solid fa-coins text-yellow-400 text-sm animate-bounce"></i>
+                <span id="coin-display" class="font-roblox text-yellow-300 text-sm sm:text-base">0</span>
+            </div>
+            
+            <button id="btn-camera" class="bg-black/70 hover:bg-black/90 px-3 py-1.5 rounded-2xl text-white border border-white/20 shadow-xl transition active:scale-95 flex items-center space-x-1.5" title="시점 변경 (C)">
+                <i class="fa-solid fa-video text-cyan-400 text-sm"></i>
+                <span id="cam-mode-text" class="text-xs font-bold text-gray-200 hidden sm:inline">쿼터뷰</span>
+            </button>
+
+            <button id="btn-open-shop" class="bg-black/70 hover:bg-black/90 p-2 rounded-2xl text-white border border-white/20 shadow-xl transition active:scale-95 flex items-center space-x-1" title="아바타 상점">
+                <i class="fa-solid fa-store text-yellow-400 text-base"></i>
+                <span class="text-xs font-bold text-white hidden sm:inline pr-1">상점</span>
+            </button>
+
+            <button id="btn-toggle-sound" class="bg-black/70 hover:bg-black/90 p-2 rounded-2xl text-white border border-white/20 shadow-xl transition active:scale-95" title="음소거">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-base text-gray-200"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Game HUD -->
+    <div id="game-hud" class="absolute top-16 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none transition-opacity duration-300 opacity-0">
+        <div class="bg-black/85 backdrop-blur border border-yellow-400/80 px-6 py-2 rounded-2xl shadow-2xl flex items-center space-x-3">
+            <span class="text-[11px] text-yellow-400 font-bold uppercase tracking-wider">계단 수</span>
+            <span id="score-text" class="font-roblox text-3xl text-white drop-shadow-[0_2px_8px_rgba(255,255,255,0.4)]">0</span>
+        </div>
+
+        <div class="mt-2 flex flex-col items-center">
+            <button id="btn-toggle-timer-mode" class="pointer-events-auto bg-black/60 hover:bg-black/80 text-[10px] text-emerald-300 font-bold px-3 py-1 rounded-full border border-emerald-500/40 mb-1 transition active:scale-95 flex items-center space-x-1">
+                <i id="timer-mode-icon" class="fa-solid fa-shield-halved text-emerald-400"></i>
+                <span id="timer-mode-text">무제한 서 있기 모드 (스태미나 OFF)</span>
+            </button>
+            <div id="timer-bar-wrapper" class="w-56 sm:w-72 bg-black/60 border border-white/20 h-3 rounded-full p-0.5 shadow-lg relative overflow-hidden opacity-40">
+                <div id="timer-bar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-red-500 rounded-full w-full transition-all"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby UI Screen -->
+    <div id="lobby-ui" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 pointer-events-auto">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center flex flex-col items-center shadow-2xl border border-white/20">
+            <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-3xl text-white font-roblox mb-3 shadow-lg transform -rotate-3">R</div>
+            <h1 class="font-roblox text-2xl sm:text-3xl text-white mb-1">INFINITE STAIRS</h1>
+            <p class="text-xs text-cyan-300 mb-6 font-semibold">ROBLOX 3D OFFICIAL</p>
+
+            <button id="btn-start" class="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black text-lg rounded-2xl shadow-xl transition transform active:scale-95 border-b-4 border-green-700 mb-3 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-play"></i>
+                <span>게임 시작</span>
+            </button>
+            <div class="text-xs text-gray-300 font-bold bg-white/5 py-2 px-4 rounded-xl border border-white/10">
+                <i class="fa-solid fa-keyboard mr-1 text-yellow-400"></i> [스페이스바] 로 바로 시작
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-ui" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 pointer-events-auto hidden">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center flex flex-col items-center shadow-2xl border border-red-500/40">
+            <div class="w-14 h-14 bg-red-500/20 text-red-500 rounded-2xl flex items-center justify-center text-3xl mb-2">
+                <i class="fa-solid fa-skull"></i>
+            </div>
+            <h2 class="font-roblox text-2xl text-red-400 mb-1">OOF! 추락했습니다</h2>
+            <p class="text-xs text-gray-400 mb-4">발을 헛디뎠습니다!</p>
+
+            <div class="w-full bg-black/50 rounded-2xl p-4 mb-5 border border-white/10 space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-bold">도달 계단</span>
+                    <span id="final-score" class="font-roblox text-xl text-yellow-400">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-bold">최고 기록</span>
+                    <span id="best-score" class="font-roblox text-xl text-emerald-400">0</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-white/10">
+                    <span class="text-xs text-gray-400 font-bold">획득 코인</span>
+                    <span id="earned-coins" class="font-roblox text-base text-yellow-300">+0</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="w-full py-3.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-lg rounded-2xl shadow-xl transition transform active:scale-95 border-b-4 border-amber-700 mb-3 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>다시하기 (RESPAWN)</span>
+            </button>
+            <div class="text-xs text-gray-300 font-bold bg-white/5 py-2 px-4 rounded-xl border border-white/10">
+                <i class="fa-solid fa-keyboard mr-1 text-yellow-400"></i> [스페이스바] 로 즉시 재시작
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorized Shop Modal -->
+    <div id="shop-modal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+        <div class="glass-panel p-5 sm:p-6 rounded-3xl max-w-lg w-full border border-white/20 flex flex-col max-h-[85vh] shadow-2xl">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
+                <h3 class="font-roblox text-xl text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-store text-yellow-400"></i>
+                    <span>상점</span>
+                </h3>
+                <button id="btn-close-shop" class="text-gray-400 hover:text-white text-xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex bg-black/50 p-1 rounded-2xl mb-4 border border-white/10">
+                <button id="tab-avatar" class="flex-1 py-1.5 text-xs font-bold rounded-xl text-yellow-400 bg-white/10 transition flex items-center justify-center space-x-1">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span>스킨</span>
+                </button>
+                <button id="tab-trail" class="flex-1 py-1.5 text-xs font-bold rounded-xl text-gray-400 hover:text-white transition flex items-center justify-center space-x-1">
+                    <i class="fa-solid fa-shoe-prints"></i>
+                    <span>발자국</span>
+                </button>
+                <button id="tab-wing" class="flex-1 py-1.5 text-xs font-bold rounded-xl text-gray-400 hover:text-white transition flex items-center justify-center space-x-1">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                    <span>날개</span>
+                </button>
+            </div>
+
+            <div id="shop-items" class="grid grid-cols-2 gap-3 overflow-y-auto p-1 pr-2 custom-scroll flex-1">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Controls Footer -->
+    <footer class="absolute bottom-4 left-0 right-0 z-10 flex justify-center items-center px-4 pointer-events-auto">
+        <div class="glass-panel px-4 py-2 rounded-2xl flex items-center space-x-3 sm:space-x-5 border border-white/20 shadow-2xl text-xs text-gray-200">
+            <button id="btn-left" class="key-badge flex items-center space-x-1.5 bg-gray-800 hover:bg-gray-700 px-3.5 py-2 rounded-xl border border-gray-600 text-white font-bold active:scale-95">
+                <span class="bg-gray-700 text-yellow-400 px-1.5 py-0.5 rounded text-[10px]">←</span>
+                <span>왼쪽 회전</span>
+            </button>
+
+            <button id="btn-climb" class="key-badge flex items-center space-x-1.5 bg-green-700 hover:bg-green-600 px-4 sm:px-6 py-2 rounded-xl border border-green-500 text-white font-black active:scale-95">
+                <span class="bg-green-800 text-yellow-300 px-2 py-0.5 rounded text-[10px]">SPACE</span>
+                <span>오르기</span>
+            </button>
+
+            <button id="btn-right" class="key-badge flex items-center space-x-1.5 bg-gray-800 hover:bg-gray-700 px-3.5 py-2 rounded-xl border border-gray-600 text-white font-bold active:scale-95">
+                <span>오른쪽 회전</span>
+                <span class="bg-gray-700 text-yellow-400 px-1.5 py-0.5 rounded text-[10px]">→</span>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const STATE = { LOBBY: 'LOBBY', PLAYING: 'PLAYING', GAMEOVER: 'GAMEOVER' };
+        let gameState = STATE.LOBBY;
+
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('roblox_stairs_high') || '0');
+        
+        let savedCoins = localStorage.getItem('roblox_stairs_coins');
+        let coins = savedCoins !== null ? parseInt(savedCoins) : 100000;
+        if (savedCoins === null) {
+            localStorage.setItem('roblox_stairs_coins', coins);
+        }
+
+        let unlockedAvatars = JSON.parse(localStorage.getItem('roblox_stairs_unlocked_avatars') || '["default"]');
+        let currentAvatar = localStorage.getItem('roblox_stairs_avatar') || 'default';
+
+        let unlockedTrails = JSON.parse(localStorage.getItem('roblox_stairs_unlocked_trails') || '["none"]');
+        let currentTrail = localStorage.getItem('roblox_stairs_trail') || 'none';
+
+        let unlockedWings = JSON.parse(localStorage.getItem('roblox_stairs_unlocked_wings') || '["none"]');
+        let currentWing = localStorage.getItem('roblox_stairs_wing') || 'none';
+
+        let activeShopCategory = 'avatar';
+
+        const MAX_STAMINA = 100;
+        let currentStamina = MAX_STAMINA;
+        let isTimerEnabled = false;
+        const BASE_STAMINA_DRAIN = 18;
+
+        const CAM_MODES = ['QUARTER', 'CHASE', 'TOPDOWN', 'FIRST_PERSON'];
+        const CAM_MODE_NAMES = ['쿼터뷰', '백뷰', '탑뷰', '1인칭'];
+        let currentCamModeIndex = 0;
+
+        const AVATARS = [
+            { id: 'default', name: '기본 아바타', price: 0, headColor: 0xf1c40f, torsoColor: 0x3498db, legColor: 0x2c3e50, style: 'normal', icon: 'fa-user' },
+            { id: 'neon', name: '네온 사이버', price: 1000, headColor: 0x00ffff, torsoColor: 0x0a0a23, legColor: 0x00ffff, style: 'neon', icon: 'fa-bolt' },
+            { id: 'lava', name: '용암 데몬', price: 2000, headColor: 0xff3300, torsoColor: 0x220000, legColor: 0xff5500, style: 'lava', icon: 'fa-fire' },
+            { id: 'ice', name: '다이아 얼음왕', price: 3500, headColor: 0xaaeeff, torsoColor: 0x113355, legColor: 0x88e0ff, style: 'ice', icon: 'fa-snowflake' },
+            { id: 'gold', name: '순금 황제', price: 6000, headColor: 0xffd700, torsoColor: 0xb8860b, legColor: 0xffd700, style: 'gold', icon: 'fa-crown' },
+            { id: 'rgb', name: 'RGB 레전드', price: 10000, headColor: 0xff00ff, torsoColor: 0x111111, legColor: 0x00ffff, style: 'rgb', icon: 'fa-wand-magic-sparkles' }
+        ];
+
+        const TRAILS = [
+            { id: 'none', name: '없음', price: 0, color: 0x000000, type: 'none', icon: 'fa-ban' },
+            { id: 'sparkle', name: '별빛 별가루', price: 500, color: 0xffea00, type: 'sparkle', icon: 'fa-star' },
+            { id: 'fire', name: '화염 트레일', price: 1200, color: 0xff3300, type: 'fire', icon: 'fa-fire-flame-curved' },
+            { id: 'rainbow', name: '무지개 구름', price: 2500, color: 0xff00ff, type: 'rainbow', icon: 'fa-rainbow' },
+            { id: 'cyber', name: '사이보그 그리드', price: 4000, color: 0x00ffff, type: 'cyber', icon: 'fa-microchip' }
+        ];
+
+        const WINGS = [
+            { id: 'none', name: '없음', price: 0, type: 'none', icon: 'fa-ban' },
+            { id: 'angel', name: '천사의 날개', price: 1500, type: 'angel', color: 0xffffff, icon: 'fa-feather' },
+            { id: 'demon', name: '악마의 날개', price: 3000, type: 'demon', color: 0x880000, icon: 'fa-dragon' },
+            { id: 'mecha', name: '메카 사이버 윙', price: 5000, type: 'mecha', color: 0x00ffff, icon: 'fa-jet-fighter' },
+            { id: 'golden', name: '골든 페더 윙', price: 8000, type: 'golden', color: 0xffd700, icon: 'fa-gem' }
+        ];
+
+        const audio = {
+            enabled: true,
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            },
+            playBeep(freq, type, duration, gainVal = 0.1) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            },
+            playStep() { this.playBeep(320 + Math.random() * 80, 'sine', 0.08, 0.15); },
+            playCoin() { this.playBeep(987, 'triangle', 0.2, 0.2); setTimeout(() => this.playBeep(1318, 'triangle', 0.25, 0.2), 60); },
+            playOof() { this.playBeep(150, 'sawtooth', 0.35, 0.25); }
+        };
+
+        function showToast(msg, icon = 'fa-circle-info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast || !toastMsg) return;
+            toastMsg.innerText = msg;
+            if (toastIcon) toastIcon.className = `fa-solid ${icon} text-yellow-400`;
+            toast.classList.remove('opacity-0', '-translate-y-10');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-10');
+            }, 2000);
+        }
+
+        const BG_THEMES = [
+            { score: 0,   bg: 0x60a5fa, light: 0xffffff },
+            { score: 25,  bg: 0xf97316, light: 0xffedd5 },
+            { score: 55,  bg: 0xa855f7, light: 0xf3e8ff },
+            { score: 90,  bg: 0x0f172a, light: 0x93c5fd },
+            { score: 130, bg: 0x042f2e, light: 0x99f6e4 },
+            { score: 180, bg: 0x831843, light: 0xfbcfe8 },
+            { score: 240, bg: 0x78350f, light: 0xfef08a }
+        ];
+        let targetBgColor = new THREE.Color(0x60a5fa);
+        let currentBgColor = new THREE.Color(0x60a5fa);
+        let targetLightColor = new THREE.Color(0xffffff);
+
+        let scene, camera, renderer;
+        let dirLight, ambientLight;
+        let playerGroup, playerVisualContainer;
+        let leftArmGroup, rightArmGroup, leftLegGroup, rightLegGroup;
+        let auraMesh = null, secondAuraMesh = null, rgbMaterials = [];
+        let skinParticles = [];
+        let stepImpactParticles = [];
+        let activeTrailParticles = [];
+        let activeWingParticles = []; // 날개 이펙트 파티클 배열 추가
+        let wingMeshGroup = null, leftWingBone = null, rightWingBone = null;
+        let skinPointLight = null;
+
+        let targetPlayerPos = new THREE.Vector3();
+        let targetPlayerRotY = 0;
+        let jumpProgress = 0;
+        let stepCount = 0;
+        let isFalling = false;
+        let fallVelocity = 0;
+        let isShopOpen = false;
+
+        let stairs = [];
+        let coinsList = [];
+        let currentStepIndex = 0;
+        let stairDirections = [];
+
+        const STAIR_WIDTH = 3.5;
+        const STAIR_HEIGHT = 1.0;
+        const STAIR_DEPTH = 3.5;
+
+        const DIRS = {
+            FORWARD: new THREE.Vector3(0, 0, -1),
+            RIGHT: new THREE.Vector3(1, 0, 0),
+            BACK: new THREE.Vector3(0, 0, 1),
+            LEFT: new THREE.Vector3(-1, 0, 0)
+        };
+        let currentFacingDir = DIRS.FORWARD.clone();
+    </script>
+
+    <script>
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            container.innerHTML = '';
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x60a5fa);
+            scene.fog = new THREE.FogExp2(0x60a5fa, 0.012);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+            dirLight.position.set(25, 45, 25);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 120;
+            scene.add(dirLight);
+
+            createPlayerModel();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createWingModel() {
+            const wingDef = WINGS.find(w => w.id === currentWing);
+            if (!wingDef || wingDef.type === 'none') return null;
+
+            const wingGroup = new THREE.Group();
+            wingGroup.position.set(0, 1.6, 0.35);
+
+            const leftWing = new THREE.Group();
+            const rightWing = new THREE.Group();
+
+            if (wingDef.type === 'angel') {
+                const featherGeo = new THREE.BoxGeometry(0.1, 0.5, 1.2);
+                featherGeo.translate(0, 0, 0.5);
+                const featherMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, emissive: 0x333333 });
+
+                for (let i = 0; i < 4; i++) {
+                    const fLeft = new THREE.Mesh(featherGeo, featherMat);
+                    fLeft.position.set(-0.1, i * 0.25, i * 0.1);
+                    fLeft.rotation.y = 0.3 + i * 0.1;
+                    fLeft.rotation.z = -0.2 - i * 0.15;
+                    leftWing.add(fLeft);
+
+                    const fRight = new THREE.Mesh(featherGeo, featherMat);
+                    fRight.position.set(0.1, i * 0.25, i * 0.1);
+                    fRight.rotation.y = -0.3 - i * 0.1;
+                    fRight.rotation.z = 0.2 + i * 0.15;
+                    rightWing.add(fRight);
+                }
+            } else if (wingDef.type === 'demon') {
+                const boneMat = new THREE.MeshStandardMaterial({ color: 0x220000, roughness: 0.2 });
+                const membraneMat = new THREE.MeshStandardMaterial({ color: 0x880000, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+
+                const strutGeo = new THREE.CylinderGeometry(0.06, 0.04, 1.5);
+                strutGeo.translate(0, 0.75, 0);
+
+                const leftStrut = new THREE.Mesh(strutGeo, boneMat);
+                leftStrut.rotation.z = -0.8;
+                leftStrut.rotation.x = 0.2;
+                leftWing.add(leftStrut);
+
+                const rightStrut = new THREE.Mesh(strutGeo, boneMat);
+                rightStrut.rotation.z = 0.8;
+                rightStrut.rotation.x = 0.2;
+                rightWing.add(rightStrut);
+
+                const shape = new THREE.Shape();
+                shape.moveTo(0, 0);
+                shape.lineTo(-1.4, 0.8);
+                shape.lineTo(-1.1, -0.4);
+                shape.lineTo(-0.5, -0.2);
+                shape.lineTo(0, 0);
+
+                const membraneGeo = new THREE.ShapeGeometry(shape);
+                const mLeft = new THREE.Mesh(membraneGeo, membraneMat);
+                mLeft.rotation.x = 0.2;
+                leftWing.add(mLeft);
+
+                const mRight = new THREE.Mesh(membraneGeo, membraneMat);
+                mRight.scale.x = -1;
+                mRight.rotation.x = 0.2;
+                rightWing.add(mRight);
+            } else if (wingDef.type === 'mecha') {
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x112233, metalness: 0.9, roughness: 0.1 });
+                const neonMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+
+                for (let i = 0; i < 3; i++) {
+                    const bladeGeo = new THREE.BoxGeometry(0.08, 0.2, 1.0 + i * 0.3);
+                    bladeGeo.translate(0, 0, 0.5);
+
+                    const bLeft = new THREE.Mesh(bladeGeo, metalMat);
+                    bLeft.position.set(-0.2, i * 0.3, 0);
+                    bLeft.rotation.y = 0.4 + i * 0.15;
+                    bLeft.rotation.z = -0.3;
+                    leftWing.add(bLeft);
+
+                    const nLeft = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.05, 0.8 + i * 0.3), neonMat);
+                    nLeft.position.set(-0.2, i * 0.3, 0.4);
+                    nLeft.rotation.y = 0.4 + i * 0.15;
+                    nLeft.rotation.z = -0.3;
+                    leftWing.add(nLeft);
+
+                    const bRight = new THREE.Mesh(bladeGeo, metalMat);
+                    bRight.position.set(0.2, i * 0.3, 0);
+                    bRight.rotation.y = -0.4 - i * 0.15;
+                    bRight.rotation.z = 0.3;
+                    rightWing.add(bRight);
+
+                    const nRight = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.05, 0.8 + i * 0.3), neonMat);
+                    nRight.position.set(0.2, i * 0.3, 0.4);
+                    nRight.rotation.y = -0.4 - i * 0.15;
+                    nRight.rotation.z = 0.3;
+                    rightWing.add(nRight);
+                }
+            } else if (wingDef.type === 'golden') {
+                const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.95, roughness: 0.05 });
+                const featherGeo = new THREE.ConeGeometry(0.15, 1.4, 4);
+                featherGeo.translate(0, 0.7, 0);
+
+                for (let i = 0; i < 5; i++) {
+                    const gLeft = new THREE.Mesh(featherGeo, goldMat);
+                    gLeft.position.set(-0.2, i * 0.2, i * 0.1);
+                    gLeft.rotation.z = -0.5 - i * 0.2;
+                    gLeft.rotation.x = -0.3;
+                    leftWing.add(gLeft);
+
+                    const gRight = new THREE.Mesh(featherGeo, goldMat);
+                    gRight.position.set(0.2, i * 0.2, i * 0.1);
+                    gRight.rotation.z = 0.5 + i * 0.2;
+                    gRight.rotation.x = -0.3;
+                    rightWing.add(gRight);
+                }
+            }
+
+            wingGroup.add(leftWing);
+            wingGroup.add(rightWing);
+            leftWingBone = leftWing;
+            rightWingBone = rightWing;
+
+            return wingGroup;
+        }
+
+        function createPlayerModel() {
+            if (playerGroup) scene.remove(playerGroup);
+            rgbMaterials = [];
+            skinParticles = [];
+            auraMesh = null;
+            secondAuraMesh = null;
+            skinPointLight = null;
+
+            const avatar = AVATARS.find(a => a.id === currentAvatar) || AVATARS[0];
+
+            playerGroup = new THREE.Group();
+            playerVisualContainer = new THREE.Group();
+            playerGroup.add(playerVisualContainer);
+
+            const headMat = new THREE.MeshLambertMaterial({ color: avatar.headColor });
+            const torsoMat = new THREE.MeshLambertMaterial({ color: avatar.torsoColor });
+            const legMat = new THREE.MeshLambertMaterial({ color: avatar.legColor });
+
+            if (avatar.style === 'rgb') {
+                rgbMaterials.push(headMat, torsoMat, legMat);
+            }
+
+            const torsoGeo = new THREE.BoxGeometry(1.2, 1.4, 0.6);
+            const torso = new THREE.Mesh(torsoGeo, torsoMat);
+            torso.position.y = 1.35;
+            torso.castShadow = true;
+            playerVisualContainer.add(torso);
+
+            wingMeshGroup = createWingModel();
+            if (wingMeshGroup) {
+                playerVisualContainer.add(wingMeshGroup);
+            }
+
+            const headGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 2.5;
+            head.castShadow = true;
+            playerVisualContainer.add(head);
+
+            const faceCanvas = document.createElement('canvas');
+            faceCanvas.width = 64;
+            faceCanvas.height = 64;
+            const ctx = faceCanvas.getContext('2d');
+            ctx.fillStyle = '#' + avatar.headColor.toString(16).padStart(6, '0');
+            ctx.fillRect(0, 0, 64, 64);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(16, 20, 8, 12);
+            ctx.fillRect(40, 20, 8, 12);
+            ctx.fillRect(20, 44, 24, 6);
+
+            const faceTex = new THREE.CanvasTexture(faceCanvas);
+            const faceMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.MeshBasicMaterial({ map: faceTex }));
+            faceMesh.position.set(0, 2.5, -0.46);
+            faceMesh.rotation.y = Math.PI;
+            playerVisualContainer.add(faceMesh);
+
+            const armGeo = new THREE.BoxGeometry(0.55, 1.3, 0.55);
+            armGeo.translate(0, -0.65, 0);
+
+            const legGeo = new THREE.BoxGeometry(0.55, 1.3, 0.55);
+            legGeo.translate(0, -0.65, 0);
+
+            leftArmGroup = new THREE.Group();
+            leftArmGroup.position.set(-0.9, 1.95, 0);
+            const leftArm = new THREE.Mesh(armGeo, headMat);
+            leftArm.castShadow = true;
+            leftArmGroup.add(leftArm);
+            playerVisualContainer.add(leftArmGroup);
+
+            rightArmGroup = new THREE.Group();
+            rightArmGroup.position.set(0.9, 1.95, 0);
+            const rightArm = new THREE.Mesh(armGeo, headMat);
+            rightArm.castShadow = true;
+            rightArmGroup.add(rightArm);
+            playerVisualContainer.add(rightArmGroup);
+
+            leftLegGroup = new THREE.Group();
+            leftLegGroup.position.set(-0.325, 1.3, 0);
+            const leftLeg = new THREE.Mesh(legGeo, legMat);
+            leftLeg.castShadow = true;
+            leftLegGroup.add(leftLeg);
+            playerVisualContainer.add(leftLegGroup);
+
+            rightLegGroup = new THREE.Group();
+            rightLegGroup.position.set(0.325, 1.3, 0);
+            const rightLeg = new THREE.Mesh(legGeo, legMat);
+            rightLeg.castShadow = true;
+            rightLegGroup.add(rightLeg);
+            playerVisualContainer.add(rightLegGroup);
+
+            if (avatar.style !== 'normal') {
+                skinPointLight = new THREE.PointLight(0xffffff, 3.5, 14.0);
+                skinPointLight.position.set(0, 2.0, 0);
+                playerVisualContainer.add(skinPointLight);
+            }
+
+            if (avatar.style === 'neon') {
+                skinPointLight.color.setHex(0x00ffff);
+                const ringGeo = new THREE.TorusGeometry(1.3, 0.07, 16, 32);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                auraMesh = new THREE.Mesh(ringGeo, ringMat);
+                auraMesh.rotation.x = Math.PI / 2;
+                auraMesh.position.y = 1.35;
+                playerVisualContainer.add(auraMesh);
+
+                const ringGeo2 = new THREE.TorusGeometry(1.5, 0.05, 16, 32);
+                const ringMat2 = new THREE.MeshBasicMaterial({ color: 0x0088ff });
+                secondAuraMesh = new THREE.Mesh(ringGeo2, ringMat2);
+                secondAuraMesh.rotation.y = Math.PI / 4;
+                secondAuraMesh.position.y = 1.35;
+                playerVisualContainer.add(secondAuraMesh);
+
+                const pGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+                const pMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                for (let i = 0; i < 20; i++) {
+                    const p = new THREE.Mesh(pGeo, pMat);
+                    p.userData = {
+                        angle: (i / 20) * Math.PI * 2,
+                        radius: 1.1 + Math.random() * 0.5,
+                        speed: 1.5 + Math.random() * 1.5,
+                        yOffset: Math.random() * 2.5
+                    };
+                    playerVisualContainer.add(p);
+                    skinParticles.push(p);
+                }
+            } else if (avatar.style === 'lava') {
+                skinPointLight.color.setHex(0xff3300);
+                const hornGeo = new THREE.ConeGeometry(0.18, 0.6, 8);
+                const hornMat = new THREE.MeshStandardMaterial({ color: 0xff2200, roughness: 0.3, emissive: 0x880000 });
+                
+                const leftHorn = new THREE.Mesh(hornGeo, hornMat);
+                leftHorn.position.set(-0.35, 3.0, 0);
+                leftHorn.rotation.z = 0.3;
+                leftHorn.rotation.x = -0.2;
+                playerVisualContainer.add(leftHorn);
+
+                const rightHorn = new THREE.Mesh(hornGeo, hornMat);
+                rightHorn.position.set(0.35, 3.0, 0);
+                rightHorn.rotation.z = -0.3;
+                rightHorn.rotation.x = -0.2;
+                playerVisualContainer.add(rightHorn);
+
+                const ringGeo = new THREE.TorusGeometry(1.2, 0.1, 16, 24);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+                auraMesh = new THREE.Mesh(ringGeo, ringMat);
+                auraMesh.rotation.x = Math.PI / 2;
+                auraMesh.position.y = 0.1;
+                playerVisualContainer.add(auraMesh);
+
+                const emberGeo = new THREE.SphereGeometry(0.08, 6, 6);
+                for (let i = 0; i < 24; i++) {
+                    const emberMat = new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xff2200 : 0xffaa00 });
+                    const ember = new THREE.Mesh(emberGeo, emberMat);
+                    ember.userData = {
+                        x: (Math.random() - 0.5) * 1.8,
+                        z: (Math.random() - 0.5) * 1.8,
+                        y: Math.random() * 3.0,
+                        speed: 1.2 + Math.random() * 1.5,
+                        wobble: Math.random() * Math.PI * 2
+                    };
+                    playerVisualContainer.add(ember);
+                    skinParticles.push(ember);
+                }
+            } else if (avatar.style === 'ice') {
+                skinPointLight.color.setHex(0x00e5ff);
+                const crownGroup = new THREE.Group();
+                crownGroup.position.set(0, 3.0, 0);
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const spikeGeo = new THREE.ConeGeometry(0.12, 0.5 + (i % 2) * 0.2, 5);
+                    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xaaeeff, roughness: 0.1, metalness: 0.8 });
+                    const spike = new THREE.Mesh(spikeGeo, spikeMat);
+                    spike.position.set(Math.cos(angle) * 0.35, 0.2, Math.sin(angle) * 0.35);
+                    spike.rotation.x = Math.sin(angle) * 0.2;
+                    spike.rotation.z = -Math.cos(angle) * 0.2;
+                    crownGroup.add(spike);
+                }
+                playerVisualContainer.add(crownGroup);
+
+                const crystalGeo = new THREE.OctahedronGeometry(0.18);
+                const crystalMat = new THREE.MeshStandardMaterial({ color: 0x88e0ff, roughness: 0.05, transparent: true, opacity: 0.85 });
+                for (let i = 0; i < 20; i++) {
+                    const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+                    crystal.userData = {
+                        angle: (i / 20) * Math.PI * 2,
+                        radius: 1.2 + Math.sin(i) * 0.3,
+                        speed: 1.2 + Math.random() * 0.8,
+                        yOffset: (i / 20) * 2.8
+                    };
+                    playerVisualContainer.add(crystal);
+                    skinParticles.push(crystal);
+                }
+            } else if (avatar.style === 'gold') {
+                skinPointLight.color.setHex(0xffd700);
+                const crownGeo = new THREE.CylinderGeometry(0.5, 0.4, 0.4, 7, 1, true);
+                const crownMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.1 });
+                const crown = new THREE.Mesh(crownGeo, crownMat);
+                crown.position.set(0, 3.15, 0);
+                playerVisualContainer.add(crown);
+
+                const gemGeo = new THREE.OctahedronGeometry(0.15);
+                const gemMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+                const gem = new THREE.Mesh(gemGeo, gemMat);
+                gem.position.set(0, 3.25, -0.42);
+                playerVisualContainer.add(gem);
+
+                const haloGeo = new THREE.TorusGeometry(1.1, 0.08, 16, 32);
+                const haloMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.1 });
+                auraMesh = new THREE.Mesh(haloGeo, haloMat);
+                auraMesh.position.set(0, 2.0, 0.4);
+                playerVisualContainer.add(auraMesh);
+
+                const sparkleGeo = new THREE.OctahedronGeometry(0.1);
+                const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffec8b });
+                for (let i = 0; i < 24; i++) {
+                    const sp = new THREE.Mesh(sparkleGeo, sparkleMat);
+                    sp.userData = {
+                        x: (Math.random() - 0.5) * 2.0,
+                        z: (Math.random() - 0.5) * 2.0,
+                        y: Math.random() * 3.2,
+                        speed: 0.8 + Math.random() * 1.2,
+                        rotSpeed: Math.random() * 5
+                    };
+                    playerVisualContainer.add(sp);
+                    skinParticles.push(sp);
+                }
+            } else if (avatar.style === 'rgb') {
+                const haloGroup = new THREE.Group();
+                haloGroup.position.set(0, 3.3, 0);
+
+                const haloGeo = new THREE.TorusGeometry(0.8, 0.06, 16, 32);
+                const haloMat1 = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const haloMat2 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const haloMat3 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+
+                const h1 = new THREE.Mesh(haloGeo, haloMat1);
+                h1.rotation.x = Math.PI / 2;
+                const h2 = new THREE.Mesh(haloGeo, haloMat2);
+                h2.rotation.x = Math.PI / 2;
+                h2.position.y = 0.15;
+                const h3 = new THREE.Mesh(haloGeo, haloMat3);
+                h3.rotation.x = Math.PI / 2;
+                h3.position.y = 0.3;
+
+                haloGroup.add(h1, h2, h3);
+                playerVisualContainer.add(haloGroup);
+                auraMesh = haloGroup;
+
+                rgbMaterials.push(haloMat1, haloMat2, haloMat3);
+
+                const pGeo = new THREE.SphereGeometry(0.1, 8, 8);
+                for (let i = 0; i < 28; i++) {
+                    const pMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                    const p = new THREE.Mesh(pGeo, pMat);
+                    p.userData = {
+                        angle: (i / 28) * Math.PI * 2,
+                        radius: 1.3,
+                        speed: 2.0,
+                        yBase: (i / 28) * 3.0,
+                        phase: i
+                    };
+                    playerVisualContainer.add(p);
+                    skinParticles.push(p);
+                    rgbMaterials.push(pMat);
+                }
+            }
+
+            scene.add(playerGroup);
+        }
+    </script>
+
+    <script>
+        function updateCameraPosition(isInstant = false) {
+            if (!camera || !playerGroup) return;
+
+            const pPos = playerGroup.position.clone();
+            const camMode = CAM_MODES[currentCamModeIndex];
+
+            if (playerVisualContainer) {
+                playerVisualContainer.visible = (camMode !== 'FIRST_PERSON');
+            }
+
+            let targetCamPos = new THREE.Vector3();
+            let lookAtPos = new THREE.Vector3();
+
+            if (camMode === 'QUARTER') {
+                targetCamPos.set(pPos.x + 14, pPos.y + 18, pPos.z + 14);
+                lookAtPos.set(pPos.x, pPos.y + 1.5, pPos.z);
+            } else if (camMode === 'CHASE') {
+                const backDir = currentFacingDir.clone().multiplyScalar(-1);
+                targetCamPos.copy(pPos).add(new THREE.Vector3(backDir.x * 9, 6, backDir.z * 9));
+                lookAtPos.copy(pPos).add(new THREE.Vector3(0, 2, 0));
+            } else if (camMode === 'TOPDOWN') {
+                targetCamPos.set(pPos.x, pPos.y + 24, pPos.z + 0.001);
+                lookAtPos.set(pPos.x, pPos.y, pPos.z);
+            } else if (camMode === 'FIRST_PERSON') {
+                const fwd = currentFacingDir.clone();
+                targetCamPos.copy(pPos).add(new THREE.Vector3(0, 2.3, 0)).add(fwd.clone().multiplyScalar(0.3));
+                lookAtPos.copy(targetCamPos).add(fwd.clone().multiplyScalar(5)).add(new THREE.Vector3(0, -3.5, 0));
+            }
+
+            if (isInstant) {
+                camera.position.copy(targetCamPos);
+            } else {
+                camera.position.lerp(targetCamPos, 0.12);
+            }
+            camera.lookAt(lookAtPos);
+        }
+
+        function resetGame() {
+            stairs.forEach(s => scene.remove(s));
+            coinsList.forEach(c => scene.remove(c));
+            activeTrailParticles.forEach(p => scene.remove(p));
+            activeWingParticles.forEach(p => scene.remove(p));
+
+            stairs = [];
+            coinsList = [];
+            stairDirections = [];
+            activeTrailParticles = [];
+            activeWingParticles = [];
+
+            currentStepIndex = 0;
+            score = 0;
+            stepCount = 0;
+            jumpProgress = 0;
+            isFalling = false;
+            fallVelocity = 0;
+
+            currentStamina = MAX_STAMINA;
+            currentFacingDir.copy(DIRS.FORWARD);
+
+            document.getElementById('score-text').innerText = '0';
+            document.getElementById('timer-bar').style.width = '100%';
+
+            const startPos = new THREE.Vector3(0, 0, 0);
+            createStairBlock(startPos, 0x34495e, 0);
+
+            let currentPos = startPos.clone();
+            let lastDir = DIRS.FORWARD.clone();
+            stairDirections.push(lastDir.clone());
+
+            currentPos.add(new THREE.Vector3(lastDir.x * STAIR_WIDTH, STAIR_HEIGHT, lastDir.z * STAIR_DEPTH));
+            createStairBlock(currentPos, getStairColor(1), 1);
+            stairDirections.push(lastDir.clone());
+
+            for (let i = 2; i < 40; i++) {
+                if (Math.random() < 0.4) {
+                    const turnRight = Math.random() < 0.5;
+                    if (turnRight) lastDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+                    else lastDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                }
+                lastDir.x = Math.round(lastDir.x);
+                lastDir.z = Math.round(lastDir.z);
+
+                currentPos.add(new THREE.Vector3(lastDir.x * STAIR_WIDTH, STAIR_HEIGHT, lastDir.z * STAIR_DEPTH));
+                createStairBlock(currentPos, getStairColor(i), i);
+                stairDirections.push(lastDir.clone());
+
+                if (Math.random() < 0.25) {
+                    spawnCoin(currentPos.clone().add(new THREE.Vector3(0, 1.8, 0)), i);
+                }
+            }
+
+            targetPlayerPos.set(0, STAIR_HEIGHT / 2, 0);
+            playerGroup.position.copy(targetPlayerPos);
+            playerGroup.rotation.set(0, 0, 0);
+
+            playerVisualContainer.position.set(0, 0, 0);
+            playerVisualContainer.rotation.set(0, Math.PI, 0);
+
+            if (leftArmGroup) {
+                leftArmGroup.rotation.set(0, 0, 0);
+                rightArmGroup.rotation.set(0, 0, 0);
+                leftLegGroup.rotation.set(0, 0, 0);
+                rightLegGroup.rotation.set(0, 0, 0);
+            }
+
+            targetPlayerRotY = Math.PI;
+            updateCameraPosition(true);
+        }
+
+        function getStairColor(index) {
+            const colors = [0x2ecc71, 0x3498db, 0x9b59b6, 0xe67e22, 0xe74c3c, 0x1abc9c];
+            return colors[Math.floor(index / 10) % colors.length];
+        }
+
+        function createStairBlock(pos, colorHex, index) {
+            const geo = new THREE.BoxGeometry(STAIR_WIDTH, STAIR_HEIGHT, STAIR_DEPTH);
+            const mat = new THREE.MeshLambertMaterial({ color: colorHex, transparent: true, opacity: 1.0 });
+            const stair = new THREE.Mesh(geo, mat);
+            stair.position.copy(pos);
+            stair.receiveShadow = true;
+            stair.castShadow = true;
+            stair.userData = { index: index, originalColor: colorHex };
+
+            const studGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.1, 12);
+            const studMat = new THREE.MeshLambertMaterial({ color: colorHex, transparent: true, opacity: 1.0 });
+            for (let x = -1; x <= 1; x++) {
+                for (let z = -1; z <= 1; z++) {
+                    const stud = new THREE.Mesh(studGeo, studMat);
+                    stud.position.set(x * 1.0, STAIR_HEIGHT / 2 + 0.05, z * 1.0);
+                    stair.add(stud);
+                }
+            }
+
+            scene.add(stair);
+            stairs.push(stair);
+        }
+
+        function spawnCoin(pos, stairIndex) {
+            const coinGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.15, 16);
+            const coinMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.8, roughness: 0.2 });
+            const coin = new THREE.Mesh(coinGeo, coinMat);
+            coin.position.copy(pos);
+            coin.rotation.x = Math.PI / 2;
+            coin.userData = { stairIndex: stairIndex, collected: false };
+            scene.add(coin);
+            coinsList.push(coin);
+        }
+
+        function generateMoreStairs() {
+            const lastStair = stairs[stairs.length - 1];
+            let currentPos = lastStair.position.clone();
+            let lastDir = stairDirections[stairDirections.length - 1].clone();
+
+            const startIndex = stairs.length;
+            for (let i = startIndex; i < startIndex + 20; i++) {
+                if (Math.random() < 0.45) {
+                    const turnRight = Math.random() < 0.5;
+                    if (turnRight) lastDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+                    else lastDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                    lastDir.x = Math.round(lastDir.x);
+                    lastDir.z = Math.round(lastDir.z);
+                }
+
+                currentPos.add(new THREE.Vector3(lastDir.x * STAIR_WIDTH, STAIR_HEIGHT, lastDir.z * STAIR_DEPTH));
+                createStairBlock(currentPos, getStairColor(i), i);
+                stairDirections.push(lastDir.clone());
+
+                if (Math.random() < 0.3) {
+                    spawnCoin(currentPos.clone().add(new THREE.Vector3(0, 1.8, 0)), i);
+                }
+            }
+        }
+    </script>
+
+    <script>
+        function spawnTrailParticle(pos) {
+            const trailDef = TRAILS.find(t => t.id === currentTrail);
+            if (!trailDef || trailDef.type === 'none') return;
+
+            let geo, mat;
+            const pPos = pos.clone().add(new THREE.Vector3(0, STAIR_HEIGHT / 2 + 0.1, 0));
+
+            if (trailDef.type === 'sparkle') {
+                geo = new THREE.OctahedronGeometry(0.35);
+                mat = new THREE.MeshBasicMaterial({ color: 0xffea00, transparent: true, opacity: 1 });
+            } else if (trailDef.type === 'fire') {
+                geo = new THREE.SphereGeometry(0.38, 6, 6);
+                mat = new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xff3300 : 0xffaa00, transparent: true, opacity: 1 });
+            } else if (trailDef.type === 'rainbow') {
+                geo = new THREE.BoxGeometry(0.4, 0.15, 0.4);
+                mat = new THREE.MeshBasicMaterial({ color: Math.floor(Math.random() * 0xffffff), transparent: true, opacity: 1 });
+            } else if (trailDef.type === 'cyber') {
+                geo = new THREE.RingGeometry(0.2, 0.55, 6);
+                mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 1 });
+            }
+
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(pPos);
+            p.rotation.x = Math.PI / 2;
+            p.userData = { life: 1.5, maxLife: 1.5, type: trailDef.type };
+
+            scene.add(p);
+            activeTrailParticles.push(p);
+        }
+
+        // [추가] 날개 장착 시 주변으로 흩날리는 파티클 생성 함수
+        function spawnWingParticle() {
+            if (!currentWing || currentWing === 'none' || !playerGroup) return;
+
+            const wingDef = WINGS.find(w => w.id === currentWing);
+            if (!wingDef) return;
+
+            let geo, mat;
+            const pPos = playerGroup.position.clone().add(new THREE.Vector3(
+                (Math.random() - 0.5) * 1.5,
+                1.6 + Math.random() * 1.0,
+                (Math.random() - 0.5) * 1.5 - 0.4
+            ));
+
+            if (wingDef.type === 'angel') {
+                geo = new THREE.BoxGeometry(0.12, 0.04, 0.25);
+                mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
+            } else if (wingDef.type === 'demon') {
+                geo = new THREE.SphereGeometry(0.12, 4, 4);
+                mat = new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xff2200 : 0x440000, transparent: true, opacity: 1 });
+            } else if (wingDef.type === 'mecha') {
+                geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+                mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 1 });
+            } else if (wingDef.type === 'golden') {
+                geo = new THREE.OctahedronGeometry(0.12);
+                mat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 1 });
+            } else {
+                return;
+            }
+
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(pPos);
+            p.userData = {
+                life: 0.8,
+                maxLife: 0.8,
+                vx: (Math.random() - 0.5) * 1.2,
+                vy: 0.5 + Math.random() * 1.5,
+                vz: (Math.random() - 0.5) * 1.2
+            };
+
+            scene.add(p);
+            activeWingParticles.push(p);
+        }
+
+        function spawnSkinStepEffect(stairPos) {
+            const avatar = AVATARS.find(a => a.id === currentAvatar) || AVATARS[0];
+            let particleColor = 0xffffff;
+
+            if (avatar.style === 'neon') particleColor = 0x00ffff;
+            else if (avatar.style === 'lava') particleColor = 0xff3300;
+            else if (avatar.style === 'ice') particleColor = 0x88e0ff;
+            else if (avatar.style === 'gold') particleColor = 0xffd700;
+            else if (avatar.style === 'rgb') particleColor = Math.floor(Math.random() * 0xffffff);
+
+            const count = avatar.style === 'normal' ? 6 : 16;
+            const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+
+            for (let i = 0; i < count; i++) {
+                const mat = new THREE.MeshBasicMaterial({ color: particleColor, transparent: true, opacity: 1.0 });
+                const p = new THREE.Mesh(geo, mat);
+                p.position.copy(stairPos).add(new THREE.Vector3(0, STAIR_HEIGHT / 2 + 0.2, 0));
+                
+                const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+                const speed = 2.0 + Math.random() * 3.5;
+                p.userData = {
+                    vx: Math.cos(angle) * speed,
+                    vy: 2.5 + Math.random() * 3.0,
+                    vz: Math.sin(angle) * speed,
+                    life: 0.4 + Math.random() * 0.25
+                };
+                scene.add(p);
+                stepImpactParticles.push(p);
+            }
+        }
+
+        function executeStep(isTurnAction) {
+            if (gameState !== STATE.PLAYING || isShopOpen) return;
+
+            const nextIndex = currentStepIndex + 1;
+            if (nextIndex >= stairDirections.length) return;
+
+            const requiredDir = stairDirections[nextIndex];
+            const nextStair = stairs[nextIndex];
+
+            let isCorrectAction = false;
+
+            if (isTurnAction) {
+                const currentAngle = Math.atan2(currentFacingDir.x, currentFacingDir.z);
+                const requiredAngle = Math.atan2(requiredDir.x, requiredDir.z);
+
+                if (Math.abs(currentAngle - requiredAngle) > 0.1) {
+                    currentFacingDir.copy(requiredDir);
+                    isCorrectAction = true;
+                }
+            } else {
+                if (currentFacingDir.distanceTo(requiredDir) < 0.1) {
+                    isCorrectAction = true;
+                }
+            }
+
+            if (isCorrectAction) {
+                currentStepIndex = nextIndex;
+                score = currentStepIndex;
+                stepCount++;
+
+                targetPlayerPos.copy(nextStair.position.clone().add(new THREE.Vector3(0, STAIR_HEIGHT / 2, 0)));
+                jumpProgress = 1.0;
+
+                targetPlayerRotY = Math.atan2(currentFacingDir.x, currentFacingDir.z) + Math.PI;
+
+                if (isTimerEnabled) {
+                    currentStamina = Math.min(MAX_STAMINA, currentStamina + 12);
+                }
+
+                spawnSkinStepEffect(nextStair.position);
+                spawnTrailParticle(nextStair.position);
+
+                document.getElementById('score-text').innerText = score;
+                audio.playStep();
+
+                coinsList.forEach(coin => {
+                    if (!coin.userData.collected && coin.userData.stairIndex === currentStepIndex) {
+                        coin.userData.collected = true;
+                        scene.remove(coin);
+                        coins += 100;
+                        document.getElementById('coin-display').innerText = coins;
+                        localStorage.setItem('roblox_stairs_coins', coins);
+                        audio.playCoin();
+                    }
+                });
+
+                if (currentStepIndex > stairs.length - 15) {
+                    generateMoreStairs();
+                }
+            } else {
+                triggerGameOver();
+            }
+        }
+
+        function triggerGameOver() {
+            gameState = STATE.GAMEOVER;
+            audio.playOof();
+            isFalling = true;
+            fallVelocity = 0;
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('roblox_stairs_high', highScore);
+            }
+
+            const earnedCoins = Math.floor(score / 2) * 20;
+            coins += earnedCoins;
+            localStorage.setItem('roblox_stairs_coins', coins);
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('best-score').innerText = highScore;
+            document.getElementById('earned-coins').innerText = `+${earnedCoins}`;
+            document.getElementById('coin-display').innerText = coins;
+
+            document.getElementById('game-hud').classList.add('opacity-0');
+            document.getElementById('gameover-ui').classList.remove('hidden');
+        }
+
+        function startGame() {
+            gameState = STATE.PLAYING;
+            resetGame();
+
+            document.getElementById('lobby-ui').classList.add('hidden');
+            document.getElementById('gameover-ui').classList.add('hidden');
+            document.getElementById('game-hud').classList.remove('opacity-0');
+        }
+
+        function toggleCameraMode() {
+            currentCamModeIndex = (currentCamModeIndex + 1) % CAM_MODES.length;
+            document.getElementById('cam-mode-text').innerText = CAM_MODE_NAMES[currentCamModeIndex];
+            showToast(`시점 변경: ${CAM_MODE_NAMES[currentCamModeIndex]}`, "fa-video");
+        }
+
+        function toggleTimerMode() {
+            isTimerEnabled = !isTimerEnabled;
+            const btnText = document.getElementById('timer-mode-text');
+            const btnIcon = document.getElementById('timer-mode-icon');
+            const wrapper = document.getElementById('timer-bar-wrapper');
+
+            if (isTimerEnabled) {
+                btnText.innerText = "타이머 모드 ON (난이도 상승)";
+                btnIcon.className = "fa-solid fa-hourglass-half text-yellow-400 animate-spin";
+                wrapper.classList.remove('opacity-40');
+                showToast("타이머 모드가 활성화되었습니다!", "fa-clock");
+            } else {
+                btnText.innerText = "무제한 서 있기 모드 (스태미나 OFF)";
+                btnIcon.className = "fa-solid fa-shield-halved text-emerald-400";
+                wrapper.classList.add('opacity-40');
+                showToast("무제한 서 있기 모드로 전환되었습니다.", "fa-shield-halved");
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+
+            if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                highlightKeyBtn('btn-left');
+                if (gameState === STATE.PLAYING) executeStep(true);
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                highlightKeyBtn('btn-right');
+                if (gameState === STATE.PLAYING) executeStep(true);
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                highlightKeyBtn('btn-climb');
+                if (gameState === STATE.LOBBY || gameState === STATE.GAMEOVER) startGame();
+                else if (gameState === STATE.PLAYING) executeStep(false);
+            } else if (e.code === 'KeyC' || e.code === 'KeyV') {
+                e.preventDefault();
+                toggleCameraMode();
+            }
+        });
+
+        function highlightKeyBtn(btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.classList.add('key-active');
+                setTimeout(() => btn.classList.remove('key-active'), 120);
+            }
+        }
+
+        document.getElementById('btn-start').addEventListener('click', startGame);
+        document.getElementById('btn-restart').addEventListener('click', startGame);
+
+        document.getElementById('btn-left').addEventListener('click', () => { if (gameState === STATE.PLAYING) executeStep(true); });
+        document.getElementById('btn-right').addEventListener('click', () => { if (gameState === STATE.PLAYING) executeStep(true); });
+        document.getElementById('btn-climb').addEventListener('click', () => {
+            if (gameState === STATE.LOBBY || gameState === STATE.GAMEOVER) startGame();
+            else if (gameState === STATE.PLAYING) executeStep(false);
+        });
+
+        document.getElementById('btn-camera').addEventListener('click', toggleCameraMode);
+        document.getElementById('btn-toggle-timer-mode').addEventListener('click', toggleTimerMode);
+
+        document.getElementById('btn-toggle-sound').addEventListener('click', () => {
+            audio.enabled = !audio.enabled;
+            document.getElementById('sound-icon').className = audio.enabled ? 'fa-solid fa-volume-high text-base text-gray-200' : 'fa-solid fa-volume-xmark text-base text-red-400';
+        });
+
+        const shopModal = document.getElementById('shop-modal');
+        const tabAvatar = document.getElementById('tab-avatar');
+        const tabTrail = document.getElementById('tab-trail');
+        const tabWing = document.getElementById('tab-wing');
+
+        document.getElementById('btn-open-shop').addEventListener('click', () => {
+            isShopOpen = true;
+            renderShopItems();
+            shopModal.classList.remove('hidden');
+        });
+        document.getElementById('btn-close-shop').addEventListener('click', () => {
+            isShopOpen = false;
+            shopModal.classList.add('hidden');
+        });
+
+        function setShopCategory(cat) {
+            activeShopCategory = cat;
+            [tabAvatar, tabTrail, tabWing].forEach(tab => {
+                tab.className = "flex-1 py-1.5 text-xs font-bold rounded-xl text-gray-400 hover:text-white transition flex items-center justify-center space-x-1";
+            });
+
+            if (cat === 'avatar') tabAvatar.className = "flex-1 py-1.5 text-xs font-bold rounded-xl text-yellow-400 bg-white/10 transition flex items-center justify-center space-x-1";
+            if (cat === 'trail') tabTrail.className = "flex-1 py-1.5 text-xs font-bold rounded-xl text-yellow-400 bg-white/10 transition flex items-center justify-center space-x-1";
+            if (cat === 'wing') tabWing.className = "flex-1 py-1.5 text-xs font-bold rounded-xl text-yellow-400 bg-white/10 transition flex items-center justify-center space-x-1";
+
+            renderShopItems();
+        }
+
+        tabAvatar.addEventListener('click', () => setShopCategory('avatar'));
+        tabTrail.addEventListener('click', () => setShopCategory('trail'));
+        tabWing.addEventListener('click', () => setShopCategory('wing'));
+
+        function renderShopItems() {
+            const container = document.getElementById('shop-items');
+            container.innerHTML = '';
+
+            let itemList = [];
+            let unlockedList = [];
+            let currentEquipped = '';
+
+            if (activeShopCategory === 'avatar') {
+                itemList = AVATARS;
+                unlockedList = unlockedAvatars;
+                currentEquipped = currentAvatar;
+            } else if (activeShopCategory === 'trail') {
+                itemList = TRAILS;
+                unlockedList = unlockedTrails;
+                currentEquipped = currentTrail;
+            } else if (activeShopCategory === 'wing') {
+                itemList = WINGS;
+                unlockedList = unlockedWings;
+                currentEquipped = currentWing;
+            }
+
+            itemList.forEach(item => {
+                const isUnlocked = unlockedList.includes(item.id);
+                const isEquipped = currentEquipped === item.id;
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border flex flex-col items-center justify-between ${
+                    isEquipped ? 'bg-yellow-500/20 border-yellow-400' : 'bg-black/50 border-white/10'
+                }`;
+
+                card.innerHTML = `
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-1 shadow bg-white/10 text-yellow-300">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <span class="text-xs font-bold text-white text-center mb-1">${item.name}</span>
+                    ${
+                        isEquipped 
+                            ? `<span class="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded-full font-black">착용 중</span>`
+                            : isUnlocked 
+                                ? `<button onclick="equipItem('${activeShopCategory}', '${item.id}')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded-xl w-full">착용</button>`
+                                : `<button onclick="buyItem('${activeShopCategory}', '${item.id}', ${item.price})" class="text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-black py-1 px-3 rounded-xl w-full flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-coins text-[10px]"></i>
+                                    <span>${item.price}</span>
+                                   </button>`
+                    }
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.equipItem = function(category, id) {
+            if (category === 'avatar') {
+                currentAvatar = id;
+                localStorage.setItem('roblox_stairs_avatar', currentAvatar);
+                createPlayerModel();
+                showToast("스킨이 교체되었습니다!", "fa-shirt");
+            } else if (category === 'trail') {
+                currentTrail = id;
+                localStorage.setItem('roblox_stairs_trail', currentTrail);
+                showToast("발자국 효과가 교체되었습니다!", "fa-shoe-prints");
+            } else if (category === 'wing') {
+                currentWing = id;
+                localStorage.setItem('roblox_stairs_wing', currentWing);
+                createPlayerModel(); // 날개 모델 갱신을 위해 호출
+                showToast("날개가 교체되었습니다!", "fa-feather-pointed");
+            }
+            renderShopItems();
+        };
+
+        window.buyItem = function(category, id, price) {
+            if (coins >= price) {
+                coins -= price;
+                localStorage.setItem('roblox_stairs_coins', coins);
+                document.getElementById('coin-display').innerText = coins;
+
+                if (category === 'avatar') {
+                    unlockedAvatars.push(id);
+                    localStorage.setItem('roblox_stairs_unlocked_avatars', JSON.stringify(unlockedAvatars));
+                } else if (category === 'trail') {
+                    unlockedTrails.push(id);
+                    localStorage.setItem('roblox_stairs_unlocked_trails', JSON.stringify(unlockedTrails));
+                } else if (category === 'wing') {
+                    unlockedWings.push(id);
+                    localStorage.setItem('roblox_stairs_unlocked_wings', JSON.stringify(unlockedWings));
+                }
+
+                equipItem(category, id);
+            } else {
+                showToast("코인이 부족합니다!", "fa-triangle-exclamation");
+            }
+        };
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+
+    <script>
+        function updateEnvironmentBackground(delta) {
+            if (!scene) return;
+
+            let themeA = BG_THEMES[0];
+            let themeB = BG_THEMES[0];
+
+            for (let i = 0; i < BG_THEMES.length - 1; i++) {
+                if (score >= BG_THEMES[i].score && score < BG_THEMES[i + 1].score) {
+                    themeA = BG_THEMES[i];
+                    themeB = BG_THEMES[i + 1];
+                    break;
+                }
+            }
+            if (score >= BG_THEMES[BG_THEMES.length - 1].score) {
+                themeA = BG_THEMES[BG_THEMES.length - 1];
+                themeB = BG_THEMES[BG_THEMES.length - 1];
+            }
+
+            let factor = 0;
+            if (themeA !== themeB) {
+                factor = (score - themeA.score) / (themeB.score - themeA.score);
+                factor = Math.max(0, Math.min(1, factor));
+            }
+
+            let cA = new THREE.Color(themeA.bg);
+            let cB = new THREE.Color(themeB.bg);
+            targetBgColor.copy(cA).lerp(cB, factor);
+
+            let lA = new THREE.Color(themeA.light);
+            let lB = new THREE.Color(themeB.light);
+            targetLightColor.copy(lA).lerp(lB, factor);
+
+            currentBgColor.lerp(targetBgColor, 0.08);
+            scene.background.copy(currentBgColor);
+            if (scene.fog) scene.fog.color.copy(currentBgColor);
+
+            if (dirLight) {
+                dirLight.color.lerp(targetLightColor, 0.08);
+            }
+        }
+
+        function updateStairsTransparency() {
+            if (!playerGroup || stairs.length === 0) return;
+
+            const playerPos = playerGroup.position.clone();
+            const camPos = camera.position.clone();
+
+            stairs.forEach(stair => {
+                const stairPos = stair.position;
+                let shouldBeTransparent = false;
+
+                if (stairPos.y > playerPos.y + 0.8) {
+                    const camToPlayer = new THREE.Vector3().subVectors(playerPos, camPos);
+                    const camToStair = new THREE.Vector3().subVectors(stairPos, camPos);
+
+                    camToPlayer.normalize();
+                    camToStair.normalize();
+                    const dot = camToPlayer.dot(camToStair);
+
+                    if (dot > 0.85 && stairPos.distanceTo(camPos) < playerPos.distanceTo(camPos) + 3.0) {
+                        shouldBeTransparent = true;
+                    }
+                }
+
+                const targetOpacity = shouldBeTransparent ? 0.2 : 1.0;
+
+                if (stair.material) {
+                    stair.material.opacity += (targetOpacity - stair.material.opacity) * 0.15;
+                }
+
+                stair.children.forEach(child => {
+                    if (child.material) {
+                        child.material.opacity += (targetOpacity - child.material.opacity) * 0.15;
+                    }
+                });
+            });
+        }
+
+        let lastTime = performance.now();
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+
+            const delta = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            updateEnvironmentBackground(delta);
+            updateStairsTransparency();
+
+            const timeSec = now * 0.001;
+
+            if (leftWingBone && rightWingBone) {
+                const flap = Math.sin(timeSec * 4.0) * 0.2;
+                leftWingBone.rotation.y = flap;
+                rightWingBone.rotation.y = -flap;
+            }
+
+            // [추가] 날개가 장착되어 있으면 일정 확률로 날개 파티클 스폰
+            if (currentWing && currentWing !== 'none' && gameState === STATE.PLAYING) {
+                if (Math.random() < 0.4) {
+                    spawnWingParticle();
+                }
+            }
+
+            if (rgbMaterials.length > 0) {
+                rgbMaterials.forEach((mat, idx) => {
+                    const hue = (timeSec * 0.6 + idx * 0.08) % 1.0;
+                    mat.color.setHSL(hue, 1.0, 0.5);
+                });
+                if (skinPointLight) {
+                    skinPointLight.color.setHSL((timeSec * 0.6) % 1.0, 1.0, 0.5);
+                }
+            }
+
+            if (skinPointLight) {
+                skinPointLight.intensity = 3.0 + Math.sin(timeSec * 7.0) * 1.0;
+            }
+
+            if (auraMesh) {
+                auraMesh.rotation.z += 1.8 * delta;
+                auraMesh.rotation.y += 1.2 * delta;
+            }
+            if (secondAuraMesh) {
+                secondAuraMesh.rotation.z -= 2.2 * delta;
+                secondAuraMesh.rotation.x += 1.5 * delta;
+            }
+
+            skinParticles.forEach((p) => {
+                const ud = p.userData;
+                if (ud.speed) {
+                    if (ud.radius !== undefined) {
+                        ud.angle += ud.speed * delta;
+                        p.position.x = Math.cos(ud.angle) * ud.radius;
+                        p.position.z = Math.sin(ud.angle) * ud.radius;
+                        if (ud.yOffset !== undefined) {
+                            p.position.y = (ud.yOffset + Math.sin(ud.angle * 2) * 0.3) % 3.2;
+                        }
+                    } else if (ud.y !== undefined) {
+                        ud.y += ud.speed * delta;
+                        if (ud.y > 3.4) ud.y = 0;
+                        p.position.y = ud.y;
+                        p.position.x = ud.x + Math.sin(timeSec * 4.0 + (ud.wobble || 0)) * 0.15;
+                        p.position.z = ud.z + Math.cos(timeSec * 4.0 + (ud.wobble || 0)) * 0.15;
+                    }
+                    if (ud.rotSpeed) {
+                        p.rotation.x += ud.rotSpeed * delta;
+                        p.rotation.y += ud.rotSpeed * delta;
+                    }
+                }
+            });
+
+            for (let i = stepImpactParticles.length - 1; i >= 0; i--) {
+                const p = stepImpactParticles[i];
+                p.userData.life -= delta;
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    stepImpactParticles.splice(i, 1);
+                } else {
+                    p.position.x += p.userData.vx * delta;
+                    p.position.y += p.userData.vy * delta;
+                    p.position.z += p.userData.vz * delta;
+                    p.userData.vy -= 9.8 * delta;
+                    p.material.opacity = p.userData.life / 0.5;
+                    p.scale.multiplyScalar(0.96);
+                }
+            }
+
+            for (let i = activeTrailParticles.length - 1; i >= 0; i--) {
+                const p = activeTrailParticles[i];
+                p.userData.life -= delta;
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    activeTrailParticles.splice(i, 1);
+                } else {
+                    const ratio = p.userData.life / p.userData.maxLife;
+                    p.material.opacity = ratio;
+                    p.position.y += 0.4 * delta;
+                    p.scale.multiplyScalar(0.98);
+                }
+            }
+
+            // [추가] 날개 파티클 애니메이션 및 제거 로직
+            for (let i = activeWingParticles.length - 1; i >= 0; i--) {
+                const p = activeWingParticles[i];
+                p.userData.life -= delta;
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    activeWingParticles.splice(i, 1);
+                } else {
+                    p.position.x += p.userData.vx * delta;
+                    p.position.y += p.userData.vy * delta;
+                    p.position.z += p.userData.vz * delta;
+                    p.userData.vy -= 2.0 * delta; // 중력 영향
+                    p.material.opacity = p.userData.life / p.userData.maxLife;
+                    p.scale.multiplyScalar(0.97);
+                }
+            }
+
+            if (gameState === STATE.PLAYING && !isShopOpen) {
+                if (isTimerEnabled) {
+                    const dynamicDrainRate = BASE_STAMINA_DRAIN + (score * 0.25);
+                    currentStamina -= dynamicDrainRate * delta;
+                    const pct = Math.max(0, (currentStamina / MAX_STAMINA) * 100);
+                    document.getElementById('timer-bar').style.width = `${pct}%`;
+
+                    if (currentStamina <= 0) {
+                        triggerGameOver();
+                    }
+                }
+
+                playerGroup.position.lerp(targetPlayerPos, 0.25);
+                
+                let diff = targetPlayerRotY - playerVisualContainer.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                playerVisualContainer.rotation.y += diff * 0.3;
+
+                if (jumpProgress > 0) {
+                    jumpProgress -= delta * 7.0;
+                    if (jumpProgress < 0) jumpProgress = 0;
+
+                    const jumpY = Math.sin(jumpProgress * Math.PI) * 0.45;
+                    playerVisualContainer.position.y = jumpY;
+
+                    const swingAngle = Math.sin(jumpProgress * Math.PI) * 0.7 * (stepCount % 2 === 0 ? 1 : -1);
+                    leftArmGroup.rotation.x = swingAngle;
+                    rightArmGroup.rotation.x = -swingAngle;
+                    leftLegGroup.rotation.x = -swingAngle;
+                    rightLegGroup.rotation.x = swingAngle;
+                } else {
+                    playerVisualContainer.position.y = 0;
+                    leftArmGroup.rotation.x *= 0.85;
+                    rightArmGroup.rotation.x *= 0.85;
+                    leftLegGroup.rotation.x *= 0.85;
+                    rightLegGroup.rotation.x *= 0.85;
+                }
+
+                coinsList.forEach(coin => {
+                    if (!coin.userData.collected) coin.rotation.z += 2.5 * delta;
+                });
+            } else if (gameState === STATE.GAMEOVER && isFalling) {
+                fallVelocity += 25 * delta;
+                playerGroup.position.y -= fallVelocity * delta;
+                playerVisualContainer.rotation.x += 5.0 * delta;
+                playerVisualContainer.rotation.z += 3.0 * delta;
+            }
+
+            updateCameraPosition(false);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function() {
+            init3D();
+            resetGame();
+            document.getElementById('coin-display').innerText = coins;
+            animate(performance.now());
+        };
+    </script>
+</body>
+</html>

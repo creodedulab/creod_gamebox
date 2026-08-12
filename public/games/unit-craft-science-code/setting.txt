@@ -1,0 +1,4 @@
+1.kor_name=[유닛 크래프트 과학 기호]
+2.eng_name=[Unit Craft Science Code]
+3.maker=[전주 띵쌤]
+3.genre=[*]

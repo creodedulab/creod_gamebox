@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>CutJump 180: Endless Ink</title>
+  <style>
+    :root {
+      --ink: #111;
+      --paper: #f8f8f8;
+      --accent: #ff3e3e;
+      --gold: #f1c40f;
+    }
+    html, body { margin:0; padding:0; background:var(--paper); height:100%; overflow:hidden; font-family: 'Courier New', Courier, monospace; }
+    #wrap { position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+    canvas { background:var(--paper); touch-action:none; cursor: crosshair; }
+    
+    #hud {
+      position:absolute; top:15px; left:15px; right:15px; display:flex; gap:8px; align-items:flex-start; justify-content:space-between;
+      pointer-events:none; z-index: 10; flex-wrap: wrap;
+    }
+    .panel {
+      background:rgba(255,255,255,0.95);
+      border:3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+      padding:6px 10px; min-width:100px;
+    }
+    .title { font-weight:900; font-size: 0.8rem; text-transform: uppercase; border-bottom: 2px solid var(--ink); margin-bottom: 4px; }
+    .stat { font-size:11px; font-weight: bold; display: flex; justify-content: space-between; gap: 4px; }
+    .bar-container { height:8px; border:2px solid var(--ink); margin-top:4px; background: #eee; position: relative; overflow: hidden; }
+    #fuelFill { height:100%; background:var(--ink); width:100%; transition: width 0.1s; }
+    #hpFill { height:100%; background:var(--accent); width:100%; transition: width 0.3s; }
+    
+    #centerMsg {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      pointer-events:none; text-align:center; z-index: 30;
+    }
+    #centerMsg > div {
+      background:white; border:4px solid var(--ink); box-shadow:8px 8px 0 var(--ink);
+      padding:25px; max-width:420px; transform: rotate(-1deg); pointer-events: auto;
+    }
+    .btn {
+      margin-top: 15px; padding: 12px 24px; background: var(--ink); color: white;
+      border: none; font-weight: bold; cursor: pointer; text-transform: uppercase;
+      font-size: 16px; transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.95) translate(2px, 2px); }
+    .hidden { display: none !important; }
+
+    #mobileControls {
+      position: absolute; bottom: 30px; left: 0; right: 0;
+      display: flex; justify-content: space-between; padding: 0 20px;
+      pointer-events: none; z-index: 25;
+    }
+    .ctrl-group { display: flex; gap: 15px; pointer-events: auto; }
+    .ctrl-btn {
+      width: 65px; height: 65px; background: rgba(255,255,255,0.85);
+      border: 4px solid var(--ink); border-radius: 12px;
+      box-shadow: 4px 4px 0 var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 900; user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); background: #eee; }
+    
+    .best-score { color: var(--gold); text-shadow: 1px 1px 0 #000; }
+    .urgent { color: var(--accent); animation: blink 0.5s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="panel">
+      <div class="title">ISSUE #무한연재</div>
+      <div class="stat"><span>현재:</span> <span id="page">1</span> P</div>
+      <div class="stat" id="timerPanel"><span>시간:</span> <span id="time">180</span>s</div>
+      <div class="stat best-score"><span>최고:</span> <span id="best">0</span> P</div>
+    </div>
+    <div class="panel">
+      <div class="title">잉크 공급</div>
+      <div class="bar-container"><div id="fuelFill"></div></div>
+      <div class="stat" style="margin-top:4px;"><span>대시:</span> <span id="dash">READY</span></div>
+    </div>
+    <div class="panel">
+      <div class="title">원고 보호</div>
+      <div class="bar-container"><div id="hpFill"></div></div>
+      <div class="stat" style="margin-top:4px;"><span>오염:</span> <span id="hits">0</span>/10</div>
+    </div>
+  </div>
+
+  <div id="mobileControls">
+    <div class="ctrl-group">
+      <div class="ctrl-btn" id="btnLeft">◀</div>
+      <div class="ctrl-btn" id="btnRight">▶</div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-btn" id="btnJump" style="width:80px;">JUMP</div>
+    </div>
+  </div>
+
+  <div id="centerMsg">
+    <!-- 메인 메뉴 -->
+    <div id="menu">
+      <div class="title" style="font-size:26px;">CUTJUMP 180</div>
+      <p style="font-size: 14px; line-height: 1.5; margin: 15px 0;">
+        무한한 만화 칸을 위로 올라가세요!<br>
+        페이지 클리어 시 <b>+25초</b> 보너스.<br>
+        잉크 오염 10번이면 게임 오버입니다.
+      </p>
+      <div style="font-size: 16px; font-weight: bold; margin: 10px 0;">
+        🏆 최고 기록: <span id="menuBest" class="best-score">0</span> 페이지
+      </div>
+      <button class="btn" id="startBtn">연재 시작</button>
+    </div>
+    
+    <!-- 게임 오버 -->
+    <div id="gameOver" class="hidden">
+      <div class="title" style="font-size: 24px; color: var(--accent);">연재 중단</div>
+      <p id="endSub" style="margin: 10px 0;">잉크가 원고를 덮었습니다.</p>
+      <div style="font-size: 22px; font-weight: 900; margin: 15px 0;">성적: <span id="finalScore">0</span> 페이지</div>
+      <div id="newRecord" class="best-score hidden" style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">★ NEW RECORD ★</div>
+      <button class="btn" id="retryBtn">다시 쓰기</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- 환경 변수 안전 처리 ---
+let firebaseConfig = null;
+try {
+  firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+} catch (e) {
+  console.error("Firebase config parsing failed", e);
+}
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'cutjump-endless';
+
+// Firebase 초기화 (설정이 있을 때만)
+let auth = null;
+let db = null;
+if (firebaseConfig) {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+}
+
+let userId = null;
+let bestScore = 0;
+
+// --- DOM 참조 ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const ui = {
+  page: document.getElementById('page'),
+  time: document.getElementById('time'),
+  timerPanel: document.getElementById('timerPanel'),
+  best: document.getElementById('best'),
+  fuelFill: document.getElementById('fuelFill'),
+  hpFill: document.getElementById('hpFill'),
+  hits: document.getElementById('hits'),
+  dash: document.getElementById('dash'),
+  centerMsg: document.getElementById('centerMsg'),
+  menu: document.getElementById('menu'),
+  menuBest: document.getElementById('menuBest'),
+  gameOver: document.getElementById('gameOver'),
+  newRecord: document.getElementById('newRecord'),
+  finalScore: document.getElementById('finalScore'),
+  endSub: document.getElementById('endSub'),
+  startBtn: document.getElementById('startBtn'),
+  retryBtn: document.getElementById('retryBtn')
+};
+
+// --- 게임 상수 ---
+const PAGE_HEIGHT = 2800;
+const GRAVITY = 1800;
+const JUMP_FORCE = -680;
+const MAX_FUEL = 100;
+const MAX_HITS = 10;
+const INK = '#111';
+
+// --- 게임 상태 ---
+let state = {
+  started: false,
+  over: false,
+  time: 180,
+  page: 1,
+  shake: 0,
+  hits: 0
+};
+
+const player = {
+  x: 0, y: 0, w: 24, h: 32,
+  vx: 0, vy: 0,
+  grounded: false,
+  fuel: MAX_FUEL,
+  dashAvail: true,
+  dashing: false,
+  face: 1,
+  hurtT: 0,
+  lastJumpT: 0
+};
+
+const cam = { x: 0, y: 0, targetY: 0 };
+const input = { left: false, right: false, up: false, space: false, lastJumpT: 0 };
+let platforms = [], hazards = [], items = [], particles = [], fxTexts = [];
+
+// --- 시스템 함수 ---
+function resize() {
+  const w = Math.min(window.innerWidth, 600);
+  const h = window.innerHeight;
+  canvas.width = w * devicePixelRatio;
+  canvas.height = h * devicePixelRatio;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function spawnFX(x, y, text) {
+  fxTexts.push({ x, y, text, life: 1.0, vx: (Math.random()-0.5)*40, vy: -70 - Math.random()*30 });
+}
+
+function spawnParticles(x, y, count = 5, color = INK) {
+  for(let i=0; i<count; i++) {
+    particles.push({
+      x, y, vx: (Math.random()-0.5)*250, vy: (Math.random()-0.5)*250, 
+      r: Math.random()*5 + 1, life: 1.0, color 
+    });
+  }
+}
+
+function initLevel(pageNum) {
+  platforms = []; hazards = []; items = [];
+  const top = (pageNum - 1) * -PAGE_HEIGHT;
+  const bottom = top + PAGE_HEIGHT;
+  const viewW = canvas.width / devicePixelRatio;
+
+  platforms.push({ x: 0, y: bottom - 20, w: viewW, h: 40 });
+
+  const speedMult = Math.min(2.8, 1 + pageNum * 0.12);
+  const sizeMult = Math.max(0.45, 1 - pageNum * 0.03);
+  const hazardFreq = Math.min(0.6, 0.15 + pageNum * 0.015);
+
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    const py = bottom - 180 - (i * (PAGE_HEIGHT / count)) - (Math.random() * 30);
+    const pw = (70 + Math.random() * 70) * sizeMult;
+    const px = Math.random() * (viewW - pw);
+    
+    const isMoving = pageNum > 1 && Math.random() > (0.8 - pageNum * 0.02);
+    platforms.push({ 
+      x: px, y: py, w: pw, h: 14, 
+      vx: isMoving ? (Math.random() > 0.5 ? 70 : -70) * speedMult : 0 
+    });
+    
+    if (Math.random() > 0.45) items.push({ x: px + pw/2, y: py - 20, r: 8, collected: false });
+    if (i > 3 && Math.random() < hazardFreq) {
+      hazards.push({ x: px + Math.random()*pw, y: py - 5, r: 10 + Math.random()*15 });
+    }
+  }
+}
+
+// --- 게임 흐름 제어 ---
+function startGame() {
+  state.started = true;
+  state.over = false;
+  state.page = 1;
+  state.time = 180;
+  state.hits = 0;
+  
+  ui.centerMsg.classList.add('hidden');
+  ui.menu.classList.add('hidden');
+  ui.gameOver.classList.add('hidden');
+  ui.newRecord.classList.add('hidden');
+  
+  initLevel(1);
+  const viewW = canvas.width / devicePixelRatio;
+  player.x = viewW / 2 - player.w / 2;
+  player.y = PAGE_HEIGHT - 120;
+  player.vx = 0;
+  player.vy = 0;
+  player.fuel = MAX_FUEL;
+  player.hurtT = 0;
+  cam.y = player.y - 400;
+  
+  spawnFX(player.x, player.y, "START!");
+}
+
+function endGame(msg) {
+  state.over = true;
+  ui.centerMsg.classList.remove('hidden');
+  ui.gameOver.classList.remove('hidden');
+  ui.endSub.innerText = msg;
+  ui.finalScore.innerText = state.page;
+  
+  if (state.page > bestScore) {
+    ui.newRecord.classList.remove('hidden');
+    saveBestScore(state.page);
+  }
+}
+
+// --- 업데이트 루프 ---
+function update(dt) {
+  if (!state.started || state.over) return;
+
+  state.time -= dt;
+  if (state.time <= 0) endGame("마감 시간 초과!");
+
+  if (state.time < 10) ui.timerPanel.classList.add('urgent');
+  else ui.timerPanel.classList.remove('urgent');
+
+  let moveDir = 0;
+  if (input.left) moveDir -= 1;
+  if (input.right) moveDir += 1;
+  
+  player.vx += moveDir * 3200 * dt;
+  player.vx *= Math.pow(0.0001, dt);
+  if (Math.abs(player.vx) > 450) player.vx = Math.sign(player.vx) * 450;
+  if (Math.abs(player.vx) > 10) player.face = Math.sign(player.vx);
+
+  if (input.up && player.grounded) {
+    player.vy = JUMP_FORCE;
+    player.grounded = false;
+    spawnParticles(player.x + player.w/2, player.y + player.h, 5);
+  }
+  
+  if (input.up && !player.grounded && player.fuel > 0) {
+    player.vy -= 1400 * dt;
+    player.fuel -= 75 * dt;
+  } else if (player.grounded) {
+    player.fuel = Math.min(MAX_FUEL, player.fuel + 60 * dt);
+  }
+
+  if (input.space && player.dashAvail && !player.grounded) {
+    player.dashing = true;
+    player.dashAvail = false;
+    player.vx = player.face * 950;
+    player.vy = -200;
+    spawnFX(player.x, player.y, "DASH!");
+    spawnParticles(player.x + player.w/2, player.y + player.h/2, 10);
+    setTimeout(() => { player.dashing = false; }, 120);
+    input.space = false;
+  }
+
+  if (!player.dashing) player.vy += GRAVITY * dt;
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+
+  const viewW = canvas.width / devicePixelRatio;
+  if (player.x < 0) { player.x = 0; player.vx *= -0.3; }
+  if (player.x + player.w > viewW) { player.x = viewW - player.w; player.vx *= -0.3; }
+
+  player.grounded = false;
+  platforms.forEach(p => {
+    if (p.vx) {
+      p.x += p.vx * dt;
+      if (p.x < 0 || p.x + p.w > viewW) p.vx *= -1;
+    }
+    if (player.vy > 0 && player.x + player.w > p.x && player.x < p.x + p.w &&
+        player.y + player.h >= p.y && player.y + player.h <= p.y + p.h + 12) {
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.grounded = true;
+      player.dashAvail = true;
+    }
+  });
+
+  hazards.forEach(h => {
+    const dx = (player.x + player.w/2) - h.x;
+    const dy = (player.y + player.h/2) - h.y;
+    if (Math.sqrt(dx*dx + dy*dy) < h.r + 6) {
+      if (player.hurtT <= 0) {
+        player.hurtT = 0.6;
+        player.vy = -450;
+        player.vx = -player.face * 350;
+        state.shake = 15;
+        state.hits++;
+        spawnFX(player.x, player.y, "OOF!");
+        if (state.hits >= MAX_HITS) endGame("원고 오염 한계!");
+      }
+    }
+  });
+  player.hurtT -= dt;
+
+  items.forEach(it => {
+    if (!it.collected) {
+      const dx = (player.x + player.w/2) - it.x;
+      const dy = (player.y + player.h/2) - it.y;
+      if (Math.sqrt(dx*dx + dy*dy) < it.r + 15) {
+        it.collected = true;
+        player.fuel = Math.min(MAX_FUEL, player.fuel + 40);
+        spawnFX(it.x, it.y, "INK+");
+      }
+    }
+  });
+
+  const pageTop = (state.page - 1) * -PAGE_HEIGHT;
+  if (player.y < pageTop - 100) {
+    state.page++;
+    state.time += 25;
+    initLevel(state.page);
+    spawnFX(player.x, player.y, `PAGE ${state.page}`);
+    saveBestScore(state.page);
+  }
+
+  cam.targetY = player.y - (canvas.height / devicePixelRatio) * 0.65;
+  cam.y += (cam.targetY - cam.y) * 0.15;
+
+  particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+  particles = particles.filter(p => p.life > 0);
+  fxTexts.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; });
+  fxTexts = fxTexts.filter(f => f.life > 0);
+  
+  state.shake *= 0.85;
+  updateHUD();
+}
+
+function updateHUD() {
+  ui.page.innerText = state.page;
+  ui.time.innerText = Math.ceil(state.time);
+  ui.fuelFill.style.width = player.fuel + '%';
+  ui.hpFill.style.width = (1 - (state.hits / MAX_HITS)) * 100 + '%';
+  ui.hits.innerText = state.hits;
+  ui.dash.innerText = (player.dashAvail || player.grounded) ? "READY" : "USED";
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  if (state.shake > 0.1) ctx.translate((Math.random()-0.5)*state.shake, (Math.random()-0.5)*state.shake);
+
+  ctx.fillStyle = '#ddd';
+  const dotSpacing = 25;
+  const offY = -cam.y % dotSpacing;
+  for(let x=0; x<canvas.width/devicePixelRatio; x+=dotSpacing) {
+    for(let y=offY; y<canvas.height/devicePixelRatio; y+=dotSpacing) {
+      ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  ctx.translate(0, -cam.y);
+
+  platforms.forEach(p => {
+    ctx.strokeStyle = INK; ctx.lineWidth = 3;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  });
+
+  items.forEach(it => {
+    if (it.collected) return;
+    ctx.fillStyle = INK;
+    ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
+  });
+
+  hazards.forEach(h => {
+    ctx.fillStyle = INK;
+    ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI*2); ctx.fill();
+    for(let i=0; i<8; i++) {
+      const ang = (i/8) * Math.PI*2;
+      ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(h.x + Math.cos(ang)*(h.r+6), h.y + Math.sin(ang)*(h.r+6));
+      ctx.strokeStyle = INK; ctx.stroke();
+    }
+  });
+
+  ctx.save();
+  ctx.translate(player.x + player.w/2, player.y + player.h/2);
+  if (player.hurtT > 0 && Math.floor(Date.now()/50)%2==0) ctx.globalAlpha = 0.2;
+  ctx.scale(player.face, 1);
+  ctx.strokeStyle = INK; ctx.lineWidth = 3;
+  ctx.strokeRect(-player.w/2, -player.h/2, player.w, player.h);
+  ctx.fillStyle = 'white'; ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
+  ctx.fillStyle = INK; ctx.fillRect(2, -8, 4, 4); ctx.fillRect(10, -8, 4, 4);
+  ctx.restore();
+
+  particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill(); });
+  ctx.globalAlpha = 1;
+  ctx.font = '900 22px "Courier New"'; ctx.strokeStyle = 'white'; ctx.lineWidth = 4;
+  fxTexts.forEach(f => {
+    ctx.globalAlpha = f.life;
+    ctx.strokeText(f.text, f.x, f.y);
+    ctx.fillStyle = INK; ctx.fillText(f.text, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// --- Firebase 인증 & 최고 기록 ---
+async function initAuth() {
+  if (!auth) return;
+  const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  if (initialToken) {
+    await signInWithCustomToken(auth, initialToken).catch(() => signInAnonymously(auth));
+  } else {
+    await signInAnonymously(auth).catch(() => {});
+  }
+}
+
+async function saveBestScore(score) {
+  if (score <= bestScore) return;
+  bestScore = score;
+  ui.best.innerText = bestScore;
+  if (!userId || !db) return;
+  const docRef = doc(db, 'artifacts', appId, 'users', userId, 'records', 'highscore');
+  await setDoc(docRef, { page: score, timestamp: Date.now() }).catch(e => console.error(e));
+}
+
+if (auth) {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      userId = user.uid;
+      if (db) {
+        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'records', 'highscore');
+        const snap = await getDoc(docRef).catch(() => null);
+        if (snap && snap.exists()) {
+          bestScore = snap.data().page || 0;
+          ui.best.innerText = bestScore;
+          ui.menuBest.innerText = bestScore;
+        }
+      }
+    }
+  });
+}
+
+// --- 버튼 이벤트 리스너 ---
+ui.startBtn.addEventListener('click', () => {
+  startGame();
+});
+
+ui.retryBtn.addEventListener('click', () => {
+  location.reload();
+});
+
+// 방향키 입력
+window.onkeydown = e => {
+  if (e.code === 'ArrowLeft') input.left = true;
+  if (e.code === 'ArrowRight') input.right = true;
+  if (e.code === 'ArrowUp' || e.code === 'KeyW') input.up = true;
+  if (e.code === 'Space') input.space = true;
+};
+window.onkeyup = e => {
+  if (e.code === 'ArrowLeft') input.left = false;
+  if (e.code === 'ArrowRight') input.right = false;
+  if (e.code === 'ArrowUp' || e.code === 'KeyW') input.up = false;
+};
+
+// 모바일 버튼 제어
+const setupBtn = (id, key) => {
+  const el = document.getElementById(id);
+  el.addEventListener('pointerdown', e => { e.preventDefault(); input[key] = true; });
+  el.addEventListener('pointerup', e => { e.preventDefault(); input[key] = false; });
+  el.addEventListener('pointercancel', e => { e.preventDefault(); input[key] = false; });
+};
+setupBtn('btnLeft', 'left');
+setupBtn('btnRight', 'right');
+setupBtn('btnJump', 'up');
+
+// 공중 대시 (화면 탭)
+canvas.addEventListener('pointerdown', e => {
+  const now = Date.now();
+  if (now - input.lastJumpT < 250) input.space = true;
+  input.lastJumpT = now;
+});
+
+// --- 초기화 및 루프 ---
+initAuth();
+let lastT = 0;
+function loop(t) {
+  const dt = Math.min(0.1, (t - lastT) / 1000);
+  lastT = t;
+  update(dt); 
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>

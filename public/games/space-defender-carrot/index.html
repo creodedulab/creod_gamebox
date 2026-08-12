@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>스페이스 디펜더 - 당근 로켓의 모험</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .hud-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            pointer-events: none;
+        }
+        
+        .left-info { 
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        
+        .center-info { 
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px; 
+            color: #00d2ff;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00d2ff;
+            white-space: nowrap;
+        }
+        
+        .right-info { 
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .score-box, .coin-box, .weapon-status-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+            border: 1px solid #444;
+            pointer-events: auto;
+        }
+        
+        .score-box { font-weight: bold; font-size: 20px; }
+        .coin-box { font-weight: bold; font-size: 20px; }
+        .coin-text { color: #ffd700; }
+        
+        .weapon-status-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        .ammo-pip {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #555;
+            display: inline-block;
+        }
+        .ammo-pip.active { background: #0f0; box-shadow: 0 0 5px #0f0; }
+        .ammo-pip.recharging { background: #f00; }
+        
+        .hud-bottom {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            pointer-events: auto;
+            display: flex;
+            gap: 15px;
+        }
+        .icon-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        
+        h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: #ff7f00;
+            text-shadow: 0 0 10px #ff7f00;
+            text-align: center;
+        }
+        p {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .rabbit-btn-container {
+            position: relative;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .rabbit-btn-container:hover { transform: scale(1.05); }
+        .rabbit-btn-container:active { transform: scale(0.95); }
+
+        #start-btn {
+            padding: 15px 50px;
+            font-size: 24px;
+            background: #ffc0cb;
+            color: #d63384;
+            border: 4px solid #fff;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 5px 15px rgba(255, 192, 203, 0.6);
+        }
+        .ear {
+            position: absolute;
+            top: -35px;
+            width: 20px;
+            height: 50px;
+            background: #ffc0cb;
+            border: 4px solid #fff;
+            border-bottom: none;
+            border-radius: 20px 20px 0 0;
+            z-index: 1;
+        }
+        .ear.left { left: 20px; transform: rotate(-10deg); }
+        .ear.right { right: 20px; transform: rotate(10deg); }
+
+        .hidden { display: none !important; }
+
+        .shop-container {
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #555;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .shop-section-title {
+            color: #00d2ff;
+            font-size: 1.2em;
+            margin: 15px 0 10px 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            text-align: left;
+        }
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+        }
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .shop-item:hover { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
+        
+        .shop-item.purchased {
+            border-color: #555;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0.7;
+            cursor: default;
+        }
+        
+        .shop-item.equipped {
+            border-color: #00d2ff;
+            background: rgba(0, 210, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+        }
+
+        .item-icon { font-size: 24px; margin-bottom: 5px; display: block; }
+        .item-name { font-weight: bold; color: #fff; font-size: 0.9em; display: block; margin-bottom: 3px; }
+        .item-desc { font-size: 0.7em; color: #aaa; display: block; margin-bottom: 5px; height: 30px; overflow: hidden;}
+        .item-cost { color: #ffd700; font-size: 0.8em; font-weight: bold; }
+        
+        .shop-action-btn {
+            margin-top: 5px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-buy { background: #ffd700; color: #000; }
+        .btn-owned { background: #555; color: #ccc; cursor: default; }
+        .btn-equip { background: #00d2ff; color: #fff; }
+        .btn-equipped { background: transparent; border: 1px solid #00d2ff; color: #00d2ff; cursor: default; }
+
+        .owned-badge {
+            position: absolute; top: 5px; right: 5px; color: #0f0; font-size: 12px;
+        }
+
+        .key-badge {
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 2px 8px;
+            color: #fff;
+            font-weight: bold;
+            margin: 0 2px;
+            font-size: 0.8em;
+        }
+
+        .normal-btn {
+            padding: 10px 30px;
+            font-size: 20px;
+            background: #00d2ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .normal-btn:hover { background: #00a0cc; }
+
+        #mobile-controls {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+        }
+        
+        .mobile-skill-btns {
+            display: none;
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            z-index: 20;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .skill-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .skill-btn .count {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: #333;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            #mobile-controls { display: block; }
+            .mobile-skill-btns { display: flex; }
+            .pc-instructions { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 가장 중요한 캔버스 요소! -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI 레이어 -->
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div class="left-info">
+                <div class="score-box">SCORE: <span id="score-val">0</span></div>
+                <div style="font-size:0.8em; color:#aaa; margin-left: 5px;">TARGET: <span id="target-val">30</span></div>
+                
+                <!-- 무기 상태창 (초기에는 숨김) -->
+                <div class="weapon-status-box" id="weapon-status-box" style="margin-top: 10px; display: none;">
+                    <div class="weapon-status-row" id="stem-status-row" style="display:none;">
+                        <span>줄기(<span style="color:#00d2ff; font-weight:bold;">C</span>)</span>
+                        <div id="stem-ammo-display">
+                            <span class="ammo-pip"></span><span class="ammo-pip"></span>
+                        </div>
+                    </div>
+                    <div class="weapon-status-row" id="rabbit-status-row" style="margin-top:5px; display:none;">
+                        <span>토끼(<span style="color:#00d2ff; font-weight:bold;">X</span>)</span>
+                        <div id="rabbit-ammo-display">
+                            <span class="ammo-pip"></span><span class="ammo-pip"></span>
+                        </div>
+                        <span id="rabbit-count-text" style="font-size:10px; margin-left:5px;">x0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-info" id="stage-display">STAGE 1</div>
+            
+            <div class="right-info">
+                <div class="coin-box"><i class="fas fa-coins coin-text"></i> <span id="coin-val">0</span></div>
+                <div id="lives-display" style="margin-top:5px; font-weight:bold; font-size:20px; text-shadow:0 0 5px red;">❤❤❤</div>
+            </div>
+        </div>
+        
+        <div class="hud-bottom">
+            <button class="icon-btn" id="home-btn" title="홈으로"><i class="fas fa-home"></i></button>
+            <button class="icon-btn" id="pause-btn" title="일시정지"><i class="fas fa-pause"></i></button>
+        </div>
+    </div>
+
+    <!-- 모바일 터치 & 스킬 -->
+    <div id="mobile-controls"></div>
+    <div class="mobile-skill-btns">
+        <div class="skill-btn" id="m-stem-btn" style="background: #228B22; display:none;">🌿<div class="count" id="m-stem-cnt">2</div></div>
+        <div class="skill-btn" id="m-rabbit-btn" style="background: #ffc0cb; display:none;">🐰<div class="count" id="m-rabbit-cnt">0</div></div>
+    </div>
+
+    <!-- 시작 화면 -->
+    <div id="start-screen" class="screen-overlay">
+        <h1>SPACE CARROT</h1>
+        <p class="pc-instructions">
+            <span class="key-badge">←</span><span class="key-badge">↑</span><span class="key-badge">↓</span><span class="key-badge">→</span> : 이동<br>
+            <span class="key-badge">SPACE</span> : 발사<br>
+            <span class="key-badge">C</span> : 줄기 (좌우) / <span class="key-badge">X</span> : 토끼 (폭탄)
+        </p>
+        <p class="mobile-instructions" style="display:none;">
+            화면 드래그: 이동 (자동발사)<br>
+            우측 하단 버튼으로 스킬 사용
+        </p>
+        
+        <div class="rabbit-btn-container" id="start-btn-wrap">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <button id="start-btn">GAME START</button>
+        </div>
+    </div>
+
+    <!-- 정비소 (상점) -->
+    <div id="shop-screen" class="screen-overlay hidden">
+        <h1 style="color:#ffd700; margin-bottom:5px;">🔧 정비소 🔧</h1>
+        <p style="margin-bottom:10px;">코인: <span id="shop-coin-val" class="coin-text">0</span></p>
+        
+        <div class="shop-container">
+            <div class="shop-section-title">소모품 & 무기 업그레이드</div>
+            <div class="shop-grid" id="upgrade-shop-grid"></div>
+
+            <div class="shop-section-title">스킨 (외형 변경)</div>
+            <div class="shop-grid" id="skin-shop-grid"></div>
+        </div>
+
+        <button class="normal-btn" id="next-stage-btn">다음 스테이지 출발! ▶</button>
+    </div>
+
+    <!-- 일시정지 -->
+    <div id="pause-screen" class="screen-overlay hidden">
+        <h1>PAUSED</h1>
+        <button class="normal-btn" id="resume-btn">계속하기</button>
+    </div>
+
+    <!-- 게임 오버 -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 style="color: #ff4444;">GAME OVER</h1>
+        <p>최종 점수: <span id="final-score" style="color: yellow; font-weight: bold;">0</span></p>
+        <button class="normal-btn" id="restart-btn">다시 하기</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 모바일 감지
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            document.querySelector('.pc-instructions').style.display = 'none';
+            document.querySelector('.mobile-instructions').style.display = 'block';
+        }
+
+        const UPGRADES = [
+            { id: 'heal', name: '체력 회복', desc: '체력 +1', cost: 30, type: 'consumable', icon: '❤', oneTime: false },
+            { id: 'leaf', name: '잎사귀 무기', desc: '레벨업 시 탄환 수 증가 (Max Lv.10)', baseCost: 30, type: 'passive', icon: '🍃', oneTime: false },
+            { id: 'rabbit_ear', name: '토끼귀', desc: '잎사귀 1.5배 크기 탄환', cost: 50, type: 'passive', icon: '🐰', oneTime: true },
+            { id: 'stem', name: '줄기 (C키)', desc: '좌우 광역 공격 (자동충전)', cost: 30, type: 'active_stem', icon: '🌿', oneTime: true },
+            { id: 'rabbit', name: '토끼 머리 (X키)', desc: '전방 설치형 폭탄', cost: 50, type: 'consumable_weapon', icon: '💣', oneTime: false }
+        ];
+
+        const SKINS = [
+            { id: 'default', name: '기본 당근', cost: 0, color: '#FF7F00', icon: '🥕' },
+            { id: 'gold', name: '황금 당근', cost: 100, color: '#FFD700', icon: '👑' },
+            { id: 'pink', name: '핑크 당근', cost: 120, color: '#FF69B4', icon: '🎀' },
+            { id: 'blue', name: '파랑 당근', cost: 120, color: '#1E90FF', icon: '💧' },
+            { id: 'green', name: '녹색 당근', cost: 150, color: '#32CD32', icon: '🥦' },
+            { id: 'shark', name: '상어 당근', cost: 200, color: '#708090', icon: '🦈' },
+            { id: 'croc', name: '악어 당근', cost: 200, color: '#2E8B57', icon: '🐊' },
+            { id: 'rainbow', name: '무지개 당근', cost: 400, color: 'rainbow', icon: '🌈' }
+        ];
+
+        let gameState = {
+            active: false,
+            paused: false,
+            score: 0,
+            coins: 0, // 초기 자본 0원
+            lives: 3,
+            stage: 1,
+            frames: 0,
+            
+            skin: 'default',
+            ownedSkins: ['default'],
+            leafWeaponLevel: 0,
+            hasRabbitEarWeapon: false,
+            hasStemWeapon: false,
+            hasRabbitWeapon: false,
+            stemAmmo: 2,
+            stemMaxAmmo: 2,
+            stemRechargeTime: 600,
+            stemTimer: 0,
+            rabbitAmmo: 0,
+            rabbitMaxAmmo: 2
+        };
+
+        const stageThresholds = [0, 30, 80, 150, 250, 500, 800, 1500, 2500, 4000];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, Space: false };
+        
+        window.addEventListener('keydown', e => { 
+            if(keys.hasOwnProperty(e.code) || keys.hasOwnProperty(e.key)) {
+                keys[e.key === ' ' ? 'Space' : e.key] = true; 
+            }
+            if (gameState.active && !gameState.paused) {
+                if (e.key.toLowerCase() === 'c') fireStem();
+                else if (e.key.toLowerCase() === 'x') fireRabbit(player.x + player.width/2, player.y - 80);
+            }
+        });
+        
+        window.addEventListener('keyup', e => { 
+            if(keys.hasOwnProperty(e.code) || keys.hasOwnProperty(e.key)) {
+                keys[e.key === ' ' ? 'Space' : e.key] = false; 
+            }
+        });
+
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        let touchX = null, touchY = null;
+        const mobileControls = document.getElementById('mobile-controls');
+        mobileControls.addEventListener('touchstart', e => { e.preventDefault(); touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; keys.Space = true; }, {passive: false});
+        mobileControls.addEventListener('touchmove', e => { e.preventDefault(); touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }, {passive: false});
+        mobileControls.addEventListener('touchend', e => { e.preventDefault(); touchX = null; touchY = null; keys.Space = false; });
+
+        document.getElementById('m-stem-btn').addEventListener('touchstart', (e) => { e.stopPropagation(); fireStem(); });
+        document.getElementById('m-rabbit-btn').addEventListener('touchstart', (e) => { 
+            e.stopPropagation(); 
+            fireRabbit(player.x + player.width/2, player.y - 100); 
+        });
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.radius = Math.random() * 3;
+                this.speedX = (Math.random() - 0.5) * 5;
+                this.speedY = (Math.random() - 0.5) * 5;
+                this.color = color;
+                this.alpha = 1;
+                this.markedForDeletion = false;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                this.alpha -= 0.05;
+                if (this.alpha <= 0) this.markedForDeletion = true;
+            }
+            draw() {
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            }
+        }
+
+        // 새롭게 추가된 블랙홀 클래스
+        class BlackHole {
+            constructor() {
+                this.radius = 45; // 충돌 반경
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = Math.random() * (canvas.height / 2) + this.radius; // 위쪽 절반에 생성
+                this.timer = 600; // 약 10초
+                this.rotation = 0;
+                this.markedForDeletion = false;
+                this.innerRadius = 0; // 등장 스케일업 효과
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                if (this.innerRadius < this.radius) this.innerRadius += 1;
+
+                // 보라색 이벤트 호라이즌
+                const gradient = ctx.createRadialGradient(0, 0, this.innerRadius * 0.5, 0, 0, this.innerRadius * 1.5);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                gradient.addColorStop(0.5, 'rgba(138, 43, 226, 0.8)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.innerRadius * 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // 중심부 블랙
+                ctx.beginPath();
+                ctx.arc(0, 0, this.innerRadius * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                
+                // 회전 흡수선 이펙트
+                ctx.strokeStyle = 'rgba(200, 100, 255, 0.6)';
+                ctx.lineWidth = 3;
+                for(let i=0; i<4; i++) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.innerRadius * 0.8 + (Math.sin(gameState.frames * 0.1 + i) * 5), (i * Math.PI/2), (i * Math.PI/2) + Math.PI/3);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+            update() {
+                this.rotation += 0.05;
+                this.timer--;
+                if (this.timer < 30) this.innerRadius -= 1.5;
+                if (this.timer <= 0) this.markedForDeletion = true;
+            }
+        }
+
+        class Player {
+            constructor() {
+                this.width = 40;
+                this.height = 50;
+                this.x = canvas.width / 2 - this.width / 2;
+                this.y = canvas.height - 100;
+                this.speed = 7;
+                this.lastShotTime = 0;
+            }
+
+            draw() {
+                ctx.save();
+                const skinData = SKINS.find(s => s.id === gameState.skin);
+                let color = skinData ? skinData.color : '#FF7F00';
+                
+                if (gameState.skin === 'rainbow') {
+                    const hue = (gameState.frames * 2) % 360;
+                    color = `hsl(${hue}, 100%, 50%)`;
+                }
+
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 10;
+                
+                if (gameState.skin === 'shark') {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x + this.width, this.y + this.height);
+                    ctx.lineTo(this.x, this.y + this.height);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y + 20);
+                    ctx.lineTo(this.x + this.width + 10, this.y + 35);
+                    ctx.lineTo(this.x + this.width/2, this.y + 45);
+                    ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(this.x+15, this.y+20, 3, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(this.x+25, this.y+20, 3, 0, Math.PI*2); ctx.fill();
+                } else if (gameState.skin === 'croc') {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y); 
+                    ctx.lineTo(this.x + this.width, this.y + this.height);
+                    ctx.lineTo(this.x + this.width/2, this.y + this.height - 10); 
+                    ctx.lineTo(this.x, this.y + this.height);
+                    ctx.fill();
+                    ctx.fillStyle = '#226622';
+                    for(let i=0; i<3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width/2, this.y + 15 + (i*10), 4, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                } else {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width / 2, this.y); 
+                    ctx.quadraticCurveTo(this.x + this.width, this.y + this.height * 0.3, this.x + this.width - 5, this.y + this.height - 10); 
+                    ctx.quadraticCurveTo(this.x + this.width / 2, this.y + this.height, this.x + 5, this.y + this.height - 10); 
+                    ctx.quadraticCurveTo(this.x, this.y + this.height * 0.3, this.x + this.width / 2, this.y); 
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 25, this.y + 15); ctx.lineTo(this.x + 35, this.y + 18);
+                    ctx.moveTo(this.x + 8, this.y + 25); ctx.lineTo(this.x + 20, this.y + 28);
+                    ctx.moveTo(this.x + 22, this.y + 35); ctx.lineTo(this.x + 32, this.y + 38);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 10, this.y + this.height - 15);
+                    ctx.quadraticCurveTo(this.x - 5, this.y + this.height, this.x + 15, this.y + this.height - 5);
+                    ctx.moveTo(this.x + this.width - 10, this.y + this.height - 15);
+                    ctx.quadraticCurveTo(this.x + this.width + 5, this.y + this.height, this.x + this.width - 15, this.y + this.height - 5);
+                    ctx.moveTo(this.x + this.width / 2 - 5, this.y + this.height - 10);
+                    ctx.lineTo(this.x + this.width / 2, this.y + this.height + 5);
+                    ctx.lineTo(this.x + this.width / 2 + 5, this.y + this.height - 10);
+                    ctx.fill();
+                }
+
+                if (gameState.active && !gameState.paused) {
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = `rgba(255, 100, 0, ${Math.random()})`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width / 2 - 3, this.y + this.height);
+                    ctx.lineTo(this.x + this.width / 2 + 3, this.y + this.height);
+                    ctx.lineTo(this.x + this.width / 2, this.y + this.height + 15 + Math.random() * 10);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            update() {
+                if (keys.ArrowLeft && this.x > 0) this.x -= this.speed;
+                if (keys.ArrowRight && this.x < canvas.width - this.width) this.x += this.speed;
+                if (keys.ArrowUp && this.y > 0) this.y -= this.speed;
+                if (keys.ArrowDown && this.y < canvas.height - this.height) this.y += this.speed;
+
+                if (touchX !== null && isMobile) {
+                    const targetX = touchX - this.width / 2;
+                    const targetY = touchY - 80;
+                    this.x += (targetX - this.x) * 0.2;
+                    this.y += (targetY - this.y) * 0.2;
+                    if(this.x < 0) this.x = 0;
+                    if(this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+                }
+
+                if (keys.Space) {
+                    const now = Date.now();
+                    if (now - this.lastShotTime > 250) {
+                        const isRainbow = gameState.skin === 'rainbow';
+                        bullets.push(new Bullet(this.x + this.width / 2, this.y, isRainbow));
+                        
+                        if (gameState.leafWeaponLevel > 0) {
+                            const level = gameState.leafWeaponLevel;
+                            const count = level + 1; 
+                            
+                            if (level === 1) {
+                                bullets.push(new LeafBullet(this.x, this.y + 20, 0));
+                                bullets.push(new LeafBullet(this.x + this.width, this.y + 20, 0));
+                            } else {
+                                const centerX = this.x + this.width / 2;
+                                const centerY = this.y + 20;
+                                const maxSpread = Math.min(100, 15 + (level * 8)); 
+                                const step = maxSpread / (count - 1);
+                                const startAngle = -maxSpread / 2;
+
+                                for (let i = 0; i < count; i++) {
+                                    const angleDeg = startAngle + (step * i);
+                                    const angleRad = (angleDeg - 90) * Math.PI / 180; 
+                                    bullets.push(new LeafBullet(centerX, centerY, angleRad));
+                                }
+                            }
+                        }
+
+                        if (gameState.hasRabbitEarWeapon) {
+                             bullets.push(new RabbitEarBullet(this.x - 10, this.y + 30));
+                             bullets.push(new RabbitEarBullet(this.x + this.width + 10, this.y + 30));
+                        }
+                        
+                        this.lastShotTime = now;
+                    }
+                }
+            }
+        }
+
+        class Bullet {
+            constructor(x, y, isRainbow = false) {
+                this.x = x; this.y = y;
+                this.radius = 4;
+                this.speed = 10;
+                this.color = '#ffeb3b';
+                this.damage = 1;
+                this.markedForDeletion = false;
+                this.isRainbow = isRainbow;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                if (this.isRainbow) {
+                    const hue = (gameState.frames * 5) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.color;
+                }
+                ctx.fill();
+            }
+            update() {
+                this.y -= this.speed;
+                if (this.y < 0) this.markedForDeletion = true;
+            }
+        }
+
+        class LeafBullet extends Bullet {
+            constructor(x, y, angleRad) {
+                super(x, y);
+                this.speed = 20; 
+                this.width = 8;
+                this.height = 14;
+                this.color = '#32CD32';
+                if (angleRad === 0 || angleRad === undefined) {
+                    this.vx = 0;
+                    this.vy = -this.speed;
+                    this.rotation = 0;
+                } else {
+                    this.vx = Math.cos(angleRad) * this.speed;
+                    this.vy = Math.sin(angleRad) * this.speed;
+                    this.rotation = angleRad + Math.PI / 2;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.y < 0 || this.x < 0 || this.x > canvas.width) this.markedForDeletion = true;
+            }
+        }
+
+        class RabbitEarBullet extends Bullet {
+            constructor(x, y) {
+                super(x, y);
+                this.speed = 20; 
+                this.width = 8 * 1.5;
+                this.height = 14 * 1.5;
+                this.color = '#FFB6C1'; 
+            }
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.translate(this.x, this.y);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class StemBullet extends Bullet {
+            constructor(x, y, direction) {
+                super(x, y);
+                this.speedX = direction * 15; 
+                this.speedY = 0;
+                this.width = 30;
+                this.height = 10;
+                this.color = '#228B22';
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            }
+            update() {
+                this.x += this.speedX;
+                if (this.x < 0 || this.x > canvas.width) this.markedForDeletion = true;
+            }
+        }
+
+        class RabbitMine {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.timer = 120; 
+                this.radius = 20;
+                this.exploded = false;
+                this.markedForDeletion = false;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                if (this.timer < 30 && Math.floor(this.timer/5)%2===0) ctx.globalAlpha = 0.5;
+                ctx.fillStyle = '#ffc0cb'; 
+                ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); 
+                ctx.beginPath(); ctx.ellipse(-8, -15, 5, 12, -0.2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(8, -15, 5, 12, 0.2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'red'; 
+                ctx.beginPath(); ctx.arc(-5, -2, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(5, -2, 2, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.timer--;
+                if (this.timer <= 0) {
+                    this.exploded = true;
+                    this.markedForDeletion = true;
+                    createExplosion(this.x, this.y, '#ffc0cb', 30);
+                    asteroids.forEach(a => {
+                        const dist = Math.hypot(this.x - a.x, this.y - a.y);
+                        if (dist < 150) { 
+                            a.takeDamage(10); 
+                        }
+                    });
+                }
+            }
+        }
+
+        class Asteroid {
+            constructor(tier) {
+                this.tier = tier;
+                this.markedForDeletion = false;
+                const playerSize = 40;
+                switch(tier) {
+                    case 1: 
+                        this.radius = playerSize * 0.25;
+                        this.maxHp = 1; this.scoreReward = 1; this.coinReward = 1; this.color = '#888';
+                        break;
+                    case 2: 
+                        this.radius = playerSize * 0.5;
+                        this.maxHp = 1; this.scoreReward = 2; this.coinReward = 2; this.color = '#999';
+                        break;
+                    case 3: 
+                        this.radius = playerSize * 0.75;
+                        this.maxHp = 2; this.scoreReward = 3; this.coinReward = 4; this.color = '#a67d5d';
+                        break;
+                    case 4: 
+                        this.radius = playerSize * 1.5;
+                        this.maxHp = 5; this.scoreReward = 4; this.coinReward = 10; this.color = '#556';
+                        break;
+                    case 5: 
+                        this.radius = playerSize * 2.5;
+                        this.maxHp = 10; this.scoreReward = 10; this.coinReward = 60; this.color = '#333';
+                        break;
+                }
+                
+                this.hp = this.maxHp;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = -this.radius * 2;
+                
+                // 속도 2배 상향 적용 (Hardcore)
+                let baseSpeed = (Math.random() * 2 + 1) * 2;
+                if (tier >= 4) baseSpeed *= 0.5;
+                let speedMultiplier = Math.pow(1.15, gameState.stage - 1);
+                this.speed = baseSpeed * speedMultiplier;
+                
+                this.rotation = 0;
+                this.rotationSpeed = (Math.random() - 0.5) * (0.2 / tier);
+                this.vertices = [];
+                const vertexCount = 7 + tier;
+                for (let i = 0; i < vertexCount; i++) {
+                    const angle = (Math.PI * 2 / vertexCount) * i;
+                    const r = this.radius * (0.8 + Math.random() * 0.4);
+                    this.vertices.push({x: Math.cos(angle) * r, y: Math.sin(angle) * r});
+                }
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+                if (this.hp <= 0) {
+                    this.markedForDeletion = true;
+                    createExplosion(this.x, this.y, this.color, 15);
+                    gameState.score += this.scoreReward;
+                    gameState.coins += this.coinReward;
+                    checkStageProgression();
+                } else {
+                    createExplosion(this.x, this.y, '#fff', 3);
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.vertices[0].x, this.vertices[0].y);
+                for (let i = 1; i < this.vertices.length; i++) {
+                    ctx.lineTo(this.vertices[i].x, this.vertices[i].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                if (this.maxHp > 1 && this.hp < this.maxHp) {
+                    ctx.rotate(-this.rotation);
+                    ctx.fillStyle = 'red'; ctx.fillRect(-this.radius, -this.radius - 10, this.radius * 2, 5);
+                    ctx.fillStyle = '#0f0'; ctx.fillRect(-this.radius, -this.radius - 10, (this.radius * 2) * (this.hp / this.maxHp), 5);
+                }
+                ctx.restore();
+            }
+
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                if (this.y > canvas.height + this.radius) this.markedForDeletion = true;
+            }
+        }
+
+        let player;
+        let bullets = [];
+        let asteroids = [];
+        let particles = [];
+        let rabbitMines = [];
+        let blackHoles = [];
+        let stars = [];
+
+        function initGame() {
+            player = new Player();
+            bullets = [];
+            asteroids = [];
+            particles = [];
+            rabbitMines = [];
+            blackHoles = [];
+            gameState.score = 0;
+            gameState.coins = 0; // 0원으로 시작 (Hardcore)
+            gameState.lives = 3;
+            gameState.stage = 1;
+            gameState.frames = 0;
+            
+            gameState.leafWeaponLevel = 0;
+            gameState.hasRabbitEarWeapon = false;
+            gameState.hasStemWeapon = false;
+            gameState.hasRabbitWeapon = false;
+            
+            gameState.stemAmmo = 2;
+            gameState.stemTimer = 0;
+            gameState.rabbitAmmo = 0;
+
+            updateUI();
+            
+            stars = [];
+            for(let i=0; i<80; i++) {
+                stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size:Math.random()*2, speed:Math.random()*2+0.5});
+            }
+        }
+
+        function spawnAsteroids() {
+            // 등장 빈도 2배 상향 적용 (base를 60->30으로 줄여 간격 단축)
+            let spawnRate = Math.max(5, Math.floor(30 * Math.pow(0.9, gameState.stage - 1)));
+            
+            if (gameState.frames % spawnRate === 0) {
+                let tier = 2;
+                const rand = Math.random();
+                
+                if (gameState.stage === 1) {
+                    tier = 2;
+                } else if (gameState.stage === 2) {
+                    if (rand < 0.3) tier = 1; 
+                } else if (gameState.stage >= 3 && gameState.stage < 5) {
+                    if (rand < 0.2) tier = 3;
+                    else if (rand < 0.4) tier = 1;
+                } else if (gameState.stage >= 5 && gameState.stage < 7) {
+                    if (rand < 0.3) tier = 4;
+                    else if (rand < 0.7) tier = 3;
+                    else if (rand < 0.8) tier = 2; 
+                } else if (gameState.stage >= 7) {
+                    if (rand < 0.4) tier = 5;
+                    else if (rand < 0.8) tier = 4;
+                    else tier = 3;
+                }
+
+                asteroids.push(new Asteroid(tier));
+            }
+        }
+
+        // 불특정 블랙홀 소환
+        function spawnBlackHole() {
+            if (gameState.stage >= 3 && Math.random() < 0.002) { 
+                if(blackHoles.length < 2) { 
+                    blackHoles.push(new BlackHole());
+                }
+            }
+        }
+
+        function fireStem() {
+            if (gameState.hasStemWeapon && gameState.stemAmmo > 0) {
+                gameState.stemAmmo--;
+                bullets.push(new StemBullet(player.x, player.y + 25, -1)); 
+                bullets.push(new StemBullet(player.x + player.width, player.y + 25, 1)); 
+                updateUI();
+            }
+        }
+
+        function fireRabbit(x, y) {
+            if (gameState.rabbitAmmo > 0) {
+                gameState.rabbitAmmo--;
+                rabbitMines.push(new RabbitMine(x, y));
+                updateUI();
+            }
+        }
+
+        function checkStageProgression() {
+            if (gameState.stage >= 10) return;
+            if (gameState.score >= stageThresholds[gameState.stage]) {
+                openShop();
+            }
+        }
+
+        function openShop() {
+            gameState.active = false;
+            asteroids = [];
+            bullets = [];
+            rabbitMines = [];
+            blackHoles = []; // 상점 진입시 블랙홀 제거
+            document.getElementById('shop-coin-val').innerText = gameState.coins;
+            renderShop();
+            document.getElementById('shop-screen').classList.remove('hidden');
+            document.getElementById('mobile-controls').style.display = 'none';
+        }
+
+        function renderShop() {
+            const upGrid = document.getElementById('upgrade-shop-grid');
+            upGrid.innerHTML = '';
+            UPGRADES.forEach(item => {
+                const el = document.createElement('div');
+                let isOwned = false;
+                let currentLevel = 0;
+                
+                if(item.id === 'leaf') {
+                    currentLevel = gameState.leafWeaponLevel;
+                    if (currentLevel >= 10) isOwned = true;
+                } else if(item.id === 'stem' && gameState.hasStemWeapon) isOwned = true;
+                else if(item.id === 'rabbit_ear' && gameState.hasRabbitEarWeapon) isOwned = true;
+
+                if (item.id === 'leaf') {
+                    let cost = item.baseCost * (currentLevel + 1);
+                    let btnText = `💰${cost}`;
+                    let btnClass = 'btn-buy';
+                    let clickHandler = () => buyItem(item);
+
+                    if (currentLevel >= 10) {
+                        btnText = 'MAX LV';
+                        btnClass = 'btn-owned';
+                        clickHandler = null;
+                    }
+
+                    el.className = 'shop-item' + (currentLevel >= 10 ? ' purchased' : '');
+                    el.onclick = clickHandler;
+                    el.innerHTML = `
+                        <span class="item-icon">${item.icon}</span>
+                        <span class="item-name">${item.name} <span style="color:#00d2ff; font-size:0.8em;">(Lv.${currentLevel})</span></span>
+                        <span class="item-desc">${item.desc}</span>
+                        <button class="shop-action-btn ${btnClass}">${btnText}</button>
+                    `;
+                } else if (isOwned && item.oneTime) {
+                    el.className = 'shop-item purchased';
+                    el.onclick = null;
+                    el.innerHTML = `
+                        <span class="item-icon">${item.icon}</span>
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-desc">${item.desc}</span>
+                        <button class="shop-action-btn btn-owned">보유중</button>
+                    `;
+                } else {
+                    el.className = 'shop-item';
+                    el.onclick = () => buyItem(item);
+                    el.innerHTML = `
+                        <span class="item-icon">${item.icon}</span>
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-desc">${item.desc}</span>
+                        <button class="shop-action-btn btn-buy">💰${item.cost}</button>
+                    `;
+                }
+                upGrid.appendChild(el);
+            });
+
+            const skinGrid = document.getElementById('skin-shop-grid');
+            skinGrid.innerHTML = '';
+            SKINS.forEach(item => {
+                const owned = gameState.ownedSkins.includes(item.id);
+                const equipped = gameState.skin === item.id;
+                const el = document.createElement('div');
+                el.className = 'shop-item ' + (equipped ? 'equipped' : '');
+                let btnHtml = '';
+                if (equipped) {
+                    btnHtml = `<button class="shop-action-btn btn-equipped">장착중</button>`;
+                    el.onclick = null;
+                } else if (owned) {
+                    btnHtml = `<button class="shop-action-btn btn-equip">장착하기</button>`;
+                    el.onclick = () => buySkin(item);
+                } else {
+                    btnHtml = `<button class="shop-action-btn btn-buy">💰${item.cost}</button>`;
+                    el.onclick = () => buySkin(item);
+                }
+                let iconStyle = `color:${item.color}`;
+                if(item.id === 'rainbow') iconStyle = `background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); -webkit-background-clip: text; color: transparent;`;
+                el.innerHTML = `
+                    <span class="item-icon" style="${iconStyle}">${item.icon}</span>
+                    <span class="item-name">${item.name}</span>
+                    ${btnHtml}
+                `;
+                skinGrid.appendChild(el);
+            });
+        }
+
+        function buyItem(item) {
+            let cost = item.cost;
+            if (item.id === 'leaf') {
+                cost = item.baseCost * (gameState.leafWeaponLevel + 1);
+            }
+
+            if (gameState.coins >= cost) {
+                let bought = false;
+                if (item.id === 'heal') {
+                    gameState.lives++;
+                    bought = true;
+                } else if (item.id === 'leaf') {
+                    if (gameState.leafWeaponLevel < 10) {
+                        gameState.leafWeaponLevel++;
+                        bought = true;
+                    }
+                } else if (item.id === 'rabbit_ear') {
+                    if (!gameState.hasRabbitEarWeapon) {
+                        gameState.hasRabbitEarWeapon = true;
+                        bought = true;
+                    }
+                } else if (item.id === 'stem') {
+                    if (!gameState.hasStemWeapon) {
+                        gameState.hasStemWeapon = true;
+                        bought = true;
+                    }
+                } else if (item.id === 'rabbit') {
+                    if (gameState.rabbitAmmo < gameState.rabbitMaxAmmo) {
+                        gameState.rabbitAmmo++;
+                        gameState.hasRabbitWeapon = true;
+                        bought = true;
+                    }
+                }
+
+                if (bought) {
+                    gameState.coins -= cost;
+                    document.getElementById('shop-coin-val').innerText = gameState.coins;
+                    renderShop(); 
+                    updateUI(); 
+                }
+            }
+        }
+
+        function buySkin(item) {
+            if (gameState.ownedSkins.includes(item.id)) {
+                gameState.skin = item.id;
+                renderShop(); 
+            } else {
+                if (gameState.coins >= item.cost) {
+                    gameState.coins -= item.cost;
+                    gameState.ownedSkins.push(item.id);
+                    gameState.skin = item.id;
+                    document.getElementById('shop-coin-val').innerText = gameState.coins;
+                    renderShop(); 
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score-val').innerText = gameState.score;
+            document.getElementById('coin-val').innerText = gameState.coins;
+            document.getElementById('stage-display').innerText = `STAGE ${gameState.stage}`;
+            document.getElementById('target-val').innerText = gameState.stage < 10 ? stageThresholds[gameState.stage] : "∞";
+            
+            let hearts = "";
+            if (gameState.lives <= 10) {
+                for(let i=0; i<gameState.lives; i++) hearts += "❤";
+            } else {
+                hearts = `❤ x ${gameState.lives}`;
+            }
+            document.getElementById('lives-display').innerText = hearts;
+
+            const statusBox = document.getElementById('weapon-status-box');
+            const stemRow = document.getElementById('stem-status-row');
+            const rabbitRow = document.getElementById('rabbit-status-row');
+            const mStemBtn = document.getElementById('m-stem-btn');
+            const mRabbitBtn = document.getElementById('m-rabbit-btn');
+            
+            if (gameState.hasStemWeapon || gameState.hasRabbitWeapon) {
+                statusBox.style.display = 'block';
+            } else {
+                statusBox.style.display = 'none';
+            }
+
+            if (gameState.hasStemWeapon) {
+                stemRow.style.display = 'flex';
+                mStemBtn.style.display = 'flex';
+                const stemPips = document.getElementById('stem-ammo-display').children;
+                for(let i=0; i<2; i++) {
+                    stemPips[i].className = 'ammo-pip' + (i < gameState.stemAmmo ? ' active' : '');
+                    if (i === gameState.stemAmmo && gameState.stemTimer > 0) stemPips[i].className += ' recharging';
+                }
+            } else {
+                stemRow.style.display = 'none';
+                mStemBtn.style.display = 'none';
+            }
+            
+            if (gameState.hasRabbitWeapon) {
+                rabbitRow.style.display = 'flex';
+                mRabbitBtn.style.display = 'flex';
+                const rabbitPips = document.getElementById('rabbit-ammo-display').children;
+                for(let i=0; i<2; i++) {
+                    rabbitPips[i].className = 'ammo-pip' + (i < gameState.rabbitAmmo ? ' active' : '');
+                }
+                document.getElementById('rabbit-count-text').innerText = `x${gameState.rabbitAmmo}`;
+            } else {
+                rabbitRow.style.display = 'none';
+                mRabbitBtn.style.display = 'none';
+            }
+
+            document.getElementById('m-stem-cnt').innerText = gameState.stemAmmo;
+            document.getElementById('m-rabbit-cnt').innerText = gameState.rabbitAmmo;
+        }
+
+        function createExplosion(x, y, color, count) {
+            for(let i=0; i<count; i++) particles.push(new Particle(x, y, color));
+        }
+
+        function animate() {
+            if (!gameState.active || gameState.paused) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState.hasStemWeapon && gameState.stemAmmo < gameState.stemMaxAmmo) {
+                gameState.stemTimer++;
+                if (gameState.stemTimer >= gameState.stemRechargeTime) {
+                    gameState.stemAmmo++;
+                    gameState.stemTimer = 0;
+                }
+            }
+
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                star.y += star.speed;
+                if(star.y > canvas.height) star.y = 0;
+                ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI*2); ctx.fill();
+            });
+
+            player.update();
+            player.draw();
+
+            bullets.forEach((b, i) => {
+                b.update();
+                b.draw();
+                if(b.markedForDeletion) bullets.splice(i, 1);
+            });
+
+            rabbitMines.forEach((r, i) => {
+                r.update();
+                r.draw();
+                if(r.markedForDeletion) rabbitMines.splice(i, 1);
+            });
+
+            // 블랙홀 처리
+            blackHoles.forEach((bh, i) => {
+                bh.update();
+                bh.draw();
+                
+                // 플레이어 즉사 처리
+                const distPlayer = Math.hypot(player.x + player.width/2 - bh.x, player.y + player.height/2 - bh.y);
+                if (distPlayer < bh.radius * 0.8 + player.width/2) {
+                    createExplosion(player.x, player.y, '#8A2BE2', 50); 
+                    gameState.lives = 0;
+                    gameState.active = false;
+                    updateUI();
+                    document.getElementById('final-score').innerText = gameState.score;
+                    document.getElementById('game-over-screen').classList.remove('hidden');
+                }
+                
+                // 총알 흡수
+                bullets.forEach(b => {
+                    const distBullet = Math.hypot(b.x - bh.x, b.y - bh.y);
+                    if (distBullet < bh.radius * 1.5) {
+                        b.markedForDeletion = true; 
+                    }
+                });
+
+                if(bh.markedForDeletion) blackHoles.splice(i, 1);
+            });
+
+            asteroids.forEach((a, aIndex) => {
+                a.update();
+                a.draw();
+
+                bullets.forEach((b, bIndex) => {
+                    const dist = Math.hypot(b.x - a.x, b.y - a.y);
+                    if (dist < a.radius + b.radius) {
+                        b.markedForDeletion = true;
+                        bullets.splice(bIndex, 1);
+                        a.takeDamage(1); 
+                    }
+                });
+
+                const distPlayer = Math.hypot(player.x + player.width/2 - a.x, player.y + player.height/2 - a.y);
+                if (distPlayer < a.radius + player.width/2 * 0.8) {
+                    a.markedForDeletion = true;
+                    createExplosion(player.x, player.y, '#ff0000', 20);
+                    gameState.lives--;
+                    updateUI();
+                    
+                    if (gameState.lives <= 0) {
+                        gameState.active = false;
+                        document.getElementById('final-score').innerText = gameState.score;
+                        document.getElementById('game-over-screen').classList.remove('hidden');
+                    }
+                }
+
+                if (a.markedForDeletion) asteroids.splice(aIndex, 1);
+            });
+
+            particles.forEach((p, i) => {
+                p.update();
+                p.draw();
+                if(p.markedForDeletion) particles.splice(i, 1);
+            });
+
+            spawnAsteroids();
+            spawnBlackHole(); // 블랙홀 소환 로직 추가
+            updateUI(); 
+
+            gameState.frames++;
+            requestAnimationFrame(animate);
+        }
+
+        // --- 버튼 이벤트 ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').classList.add('hidden');
+            gameState.active = true;
+            initGame();
+            animate();
+        });
+        document.getElementById('next-stage-btn').addEventListener('click', () => {
+            gameState.stage++;
+            gameState.active = true;
+            document.getElementById('shop-screen').classList.add('hidden');
+            if(isMobile) document.getElementById('mobile-controls').style.display = 'block';
+            updateUI();
+            animate();
+        });
+        document.getElementById('home-btn').addEventListener('click', () => {
+            gameState.active = false;
+            document.getElementById('shop-screen').classList.add('hidden');
+            document.getElementById('pause-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        });
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if(!gameState.active) return;
+            gameState.paused = true;
+            document.getElementById('pause-screen').classList.remove('hidden');
+            document.getElementById('mobile-controls').style.display = 'none';
+        });
+        document.getElementById('resume-btn').addEventListener('click', () => {
+            gameState.paused = false;
+            document.getElementById('pause-screen').classList.add('hidden');
+            if(isMobile) document.getElementById('mobile-controls').style.display = 'block';
+            animate();
+        });
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            document.getElementById('game-over-screen').classList.add('hidden');
+            gameState.active = true;
+            initGame();
+            animate();
+        });
+
+    </script>
+</body>
+</html>

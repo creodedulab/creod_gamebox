@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>NUNCHI LEAGUE - NORMAL+</title>
+<style>
+body {
+    text-align: center;
+    font-family: Arial;
+    background: #111;
+    color: white;
+}
+
+#barContainer {
+    width: 400px;
+    height: 30px;
+    background: #333;
+    margin: 40px auto;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+#bar {
+    height: 100%;
+    width: 0%;
+    background: red;
+}
+
+button {
+    padding: 20px 50px;
+    font-size: 20px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+}
+
+#result {
+    margin-top: 30px;
+    font-size: 22px;
+}
+
+#restartBtn {
+    display: none;
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>NUNCHI LEAGUE</h1>
+<p>초록 구간에 맞춰 눌러라!</p>
+
+<div id="barContainer">
+    <div id="bar"></div>
+</div>
+
+<button id="gameButton">지금 누를까...?</button>
+
+<div id="result"></div>
+<button id="restartBtn">다시하기</button>
+
+<script>
+
+let bar = document.getElementById("bar");
+let width = 0;
+let gameActive = true;
+
+let successZone = Math.random() * 20 + 65; 
+let successSize = 8; // 🔥 조금 더 넓힘
+
+let speed = Math.random() * 1.2 + 0.8; // 속도 완화
+
+let interval = setInterval(() => {
+    if (!gameActive) return;
+
+    // 가속 구간 완화
+    if (width > 45 && width < 60) {
+        speed += 0.2;
+    }
+
+    width += speed;
+    bar.style.width = width + "%";
+
+    if (width >= successZone && width <= successZone + successSize) {
+        bar.style.background = "lime";
+    } else {
+        bar.style.background = "red";
+    }
+
+    if (width >= 100) {
+        endGame(false);
+    }
+}, 30);
+
+document.getElementById("gameButton").onclick = function() {
+    if (!gameActive) return;
+
+    if (width >= successZone && width <= successZone + successSize) {
+        endGame(true);
+    } else {
+        endGame(false);
+    }
+};
+
+function endGame(success) {
+    gameActive = false;
+    clearInterval(interval);
+
+    if (success) {
+        document.getElementById("result").innerText = "🔥 성공!";
+        
+        // 🔊 성공 사운드 (음성)
+        let msg = new SpeechSynthesisUtterance("성공!");
+        msg.lang = "ko-KR";
+        speechSynthesis.speak(msg);
+
+    } else {
+        document.getElementById("result").innerText = "💀 실패...";
+    }
+
+    document.getElementById("restartBtn").style.display = "inline-block";
+}
+
+document.getElementById("restartBtn").onclick = function() {
+    location.reload();
+};
+
+</script>
+
+</body>
+</html>

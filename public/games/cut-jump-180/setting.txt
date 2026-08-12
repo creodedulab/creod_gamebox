@@ -1,0 +1,4 @@
+1.kor_name=[컷점프180]
+2.eng_name=[Cut Jump 180]
+3.maker=[전주 유나]
+3.genre=[*]

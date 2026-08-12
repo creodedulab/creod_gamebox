@@ -1,0 +1,4 @@
+1.kor_name=[힐링 아쿠아리움]
+2.eng_name=[Cozy Aquarium Studio]
+3.maker=[부안 이재]
+3.genre=[*]

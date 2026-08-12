@@ -1,0 +1,4 @@
+1.kor_name=[에임 스피드 연습]
+2.eng_name=[Aim Speed Test]
+3.maker=[부안 연승]
+3.genre=[*]

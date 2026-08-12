@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아늑한 샌드박스 수족관 (Cozy Aquarium Studio)</title>
+    <!-- Tailwind CSS for modern UI design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font (Nunito & Gowun Dodum for cozy aesthetic) -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Gowun Dodum', 'Nunito', sans-serif;
+            user-select: none;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        /* Glassmorphism styling */
+        .glass-panel {
+            background: rgba(18, 30, 49, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .glass-button {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        .glass-button:active {
+            transform: translateY(0);
+        }
+        /* Color input styling */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 9999px;
+        }
+        /* Custom range slider */
+        input[type=range] {
+            accent-color: #38bdf8;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 overflow-hidden h-screen w-screen flex flex-col justify-between">
+
+    <!-- Top Header Overlay -->
+    <header class="fixed top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 p-3 sm:px-6 rounded-2xl glass-panel shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+                <i class="fa-solid font-bold fa-fish-fins text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 via-sky-100 to-indigo-200">
+                    아늑한 수족관 스튜디오
+                </h1>
+                <p class="text-xs text-cyan-200/70 hidden sm:block">나만의 그리기로 채우는 편안한 수중 세계</p>
+            </div>
+        </div>
+
+        <!-- Right Side Quick Action Buttons -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button id="openDrawBtn" class="glass-button px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-cyan-100 flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-400/30">
+                <i class="fa-solid fa-wand-magic-sparkles text-cyan-300"></i>
+                <span>생물 그리기</span>
+            </button>
+            <button id="openDecorBtn" class="glass-button px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-palette text-amber-300"></i>
+                <span class="hidden md:inline">수족관 꾸미기</span>
+            </button>
+            <button id="openListBtn" class="glass-button px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-book-bookmark text-emerald-300"></i>
+                <span class="hidden md:inline">생물 목록</span>
+            </button>
+            <button id="toggleAudioBtn" class="glass-button w-9 h-9 rounded-xl flex items-center justify-center text-slate-200" title="사운드 온/오프">
+                <i id="audioIcon" class="fa-solid fa-volume-xmark"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Interactive Aquarium Canvas -->
+    <main class="relative w-full h-full flex-grow cursor-pointer overflow-hidden" id="aquariumContainer">
+        <canvas id="aquariumCanvas" class="w-full h-full block"></canvas>
+
+        <!-- On-screen Tutorial Helper Tip -->
+        <div id="tipBox" class="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none transition-opacity duration-500 glass-panel px-5 py-2.5 rounded-full text-xs sm:text-sm text-cyan-100/90 flex items-center gap-3 shadow-lg border border-cyan-500/20">
+            <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>💡 화면을 클릭하면 먹이를 줄 수 있습니다! 생물을 클릭하여 포만감과 성장을 확인하세요.</span>
+        </div>
+
+        <!-- Selected Creature Info Modal Box (Floats over selected fish) -->
+        <div id="creatureInfoBox" class="hidden absolute z-30 glass-panel p-4 rounded-2xl w-64 shadow-2xl transition-all duration-300 pointer-events-auto border border-cyan-400/30">
+            <div class="flex items-center justify-between mb-2">
+                <h3 id="infoName" class="font-bold text-cyan-200 text-sm truncate">귀여운 물고기</h3>
+                <button id="closeInfoBtn" class="text-slate-400 hover:text-white text-xs p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between text-slate-300">
+                    <span>유형</span>
+                    <span id="infoType" class="text-cyan-300 font-semibold">헤엄 생물</span>
+                </div>
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span>성장 등급</span>
+                        <span id="infoLevel" class="text-amber-300 font-bold">Lv.1 (기본)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                        <div id="infoGrowthBar" class="bg-gradient-to-r from-amber-400 to-yellow-200 h-full w-1/4 transition-all duration-300"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span>포만감</span>
+                        <span id="infoHungerText" class="text-emerald-300 font-semibold">배부름</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                        <div id="infoHungerBar" class="bg-emerald-400 h-full w-3/4 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-700/60 flex items-center justify-between gap-2">
+                <button id="feedSelectedBtn" class="flex-1 glass-button py-1.5 rounded-lg text-xs text-amber-200 font-medium flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-cookie-bite"></i> 먹이주기
+                </button>
+                <button id="deleteCreatureBtn" class="px-2.5 py-1.5 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/40 text-xs transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Drawing & Creation Modal -->
+    <div id="drawModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+        <div class="glass-panel w-full max-w-2xl rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 border border-cyan-500/30 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-palette text-cyan-400 text-lg"></i>
+                    <h2 class="text-base sm:text-lg font-bold text-cyan-100">나만의 스케치 생물 만들기</h2>
+                </div>
+                <button id="closeDrawBtn" class="w-8 h-8 rounded-full glass-button flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Creation Type Selection Tabs -->
+            <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800">
+                <button id="tabFish" class="type-tab py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-cyan-300 bg-cyan-500/20 border border-cyan-400/30">
+                    <i class="fa-solid fa-fish mr-1"></i> 헤엄 생물
+                </button>
+                <button id="tabFloat" class="type-tab py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-water-lower mr-1"></i> 부유체/해파리
+                </button>
+                <button id="tabDecor" class="type-tab py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-chess-rook mr-1"></i> 바닥 오브젝트
+                </button>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-5 items-center justify-center">
+                <!-- Sketch Canvas Container -->
+                <div class="relative flex-shrink-0">
+                    <div class="p-2 rounded-2xl bg-slate-900 border border-slate-700 shadow-inner">
+                        <canvas id="sketchCanvas" width="280" height="280" class="rounded-xl bg-slate-950 cursor-crosshair touch-none border border-slate-800"></canvas>
+                    </div>
+                    <p class="text-[11px] text-center text-slate-400 mt-1.5">캔버스 위에 생물을 자유롭게 그려보세요</p>
+                </div>
+
+                <!-- Tools & Template Side Panel -->
+                <div class="flex-1 w-full flex flex-col gap-3">
+                    <!-- Preset Templates -->
+                    <div>
+                        <label class="block text-xs font-semibold text-cyan-200/90 mb-1.5">스케치 템플릿 가이드</label>
+                        <div class="flex flex-wrap gap-1.5" id="templateList">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Brush Colors & Styling Tools -->
+                    <div>
+                        <label class="block text-xs font-semibold text-cyan-200/90 mb-1.5">팔레트 & 효과 브러시</label>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <input type="color" id="brushColor" value="#38bdf8" class="w-8 h-8 rounded-full bg-transparent cursor-pointer border-none">
+                            <div class="flex gap-1.5" id="colorQuickPalette">
+                                <!-- Palette dots -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brush Size & Mode -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300">브러시 두께</span>
+                            <span id="brushSizeVal" class="text-xs font-mono text-cyan-300">6px</span>
+                        </div>
+                        <input type="range" id="brushSize" min="2" max="24" value="6" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                        
+                        <div class="grid grid-cols-3 gap-2 pt-1">
+                            <button id="modeNormal" class="brush-mode-btn glass-button py-1.5 rounded-lg text-xs font-medium text-cyan-300 border-cyan-400/40">일반</button>
+                            <button id="modeGlow" class="brush-mode-btn glass-button py-1.5 rounded-lg text-xs font-medium text-slate-300">네온 글로우</button>
+                            <button id="modeEraser" class="brush-mode-btn glass-button py-1.5 rounded-lg text-xs font-medium text-slate-300">지우개</button>
+                        </div>
+                    </div>
+
+                    <!-- Clear Sketch -->
+                    <div class="flex justify-end pt-1">
+                        <button id="clearSketchBtn" class="text-xs text-slate-400 hover:text-red-400 transition flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 캔버스 지우기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Create Action Button -->
+            <div class="border-t border-slate-700/60 pt-3 flex justify-end gap-3">
+                <button id="cancelDrawBtn" class="px-4 py-2 rounded-xl glass-button text-xs font-medium text-slate-300">취소</button>
+                <button id="spawnCreatureBtn" class="px-6 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 hover:opacity-90 transition">
+                    <i class="fa-solid fa-fish-fins mr-1.5"></i> 수족관에 넣기!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decor & Environment Customization Drawer -->
+    <div id="decorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 border border-amber-500/30">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-amber-400 text-lg"></i>
+                    <h2 class="text-base sm:text-lg font-bold text-amber-100">수족관 환경 & 테마 꾸미기</h2>
+                </div>
+                <button id="closeDecorBtn" class="w-8 h-8 rounded-full glass-button flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 py-2">
+                <!-- Ambient Lighting Mood Preset -->
+                <div>
+                    <label class="block text-xs font-semibold text-amber-200/90 mb-2">조명 테마 무드</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button class="theme-btn glass-button p-2.5 rounded-xl text-xs font-medium flex flex-col items-center gap-1.5 text-cyan-300 border-cyan-400/40" data-theme="sunshine">
+                            <i class="fa-solid fa-sun text-amber-400 text-base"></i>
+                            <span>따스한 햇살</span>
+                        </button>
+                        <button class="theme-btn glass-button p-2.5 rounded-xl text-xs font-medium flex flex-col items-center gap-1.5 text-slate-300" data-theme="sunset">
+                            <i class="fa-solid fa-cloud-sun text-orange-400 text-base"></i>
+                            <span>감성 노을</span>
+                        </button>
+                        <button class="theme-btn glass-button p-2.5 rounded-xl text-xs font-medium flex flex-col items-center gap-1.5 text-slate-300" data-theme="aurora">
+                            <i class="fa-solid fa-compact-disc text-emerald-400 text-base"></i>
+                            <span>심해 오로라</span>
+                        </button>
+                        <button class="theme-btn glass-button p-2.5 rounded-xl text-xs font-medium flex flex-col items-center gap-1.5 text-slate-300" data-theme="night">
+                            <i class="fa-solid fa-moon text-indigo-400 text-base"></i>
+                            <span>아늑한 밤</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sand Base Palette -->
+                <div>
+                    <label class="block text-xs font-semibold text-amber-200/90 mb-2">바닥 모래 색상</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="sand-btn p-3 rounded-xl border border-white/20 transition hover:scale-105 flex items-center justify-center text-xs text-slate-800 font-bold" style="background: #e2c191;" data-sand="#e2c191">골드</button>
+                        <button class="sand-btn p-3 rounded-xl border border-white/20 transition hover:scale-105 flex items-center justify-center text-xs text-slate-800 font-bold" style="background: #f472b6;" data-sand="#f472b6">코랄</button>
+                        <button class="sand-btn p-3 rounded-xl border border-white/20 transition hover:scale-105 flex items-center justify-center text-xs text-slate-800 font-bold" style="background: #e2e8f0;" data-sand="#e2e8f0">화이트</button>
+                        <button class="sand-btn p-3 rounded-xl border border-white/20 transition hover:scale-105 flex items-center justify-center text-xs text-slate-100 font-bold" style="background: #475569;" data-sand="#475569">현무암</button>
+                    </div>
+                </div>
+
+                <!-- Bubbles Density Slider -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-semibold text-amber-200/90">공기 방울 생성 밀도</label>
+                        <span id="bubbleDensityVal" class="text-xs text-cyan-300">보통</span>
+                    </div>
+                    <input type="range" id="bubbleDensity" min="10" max="60" value="30" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                </div>
+            </div>
+
+            <div class="border-t border-slate-700/60 pt-3 flex justify-end">
+                <button id="applyDecorBtn" class="px-6 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 transition">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Creatures Roster Drawer -->
+    <div id="listModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 border border-emerald-500/30 max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-emerald-400 text-lg"></i>
+                    <h2 class="text-base sm:text-lg font-bold text-emerald-100">살고 있는 생물 목록</h2>
+                </div>
+                <button id="closeListBtn" class="w-8 h-8 rounded-full glass-button flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Creature Cards Grid -->
+            <div id="creaturesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto pr-1 max-h-[55vh]">
+                <!-- Populated dynamically by JS -->
+            </div>
+
+            <div class="border-t border-slate-700/60 pt-3 flex justify-between items-center">
+                <span id="totalCreaturesCount" class="text-xs text-slate-400">총 0마리의 생물</span>
+                <button id="clearAllCreaturesBtn" class="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs transition">
+                    전체 비우기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Box -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4">
+        <div class="glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm text-cyan-200 border border-cyan-400/40 shadow-xl flex items-center gap-2">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-cyan-400"></i>
+            <span id="toastMsg">알림 메시지</span>
+        </div>
+    </div>
+
+    <script>
+        // Global Game Configuration & State
+        const canvas = document.getElementById('aquariumCanvas');
+        const ctx = canvas.getContext('2d');
+        const sketchCanvas = document.getElementById('sketchCanvas');
+        const sketchCtx = sketchCanvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        // Sound Synthesis (Web Audio API)
+        let audioCtx = null;
+        let isAudioMuted = true;
+
+        // Customization State
+        let currentTheme = 'sunshine'; // sunshine, sunset, aurora, night
+        let currentSandColor = '#e2c191';
+        let bubbleDensity = 30;
+
+        // Game World Simulation Arrays
+        let creatures = [];
+        let foods = [];
+        let bubbles = [];
+        let particles = [];
+        let selectedCreature = null;
+
+        // Theme Definitions
+        const themes = {
+            sunshine: {
+                top: '#104e7a',
+                bottom: '#092c48',
+                light: 'rgba(255, 255, 200, 0.15)',
+                rayColor: 'rgba(255, 255, 255, 0.08)'
+            },
+            sunset: {
+                top: '#5a2d52',
+                bottom: '#1e1b4b',
+                light: 'rgba(255, 180, 150, 0.2)',
+                rayColor: 'rgba(255, 190, 150, 0.08)'
+            },
+            aurora: {
+                top: '#064e3b',
+                bottom: '#022c22',
+                light: 'rgba(164, 244, 207, 0.2)',
+                rayColor: 'rgba(52, 211, 153, 0.1)'
+            },
+            night: {
+                top: '#0f172a',
+                bottom: '#020617',
+                light: 'rgba(125, 211, 252, 0.08)',
+                rayColor: 'rgba(186, 230, 253, 0.04)'
+            }
+        };
+
+        // Resize Canvas Handler
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initBubbles();
+        }
+        window.addEventListener('resize', resize);
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playPlopSound() {
+            if (isAudioMuted || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        function playSparkleSound() {
+            if (isAudioMuted || !audioCtx) return;
+            try {
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                freqs.forEach((freq, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.06);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.06 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + i * 0.06);
+                    osc.stop(audioCtx.currentTime + i * 0.06 + 0.2);
+                });
+            } catch(e) {}
+        }
+
+        function initBubbles() {
+            bubbles = [];
+            for (let i = 0; i < bubbleDensity; i++) {
+                bubbles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 4 + 1.5,
+                    speed: Math.random() * 1 + 0.5,
+                    wobble: Math.random() * Math.PI * 2,
+                    wobbleSpeed: Math.random() * 0.03 + 0.01
+                });
+            }
+        }
+
+        function createSparkles(x, y, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 2 + 1;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    decay: Math.random() * 0.03 + 0.02,
+                    color: `hsl(${Math.random() * 60 + 40}, 100%, 75%)`,
+                    size: Math.random() * 3 + 2
+                });
+            }
+        }
+
+        class Creature {
+            constructor(canvasImg, type = 'fish', name = '스케치 친구') {
+                this.id = Date.now() + Math.random();
+                this.img = canvasImg;
+                this.type = type; // 'fish', 'float', 'decor'
+                this.name = name;
+
+                // Positioning & Motion
+                this.x = type === 'decor' ? Math.random() * (width - 150) + 75 : Math.random() * (width - 200) + 100;
+                this.y = type === 'decor' ? height - 70 : Math.random() * (height - 300) + 150;
+                
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.targetX = this.x;
+                this.targetY = this.y;
+                
+                this.angle = 0;
+                this.scale = type === 'decor' ? 0.9 : 0.6;
+                this.baseScale = this.scale;
+                this.tailPhase = Math.random() * Math.PI * 2;
+                
+                // Growth & State Attributes
+                this.level = 1; // Level 1 -> Level 2 -> Level 3 (Shimmering Gold/Metallic)
+                this.growth = 0; // Max 100 per level
+                this.hunger = 80; // 0 (starving) - 100 (full)
+                this.lastFed = Date.now();
+                this.shimmer = 0; // Metallic shimmer intensity
+            }
+
+            update() {
+                // Decrement hunger over time
+                if (Math.random() < 0.002) {
+                    this.hunger = Math.max(0, this.hunger - 1);
+                }
+
+                if (this.type === 'decor') return; // Fixed base decorations
+
+                // Search for nearest food particle
+                let nearestFood = null;
+                let minDist = 350;
+
+                if (this.hunger < 95 && foods.length > 0) {
+                    for (let f of foods) {
+                        const dist = Math.hypot(f.x - this.x, f.y - this.y);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearestFood = f;
+                        }
+                    }
+                }
+
+                if (nearestFood) {
+                    this.targetX = nearestFood.x;
+                    this.targetY = nearestFood.y;
+                } else if (Math.random() < 0.015) {
+                    // Pick new random wander target
+                    this.targetX = Math.random() * (width - 160) + 80;
+                    this.targetY = Math.random() * (height - 250) + 100;
+                }
+
+                if (this.type === 'fish') {
+                    // Smooth steering physics
+                    const dx = this.targetX - this.x;
+                    const dy = this.targetY - this.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist > 10) {
+                        const speed = nearestFood ? 2.2 : 1.0;
+                        this.vx += (dx / dist * speed - this.vx) * 0.05;
+                        this.vy += (dy / dist * speed - this.vy) * 0.05;
+                    }
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Calculate Swimming Angle & Wiggle
+                    const targetAngle = Math.atan2(this.vy, this.vx);
+                    this.angle += (targetAngle - this.angle) * 0.1;
+                    this.tailPhase += Math.hypot(this.vx, this.vy) * 0.15 + 0.05;
+
+                    // Clamp bounds
+                    this.x = Math.max(60, Math.min(width - 60, this.x));
+                    this.y = Math.max(80, Math.min(height - 120, this.y));
+
+                } else if (this.type === 'float') {
+                    // Pulsing Jellyfish/Submarine float logic
+                    this.tailPhase += 0.03;
+                    const floatY = Math.sin(this.tailPhase) * 1.2;
+                    this.x += (this.targetX - this.x) * 0.01;
+                    this.y += (this.targetY - this.y) * 0.01 + floatY;
+
+                    // Clamp bounds
+                    this.x = Math.max(60, Math.min(width - 60, this.x));
+                    this.y = Math.max(80, Math.min(height - 180, this.y));
+                }
+
+                // Check food collision
+                for (let i = foods.length - 1; i >= 0; i--) {
+                    const f = foods[i];
+                    if (Math.hypot(f.x - this.x, f.y - this.y) < 35 * this.scale) {
+                        foods.splice(i, 1);
+                        this.eatFood();
+                        break;
+                    }
+                }
+            }
+
+            eatFood() {
+                this.hunger = Math.min(100, this.hunger + 25);
+                this.growth += 25;
+                createSparkles(this.x, this.y, 8);
+                playSparkleSound();
+
+                // Level up Check (Growth + Metallic Shimmer Transformation)
+                if (this.growth >= 100 && this.level < 3) {
+                    this.level++;
+                    this.growth = 0;
+                    this.scale = this.baseScale * (1 + (this.level - 1) * 0.3);
+                    this.shimmer = (this.level - 1) * 0.5; // Gain metallic shimmer intensity
+                    showToast(`✨ [${this.name}]이(가) 성장하여 더 반짝입니다! (Lv.${this.level})`);
+                    createSparkles(this.x, this.y, 25);
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.type === 'fish') {
+                    // Flip image horizontally if moving left
+                    const facingLeft = this.vx < 0;
+                    ctx.scale(facingLeft ? -this.scale : this.scale, this.scale);
+
+                    // Add subtle swimming body wave tilt
+                    const wave = Math.sin(this.tailPhase) * 0.08;
+                    ctx.rotate(facingLeft ? -this.angle + wave : this.angle + wave);
+
+                } else if (this.type === 'float') {
+                    const pulse = 1 + Math.sin(this.tailPhase * 2) * 0.04;
+                    ctx.scale(this.scale * pulse, this.scale / pulse);
+                } else {
+                    ctx.scale(this.scale, this.scale);
+                }
+
+                // Metallic Glow/Shimmer Effect for Higher Levels
+                if (this.level >= 2) {
+                    ctx.shadowColor = this.level === 3 ? '#fbbf24' : '#e0f2fe';
+                    ctx.shadowBlur = 15 + Math.sin(Date.now() * 0.005) * 5;
+                }
+
+                // Draw Custom Creature Canvas Texture
+                const drawW = this.img.width;
+                const drawH = this.img.height;
+                ctx.drawImage(this.img, -drawW / 2, -drawH / 2);
+
+                // Metallic Sparkle Overlay Effect
+                if (this.level >= 2) {
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fillStyle = `rgba(255, 235, 170, ${0.15 + Math.sin(Date.now() * 0.008) * 0.1})`;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, drawW * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+
+                // Draw Selection Marker if active
+                if (selectedCreature === this) {
+                    ctx.save();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 45 * this.scale, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
+
+        let isDrawing = false;
+        let brushColor = '#38bdf8';
+        let brushSize = 6;
+        let brushMode = 'normal'; // 'normal', 'glow', 'eraser'
+        let currentTypeTab = 'fish';
+
+        const templates = {
+            fish: [
+                { name: '물고기', icon: 'fa-fish', path: drawFishTemplate },
+                { name: '고래', icon: 'fa-otter', path: drawWhaleTemplate }
+            ],
+            float: [
+                { name: '해파리', icon: 'fa-water-lower', path: drawJellyTemplate },
+                { name: '잠수함', icon: 'fa-ship', path: drawSubmarineTemplate },
+                { name: '우주선', icon: 'fa-shuttle-space', path: drawUfoTemplate }
+            ],
+            decor: [
+                { name: '성', icon: 'fa-chess-rook', path: drawCastleTemplate },
+                { name: '해초', icon: 'fa-plant-wilt', path: drawWeedTemplate }
+            ]
+        };
+
+        function setupDrawingCanvas() {
+            sketchCtx.lineCap = 'round';
+            sketchCtx.lineJoin = 'round';
+            clearSketch();
+            setupPalette();
+            renderTemplates();
+        }
+
+        function clearSketch() {
+            sketchCtx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
+        }
+
+        // Palette Colors
+        const paletteColors = ['#ffffff', '#38bdf8', '#f472b6', '#fbbf24', '#34d399', '#a78bfa', '#f87171'];
+        function setupPalette() {
+            const container = document.getElementById('colorQuickPalette');
+            container.innerHTML = '';
+            paletteColors.forEach(col => {
+                const dot = document.createElement('button');
+                dot.className = 'w-6 h-6 rounded-full border border-white/30 transition transform hover:scale-110';
+                dot.style.background = col;
+                dot.onclick = () => {
+                    brushColor = col;
+                    document.getElementById('brushColor').value = col;
+                };
+                container.appendChild(dot);
+            });
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById('templateList');
+            container.innerHTML = '';
+            const list = templates[currentTypeTab] || [];
+
+            list.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'glass-button px-2.5 py-1 rounded-lg text-xs text-slate-200 flex items-center gap-1.5';
+                btn.innerHTML = `<i class="fa-solid ${item.icon} text-cyan-300"></i> ${item.name}`;
+                btn.onclick = () => item.path();
+                container.appendChild(btn);
+            });
+        }
+
+        // Mouse & Touch Sketch Event Listeners
+        function getSketchPos(e) {
+            const rect = sketchCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (sketchCanvas.width / rect.width),
+                y: (clientY - rect.top) * (sketchCanvas.height / rect.height)
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getSketchPos(e);
+            sketchCtx.beginPath();
+            sketchCtx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getSketchPos(e);
+
+            sketchCtx.lineWidth = brushSize;
+            if (brushMode === 'eraser') {
+                sketchCtx.globalCompositeOperation = 'destination-out';
+                sketchCtx.shadowBlur = 0;
+            } else {
+                sketchCtx.globalCompositeOperation = 'source-over';
+                sketchCtx.strokeStyle = brushColor;
+                if (brushMode === 'glow') {
+                    sketchCtx.shadowColor = brushColor;
+                    sketchCtx.shadowBlur = 10;
+                } else {
+                    sketchCtx.shadowBlur = 0;
+                }
+            }
+
+            sketchCtx.lineTo(pos.x, pos.y);
+            sketchCtx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        sketchCanvas.addEventListener('mousedown', startDrawing);
+        sketchCanvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        sketchCanvas.addEventListener('touchstart', startDrawing);
+        sketchCanvas.addEventListener('touchmove', draw);
+        window.addEventListener('touchend', stopDrawing);
+
+        function drawFishTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#38bdf8';
+            sketchCtx.lineWidth = 4;
+            sketchCtx.lineCap = 'round';
+
+            // Fish Outline Template
+            sketchCtx.beginPath();
+            sketchCtx.ellipse(140, 140, 60, 40, 0, 0, Math.PI * 2);
+            sketchCtx.stroke();
+
+            // Tail
+            sketchCtx.beginPath();
+            sketchCtx.moveTo(80, 140);
+            sketchCtx.lineTo(40, 110);
+            sketchCtx.lineTo(40, 170);
+            sketchCtx.closePath();
+            sketchCtx.stroke();
+
+            // Eye
+            sketchCtx.fillStyle = '#ffffff';
+            sketchCtx.beginPath();
+            sketchCtx.arc(175, 130, 8, 0, Math.PI * 2);
+            sketchCtx.fill();
+            sketchCtx.fillStyle = '#0f172a';
+            sketchCtx.beginPath();
+            sketchCtx.arc(177, 130, 4, 0, Math.PI * 2);
+            sketchCtx.fill();
+
+            sketchCtx.restore();
+        }
+
+        function drawWhaleTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#a78bfa';
+            sketchCtx.lineWidth = 4;
+
+            sketchCtx.beginPath();
+            sketchCtx.arc(140, 140, 55, Math.PI * 0.8, Math.PI * 2.1);
+            sketchCtx.lineTo(60, 150);
+            sketchCtx.lineTo(40, 120);
+            sketchCtx.lineTo(50, 160);
+            sketchCtx.closePath();
+            sketchCtx.stroke();
+
+            // Eye
+            sketchCtx.fillStyle = '#ffffff';
+            sketchCtx.beginPath();
+            sketchCtx.arc(165, 135, 6, 0, Math.PI * 2);
+            sketchCtx.fill();
+
+            sketchCtx.restore();
+        }
+
+        function drawJellyTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#f472b6';
+            sketchCtx.lineWidth = 4;
+
+            // Cap
+            sketchCtx.beginPath();
+            sketchCtx.arc(140, 120, 50, Math.PI, 0);
+            sketchCtx.quadraticCurveTo(140, 140, 90, 120);
+            sketchCtx.stroke();
+
+            // Tentacles
+            for (let x of [105, 125, 145, 165]) {
+                sketchCtx.beginPath();
+                sketchCtx.moveTo(x, 125);
+                sketchCtx.quadraticCurveTo(x - 10, 160, x, 195);
+                sketchCtx.stroke();
+            }
+            sketchCtx.restore();
+        }
+
+        function drawSubmarineTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#fbbf24';
+            sketchCtx.lineWidth = 4;
+
+            // Body
+            sketchCtx.beginPath();
+            sketchCtx.roundRect(70, 120, 140, 60, 30);
+            sketchCtx.stroke();
+
+            // Periscope
+            sketchCtx.beginPath();
+            sketchCtx.moveTo(140, 120);
+            sketchCtx.lineTo(140, 90);
+            sketchCtx.lineTo(160, 90);
+            sketchCtx.stroke();
+
+            // Portholes
+            sketchCtx.fillStyle = '#38bdf8';
+            [100, 140, 180].forEach(x => {
+                sketchCtx.beginPath();
+                sketchCtx.arc(x, 150, 10, 0, Math.PI * 2);
+                sketchCtx.fill();
+            });
+
+            sketchCtx.restore();
+        }
+
+        function drawUfoTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#34d399';
+            sketchCtx.lineWidth = 4;
+
+            // Dome
+            sketchCtx.beginPath();
+            sketchCtx.arc(140, 130, 35, Math.PI, 0);
+            sketchCtx.stroke();
+
+            // Saucer
+            sketchCtx.beginPath();
+            sketchCtx.ellipse(140, 140, 70, 20, 0, 0, Math.PI * 2);
+            sketchCtx.stroke();
+
+            sketchCtx.restore();
+        }
+
+        function drawCastleTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#e2e8f0';
+            sketchCtx.lineWidth = 4;
+
+            sketchCtx.beginPath();
+            sketchCtx.rect(90, 110, 100, 110);
+            sketchCtx.moveTo(90, 110);
+            sketchCtx.lineTo(90, 90);
+            sketchCtx.lineTo(110, 90);
+            sketchCtx.lineTo(110, 110);
+            sketchCtx.lineTo(170, 110);
+            sketchCtx.lineTo(170, 90);
+            sketchCtx.lineTo(190, 90);
+            sketchCtx.lineTo(190, 110);
+            sketchCtx.stroke();
+
+            sketchCtx.restore();
+        }
+
+        function drawWeedTemplate() {
+            clearSketch();
+            sketchCtx.save();
+            sketchCtx.strokeStyle = '#4ade80';
+            sketchCtx.lineWidth = 5;
+
+            [110, 140, 170].forEach(startX => {
+                sketchCtx.beginPath();
+                sketchCtx.moveTo(startX, 220);
+                sketchCtx.bezierCurveTo(startX - 20, 160, startX + 20, 120, startX - 10, 70);
+                sketchCtx.stroke();
+            });
+
+            sketchCtx.restore();
+        }
+
+        function renderAquarium() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Draw Water Gradient Background
+            const theme = themes[currentTheme];
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+            bgGrad.addColorStop(0, theme.top);
+            bgGrad.addColorStop(1, theme.bottom);
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Underwater Sun Rays / Aurora Effect
+            ctx.fillStyle = theme.rayColor;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(width * (0.15 + i * 0.2), 0);
+                ctx.lineTo(width * (0.05 + i * 0.22), height);
+                ctx.lineTo(width * (0.12 + i * 0.22), height);
+                ctx.lineTo(width * (0.2 + i * 0.2), 0);
+                ctx.fill();
+            }
+
+            // 3. Bottom Sand Bed
+            ctx.fillStyle = currentSandColor;
+            ctx.beginPath();
+            ctx.moveTo(0, height - 50);
+            ctx.quadraticCurveTo(width * 0.25, height - 70, width * 0.5, height - 50);
+            ctx.quadraticCurveTo(width * 0.75, height - 30, width, height - 55);
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.fill();
+
+            // Sand Texture Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.fillRect(0, height - 55, width, 5);
+
+            // 4. Update & Draw Bubbles
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1;
+            bubbles.forEach(b => {
+                b.y -= b.speed;
+                b.wobble += b.wobbleSpeed;
+                b.x += Math.sin(b.wobble) * 0.5;
+
+                if (b.y < -10) {
+                    b.y = height + 10;
+                    b.x = Math.random() * width;
+                }
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            // 5. Update & Draw Food Particles
+            for (let i = foods.length - 1; i >= 0; i--) {
+                const f = foods[i];
+                f.y += f.vy;
+                f.x += Math.sin(f.y * 0.05) * 0.3;
+
+                // Rest on bottom sand
+                if (f.y >= height - 40) {
+                    f.y = height - 40;
+                    f.life -= 0.005;
+                    if (f.life <= 0) {
+                        foods.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                ctx.fillStyle = `rgba(251, 191, 36, ${f.life || 1})`;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 6. Update & Draw Sparkle Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+
+            // 7. Update & Draw Creatures (Decor -> Float -> Fish)
+            // Sort so decor stays in background, fish in foreground
+            const sortedCreatures = [...creatures].sort((a, b) => {
+                const order = { decor: 0, float: 1, fish: 2 };
+                return order[a.type] - order[b.type];
+            });
+
+            sortedCreatures.forEach(c => {
+                c.update();
+                c.draw(ctx);
+            });
+
+            requestAnimationFrame(renderAquarium);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('opacity-0', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-4');
+            }, 2600);
+        }
+
+        // Aquarium Canvas Interaction (Drop Food or Select Creature)
+        canvas.addEventListener('click', (e) => {
+            initAudio();
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Check if clicked on an existing creature
+            let clickedCreature = null;
+            for (let c of creatures) {
+                const dist = Math.hypot(c.x - clickX, c.y - clickY);
+                if (dist < 40 * c.scale) {
+                    clickedCreature = c;
+                    break;
+                }
+            }
+
+            if (clickedCreature) {
+                selectedCreature = clickedCreature;
+                openCreatureInfo(clickedCreature, clickX, clickY);
+                playSparkleSound();
+            } else {
+                // Drop Food
+                selectedCreature = null;
+                document.getElementById('creatureInfoBox').classList.add('hidden');
+                
+                foods.push({
+                    x: clickX,
+                    y: clickY,
+                    vy: Math.random() * 0.8 + 1.2,
+                    life: 1.0
+                });
+                playPlopSound();
+            }
+        });
+
+        function openCreatureInfo(c, x, y) {
+            const infoBox = document.getElementById('creatureInfoBox');
+            document.getElementById('infoName').innerText = c.name;
+            document.getElementById('infoType').innerText = c.type === 'fish' ? '헤엄 생물' : (c.type === 'float' ? '부유체' : '장식');
+            document.getElementById('infoLevel').innerText = `Lv.${c.level} ${c.level === 3 ? '(은빛 광택 ✨)' : ''}`;
+            document.getElementById('infoGrowthBar').style.width = `${c.growth}%`;
+            document.getElementById('infoHungerBar').style.width = `${c.hunger}%`;
+            document.getElementById('infoHungerText').innerText = c.hunger > 70 ? '배부름' : (c.hunger > 30 ? '보통' : '배고픔!');
+
+            // Position card safely near creature
+            const safeX = Math.min(width - 270, Math.max(20, x - 130));
+            const safeY = Math.min(height - 200, Math.max(80, y - 180));
+            infoBox.style.left = `${safeX}px`;
+            infoBox.style.top = `${safeY}px`;
+            infoBox.classList.remove('hidden');
+        }
+
+        document.getElementById('closeInfoBtn').onclick = () => {
+            document.getElementById('creatureInfoBox').classList.add('hidden');
+            selectedCreature = null;
+        };
+
+        document.getElementById('feedSelectedBtn').onclick = () => {
+            if (selectedCreature) {
+                selectedCreature.eatFood();
+                openCreatureInfo(selectedCreature, selectedCreature.x, selectedCreature.y);
+            }
+        };
+
+        document.getElementById('deleteCreatureBtn').onclick = () => {
+            if (selectedCreature) {
+                creatures = creatures.filter(c => c !== selectedCreature);
+                document.getElementById('creatureInfoBox').classList.add('hidden');
+                selectedCreature = null;
+                showToast('생물이 수족관에서 떠났습니다.');
+            }
+        };
+
+        // Draw Modal Tabs & Controls
+        const drawModal = document.getElementById('drawModal');
+        document.getElementById('openDrawBtn').onclick = () => {
+            initAudio();
+            drawModal.classList.remove('hidden');
+            setupDrawingCanvas();
+        };
+        document.getElementById('closeDrawBtn').onclick = () => drawModal.classList.add('hidden');
+        document.getElementById('cancelDrawBtn').onclick = () => drawModal.classList.add('hidden');
+
+        // Type Tabs (Fish, Float, Decor)
+        ['tabFish', 'tabFloat', 'tabDecor'].forEach(tabId => {
+            document.getElementById(tabId).onclick = (e) => {
+                document.querySelectorAll('.type-tab').forEach(b => {
+                    b.classList.remove('text-cyan-300', 'bg-cyan-500/20', 'border', 'border-cyan-400/30');
+                    b.classList.add('text-slate-400');
+                });
+                e.currentTarget.classList.add('text-cyan-300', 'bg-cyan-500/20', 'border', 'border-cyan-400/30');
+                e.currentTarget.classList.remove('text-slate-400');
+
+                currentTypeTab = tabId === 'tabFish' ? 'fish' : (tabId === 'tabFloat' ? 'float' : 'decor');
+                renderTemplates();
+            };
+        });
+
+        // Brush Modes
+        document.getElementById('modeNormal').onclick = (e) => setBrushMode('normal', e.currentTarget);
+        document.getElementById('modeGlow').onclick = (e) => setBrushMode('glow', e.currentTarget);
+        document.getElementById('modeEraser').onclick = (e) => setBrushMode('eraser', e.currentTarget);
+
+        function setBrushMode(mode, btnEl) {
+            brushMode = mode;
+            document.querySelectorAll('.brush-mode-btn').forEach(b => {
+                b.classList.remove('text-cyan-300', 'border-cyan-400/40');
+                b.classList.add('text-slate-300');
+            });
+            btnEl.classList.add('text-cyan-300', 'border-cyan-400/40');
+        }
+
+        document.getElementById('brushSize').oninput = (e) => {
+            brushSize = e.target.value;
+            document.getElementById('brushSizeVal').innerText = `${brushSize}px`;
+        };
+        document.getElementById('brushColor').oninput = (e) => {
+            brushColor = e.target.value;
+        };
+        document.getElementById('clearSketchBtn').onclick = clearSketch;
+
+        // Spawn Drawn Creature into Aquarium
+        document.getElementById('spawnCreatureBtn').onclick = () => {
+            // Convert sketch canvas to Offscreen Image Canvas
+            const offImg = document.createElement('canvas');
+            offImg.width = sketchCanvas.width;
+            offImg.height = sketchCanvas.height;
+            const offCtx = offImg.getContext('2d');
+            offCtx.drawImage(sketchCanvas, 0, 0);
+
+            const names = ['귀여운 생물', '반짝이 친구', '스케치 물고기', '바다 탐험가', '꿈꾸는 해파리'];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+
+            const newCreature = new Creature(offImg, currentTypeTab, randomName);
+            creatures.push(newCreature);
+
+            drawModal.classList.add('hidden');
+            playSparkleSound();
+            showToast(`🎉 새로운 생물 [${randomName}]이(가) 수족관에 합류했습니다!`);
+        };
+
+        // Aquarium Decor Customization Modal
+        const decorModal = document.getElementById('decorModal');
+        document.getElementById('openDecorBtn').onclick = () => {
+            initAudio();
+            decorModal.classList.remove('hidden');
+        };
+        document.getElementById('closeDecorBtn').onclick = () => decorModal.classList.add('hidden');
+        document.getElementById('applyDecorBtn').onclick = () => decorModal.classList.add('hidden');
+
+        // Lighting Mood Theme Selection
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                document.querySelectorAll('.theme-btn').forEach(b => {
+                    b.classList.remove('text-cyan-300', 'border-cyan-400/40');
+                    b.classList.add('text-slate-300');
+                });
+                const target = e.currentTarget;
+                target.classList.add('text-cyan-300', 'border-cyan-400/40');
+                currentTheme = target.dataset.theme;
+            };
+        });
+
+        // Sand Color Selection
+        document.querySelectorAll('.sand-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                currentSandColor = e.currentTarget.dataset.sand;
+                showToast('모래 색상이 변경되었습니다.');
+            };
+        });
+
+        // Bubble Density Slider
+        document.getElementById('bubbleDensity').oninput = (e) => {
+            bubbleDensity = parseInt(e.target.value);
+            initBubbles();
+        };
+
+        // Creature Roster List Modal
+        const listModal = document.getElementById('listModal');
+        document.getElementById('openListBtn').onclick = () => {
+            initAudio();
+            renderCreatureRoster();
+            listModal.classList.remove('hidden');
+        };
+        document.getElementById('closeListBtn').onclick = () => listModal.classList.add('hidden');
+
+        function renderCreatureRoster() {
+            const container = document.getElementById('creaturesGrid');
+            container.innerHTML = '';
+            document.getElementById('totalCreaturesCount').innerText = `총 ${creatures.length}마리의 생물`;
+
+            if (creatures.length === 0) {
+                container.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-8">수족관이 비어있습니다. [생물 그리기]로 첫 생물을 만들어보세요!</p>`;
+                return;
+            }
+
+            creatures.forEach((c, idx) => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-3 rounded-2xl flex items-center justify-between border border-slate-700/60';
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center p-1">
+                            <img src="${c.img.toDataURL()}" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-cyan-200">${c.name}</p>
+                            <p class="text-[11px] text-slate-400">Lv.${c.level} • ${c.type === 'fish' ? '헤엄' : '부유'}</p>
+                        </div>
+                    </div>
+                    <button class="remove-single-btn text-red-400 hover:text-red-300 p-2 text-xs" data-idx="${idx}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            document.querySelectorAll('.remove-single-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.idx);
+                    creatures.splice(idx, 1);
+                    renderCreatureRoster();
+                };
+            });
+        }
+
+        document.getElementById('clearAllCreaturesBtn').onclick = () => {
+            creatures = [];
+            renderCreatureRoster();
+            showToast('수족관의 모든 생물을 비웠습니다.');
+        };
+
+        // Audio Mute Toggle
+        document.getElementById('toggleAudioBtn').onclick = () => {
+            initAudio();
+            isAudioMuted = !isAudioMuted;
+            const icon = document.getElementById('audioIcon');
+            if (isAudioMuted) {
+                icon.className = 'fa-solid fa-volume-xmark';
+                showToast('사운드 끄기');
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-cyan-300';
+                showToast('사운드 켜기');
+            }
+        };
+
+        function initStarterCreatures() {
+            // Generate a default fish template creature to start with
+            const starterCanvas = document.createElement('canvas');
+            starterCanvas.width = 280;
+            starterCanvas.height = 280;
+            const sCtx = starterCanvas.getContext('2d');
+
+            sCtx.strokeStyle = '#38bdf8';
+            sCtx.lineWidth = 6;
+            sCtx.lineCap = 'round';
+            sCtx.beginPath();
+            sCtx.ellipse(140, 140, 60, 40, 0, 0, Math.PI * 2);
+            sCtx.stroke();
+            sCtx.beginPath();
+            sCtx.moveTo(80, 140);
+            sCtx.lineTo(40, 110);
+            sCtx.lineTo(40, 170);
+            sCtx.closePath();
+            sCtx.stroke();
+            sCtx.fillStyle = '#ffffff';
+            sCtx.beginPath();
+            sCtx.arc(175, 130, 8, 0, Math.PI * 2);
+            sCtx.fill();
+            sCtx.fillStyle = '#0f172a';
+            sCtx.beginPath();
+            sCtx.arc(177, 130, 4, 0, Math.PI * 2);
+            sCtx.fill();
+
+            creatures.push(new Creature(starterCanvas, 'fish', '첫 시작 물고기'));
+        }
+
+        window.onload = () => {
+            initBubbles();
+            initStarterCreatures();
+            renderAquarium();
+
+            // Auto-hide tip box after 8 seconds
+            setTimeout(() => {
+                const tipBox = document.getElementById('tipBox');
+                if (tipBox) tipBox.style.opacity = '0';
+            }, 8000);
+        };
+    </script>
+</body>
+</html>

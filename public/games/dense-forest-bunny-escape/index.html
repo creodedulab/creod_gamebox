@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>황금빛 숲속의 탈출: 묶인 토끼의 야간 도주</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #051610;
+            color: #f8fafc;
+            user-select: none;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+        canvas {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-2 overflow-hidden">
+
+    <header class="text-center my-1">
+        <h1 class="pixel-font text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-emerald-300 mb-0.5">
+            🌲 SUNSET FOREST BUNNY ESCAPE 🐰
+        </h1>
+        <p class="text-[11px] text-emerald-200">시간에 따라 변하는 숲, 사냥개와 여우를 피해 밧줄로 묶인 두 토끼의 협동 탈출!</p>
+    </header>
+
+    <div class="w-full max-w-4xl flex justify-between items-center px-4 py-1.5 bg-emerald-950/90 backdrop-blur rounded-xl border border-emerald-700/60 shadow-lg">
+        <!-- Player 1 Status -->
+        <div class="flex items-center space-x-2">
+            <div class="w-3.5 h-3.5 rounded-full bg-blue-400 animate-pulse"></div>
+            <div>
+                <span class="text-xs text-blue-300 font-bold block">토끼 1 (WASD)</span>
+                <span class="text-[11px] text-slate-300">HP: <span id="p1-hp" class="text-green-400 font-bold">100</span></span>
+            </div>
+        </div>
+
+        <!-- Game Center Status / Score -->
+        <div class="text-center flex items-center space-x-3">
+            <div>
+                <span class="text-[10px] text-amber-300 block font-bold">탈출 거리</span>
+                <span id="game-score" class="text-lg font-black text-yellow-300">0</span>m
+            </div>
+            <div>
+                <span class="text-[10px] text-orange-300 block font-bold">시간대</span>
+                <span id="time-phase" class="text-xs font-bold text-amber-200">☀️ 낮 (Sunlit)</span>
+            </div>
+            <span id="game-status" class="pixel-font text-[8px] text-yellow-300 px-2 py-1 bg-slate-900 rounded border border-yellow-500/50">SPACE TO START</span>
+        </div>
+
+        <!-- Player 2 Status -->
+        <div class="flex items-center space-x-2 text-right">
+            <div>
+                <span class="text-xs text-pink-300 font-bold block">토끼 2 (ARROWS)</span>
+                <span class="text-[11px] text-slate-300">HP: <span id="p2-hp" class="text-green-400 font-bold">100</span></span>
+            </div>
+            <div class="w-3.5 h-3.5 rounded-full bg-pink-400 animate-pulse"></div>
+        </div>
+    </div>
+
+    <div class="relative w-full max-w-4xl flex justify-center items-center my-1">
+        <canvas id="gameCanvas" width="900" height="420" class="rounded-2xl border-2 border-amber-700/60 w-full max-w-[900px] aspect-[45/21]"></canvas>
+        
+        <!-- Controls Overlay / Instructions Modal -->
+        <div id="start-screen" class="absolute inset-0 bg-slate-950/88 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl p-6 text-center">
+            <h2 class="pixel-font text-sm text-yellow-400 mb-2">🌲 숲속의 묶인 토끼 탈출 🥕</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-left w-full max-w-lg">
+                <div class="bg-emerald-950/90 border border-blue-500/40 p-2.5 rounded-xl">
+                    <h3 class="text-blue-300 font-bold text-xs mb-0.5">💙 토끼 1 (네발로 걷기)</h3>
+                    <p class="text-[11px] text-slate-300"><b>이동:</b> A/D | <b>점프:</b> W | <b>땅굴:</b> S</p>
+                </div>
+                <div class="bg-emerald-950/90 border border-pink-500/40 p-2.5 rounded-xl">
+                    <h3 class="text-pink-300 font-bold text-xs mb-0.5">💖 토끼 2 (네발로 걷기)</h3>
+                    <p class="text-[11px] text-slate-300"><b>이동:</b> ←/→ | <b>점프:</b> ↑ | <b>땅굴:</b> ↓</p>
+                </div>
+            </div>
+            <div class="text-[11px] text-emerald-200 mb-3 bg-emerald-900/60 p-2.5 rounded-lg border border-emerald-500/30 max-w-lg space-y-1 text-left">
+                <div>✨ <b>구석 햇살 & 시간 변화:</b> 좌측 상단에서 내리쬐는 햇살과 함께 시간이 흐르며 <b>노을</b>과 <b>밤</b>으로 변합니다!</div>
+                <div>🪵 <b>리얼한 통나무 & 시야 장애:</b> 울창한 나무와 거대한 통나무 장애물을 점프와 땅굴로 극복하세요.</div>
+                <div>🐿️ <b>다람쥐와 적들:</b> 네발로 달리는 사냥개와 여우를 피해, 다람쥐가 던져주는 도토리로 사냥개를 저지하세요!</div>
+            </div>
+            <button onclick="startGame()" class="pixel-font bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-slate-950 text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                게임 시작하기!
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-[11px] text-emerald-300 text-center">
+        <span>팁: 두 토끼가 밧줄 거리 안에서 호흡을 맞춰 사냥개와 여우를 따돌리세요!</span>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameRunning = false;
+        let keys = {};
+        let gameScore = 0;
+        let worldSpeed = 4;
+        let gameTime = 0; // Time counter for day -> sunset -> night cycle
+
+        const groundY = 320;
+
+        // Player 1 (Blue Bunny)
+        let p1 = {
+            x: 200,
+            y: groundY,
+            vy: 0,
+            width: 32,
+            height: 22,
+            speed: 4,
+            jumpPower: -10.5,
+            isDuck: false,
+            color: '#93c5fd',
+            darkColor: '#3b82f6',
+            hp: 100,
+            invincible: 0,
+            animFrame: 0
+        };
+
+        // Player 2 (Pink Bunny)
+        let p2 = {
+            x: 255,
+            y: groundY,
+            vy: 0,
+            width: 32,
+            height: 22,
+            speed: 4,
+            jumpPower: -10.5,
+            isDuck: false,
+            color: '#f472b6',
+            darkColor: '#db2777',
+            hp: 100,
+            invincible: 0,
+            animFrame: 0
+        };
+
+        const maxRopeLength = 110;
+        const gravity = 0.55;
+
+        let trees = [];       
+        let obstacles = [];   // Logs and tunnels
+        let enemies = [];     // Hounds and Foxes (four-legged quadrupeds)
+        let squirrels = [];   
+        let acorns = [];      
+        let fallenLeaves = []; // Falling leaf particles on ground and air
+        let groundLeaves = []; // Accumulated fallen leaves on ground
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
+            if (!gameRunning && e.code === 'Space') {
+                startGame();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            gameRunning = true;
+            gameScore = 0;
+            gameTime = 0;
+            worldSpeed = 4.2;
+            p1.x = 180; p1.y = groundY; p1.vy = 0; p1.hp = 100; p1.invincible = 0;
+            p2.x = 235; p2.y = groundY; p2.vy = 0; p2.hp = 100; p2.invincible = 0;
+            trees = [];
+            obstacles = [];
+            enemies = [];
+            squirrels = [];
+            acorns = [];
+            fallenLeaves = [];
+            groundLeaves = [];
+            
+            // Initialize initial trees
+            for(let i=0; i<5; i++) {
+                trees.push({
+                    x: i * 240 + Math.random() * 80,
+                    width: 70 + Math.random() * 30,
+                    height: 280 + Math.random() * 60,
+                    hasBranch: Math.random() > 0.3
+                });
+            }
+
+            // Initialize ground leaves
+            for(let i=0; i<35; i++) {
+                groundLeaves.push({
+                    x: Math.random() * canvas.width,
+                    y: groundY + 10 + Math.random() * 70,
+                    size: 4 + Math.random() * 6,
+                    color: Math.random() > 0.5 ? '#b45309' : '#15803d',
+                    rotation: Math.random() * Math.PI
+                });
+            }
+
+            document.getElementById('game-status').innerText = 'RUNNING';
+            document.getElementById('game-status').className = 'pixel-font text-[8px] text-green-400 px-2 py-1 bg-slate-900 rounded border border-green-500/50';
+        }
+
+        let spawnTimer = 0;
+        function handleSpawns() {
+            spawnTimer++;
+
+            // Spawn background trees
+            if (spawnTimer % 80 === 0) {
+                trees.push({
+                    x: canvas.width + 80,
+                    width: Math.random() * 40 + 65,
+                    height: Math.random() * 70 + 260,
+                    hasBranch: Math.random() > 0.3
+                });
+            }
+
+            // Spawn Realistic Fallen Logs or Tunnels
+            if (spawnTimer % 120 === 0) {
+                const type = Math.random() > 0.4 ? 'log' : 'tunnel';
+                obstacles.push({
+                    x: canvas.width + 50,
+                    type: type, 
+                    width: type === 'log' ? 70 : 75,
+                    height: type === 'log' ? 32 : 40
+                });
+            }
+
+            // Spawn Quadrupedal Enemies (Hound or Fox)
+            if (spawnTimer % 150 === 0) {
+                const isHound = Math.random() > 0.35;
+                enemies.push({
+                    x: canvas.width + 60,
+                    y: groundY,
+                    type: isHound ? 'hound' : 'fox',
+                    vx: isHound ? -5.0 : -4.2,
+                    stunnedTimer: 0,
+                    animFrame: 0
+                });
+            }
+
+            // Spawn Helper Squirrel
+            if (spawnTimer % 200 === 0) {
+                squirrels.push({
+                    x: canvas.width + 60,
+                    y: groundY - 170,
+                    thrown: false
+                });
+            }
+
+            // Spawn falling leaf particle
+            if (spawnTimer % 15 === 0) {
+                fallenLeaves.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    vx: -1.5 - Math.random() * 1.5,
+                    vy: 1.5 + Math.random() * 2,
+                    size: 5 + Math.random() * 5,
+                    color: Math.random() > 0.4 ? '#d97706' : '#16a34a',
+                    angle: Math.random() * Math.PI
+                });
+            }
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            gameScore += 0.15;
+            gameTime += 0.05; // Drives lighting / time of day transition
+            worldSpeed = 4.2 + Math.floor(gameScore / 180) * 0.4;
+
+            // --- Player 1 Controls (WASD) ---
+            if (keys['KeyA']) { p1.x -= p1.speed; p1.animFrame += 0.2; }
+            if (keys['KeyD']) { p1.x += p1.speed; p1.animFrame += 0.2; }
+            if (keys['KeyW'] && p1.y >= groundY) {
+                p1.vy = p1.jumpPower;
+            }
+            p1.isDuck = !!keys['KeyS'];
+
+            // --- Player 2 Controls (Arrow Keys) ---
+            if (keys['ArrowLeft']) { p2.x -= p2.speed; p2.animFrame += 0.2; }
+            if (keys['ArrowRight']) { p2.x += p2.speed; p2.animFrame += 0.2; }
+            if (keys['ArrowUp'] && p2.y >= groundY) {
+                p2.vy = p2.jumpPower;
+            }
+            p2.isDuck = !!keys['ArrowDown'];
+
+            // Apply Gravity & Vertical motion
+            p1.vy += gravity;
+            p1.y += p1.vy;
+            if (p1.y > groundY) { p1.y = groundY; p1.vy = 0; }
+
+            p2.vy += gravity;
+            p2.y += p2.vy;
+            if (p2.y > groundY) { p2.y = groundY; p2.vy = 0; }
+
+            // Screen boundaries
+            p1.x = Math.max(30, Math.min(canvas.width - 50, p1.x));
+            p2.x = Math.max(30, Math.min(canvas.width - 50, p2.x));
+
+            // --- Rope Constraint Physics ---
+            const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            if (dist > maxRopeLength) {
+                const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                const excess = dist - maxRopeLength;
+                p1.x += Math.cos(angle) * (excess * 0.5);
+                p1.y += Math.sin(angle) * (excess * 0.5);
+                p2.x -= Math.cos(angle) * (excess * 0.5);
+                p2.y -= Math.sin(angle) * (excess * 0.5);
+            }
+
+            if (p1.invincible > 0) p1.invincible--;
+            if (p2.invincible > 0) p2.invincible--;
+
+            // Move & clean Trees
+            for (let i = trees.length - 1; i >= 0; i--) {
+                trees[i].x -= worldSpeed;
+                if (trees[i].x < -130) trees.splice(i, 1);
+            }
+
+            // Move & clean Ground Leaves
+            for (let i = groundLeaves.length - 1; i >= 0; i--) {
+                groundLeaves[i].x -= worldSpeed;
+                if (groundLeaves[i].x < -20) {
+                    groundLeaves.splice(i, 1);
+                    groundLeaves.push({
+                        x: canvas.width + Math.random() * 50,
+                        y: groundY + 10 + Math.random() * 70,
+                        size: 4 + Math.random() * 6,
+                        color: Math.random() > 0.5 ? '#b45309' : '#15803d',
+                        rotation: Math.random() * Math.PI
+                    });
+                }
+            }
+
+            // Move & clean Falling Leaves
+            for (let i = fallenLeaves.length - 1; i >= 0; i--) {
+                let fl = fallenLeaves[i];
+                fl.x += fl.vx - (worldSpeed * 0.5);
+                fl.y += fl.vy;
+                fl.angle += 0.05;
+                if (fl.y > canvas.height || fl.x < -20) {
+                    fallenLeaves.splice(i, 1);
+                }
+            }
+
+            // Move & check Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= worldSpeed;
+                if (obs.x < -90) { obstacles.splice(i, 1); continue; }
+
+                checkObstacleCollision(p1, obs);
+                checkObstacleCollision(p2, obs);
+            }
+
+            // Move & check Quadruped Enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let en = enemies[i];
+                en.animFrame += 0.25;
+                if (en.stunnedTimer > 0) {
+                    en.stunnedTimer--;
+                    en.x += 3.5; 
+                } else {
+                    en.x += en.vx - (worldSpeed * 0.35);
+                }
+                if (en.x < -80) { enemies.splice(i, 1); continue; }
+
+                if (Math.abs(p1.x - (en.x + 20)) < 24 && Math.abs(p1.y - en.y) < 22) {
+                    if (p1.invincible === 0) { p1.hp -= 25; p1.invincible = 40; }
+                }
+                if (Math.abs(p2.x - (en.x + 20)) < 24 && Math.abs(p2.y - en.y) < 22) {
+                    if (p2.invincible === 0) { p2.hp -= 25; p2.invincible = 40; }
+                }
+            }
+
+            // Move Squirrels
+            for (let i = squirrels.length - 1; i >= 0; i--) {
+                let sq = squirrels[i];
+                sq.x -= worldSpeed;
+                if (sq.x < -60) { squirrels.splice(i, 1); continue; }
+
+                if (!sq.thrown) {
+                    let targetHound = enemies.find(en => en.type === 'hound' && Math.abs(en.x - sq.x) < 280);
+                    if (targetHound) {
+                        sq.thrown = true;
+                        acorns.push({
+                            x: sq.x,
+                            y: sq.y + 20,
+                            vx: 6.5,
+                            vy: -4.5
+                        });
+                    }
+                }
+            }
+
+            // Move Acorns
+            for (let i = acorns.length - 1; i >= 0; i--) {
+                let ac = acorns[i];
+                ac.x += ac.vx;
+                ac.y += ac.vy;
+                ac.vy += 0.45;
+
+                for (let en of enemies) {
+                    if (en.type === 'hound' && Math.hypot(en.x - ac.x, en.y - ac.y) < 28) {
+                        en.stunnedTimer = 80;
+                        acorns.splice(i, 1);
+                        break;
+                    }
+                }
+                if (ac && ac.y > groundY + 10) acorns.splice(i, 1);
+            }
+
+            handleSpawns();
+
+            if (p1.hp <= 0 || p2.hp <= 0) {
+                endGame();
+            }
+
+            // Update Time phase text
+            let timePhaseStr = "☀️ 낮 (Sunlit)";
+            let phaseVal = Math.floor(gameTime) % 120;
+            if (phaseVal > 40 && phaseVal <= 80) timePhaseStr = "🌅 노을 (Sunset)";
+            else if (phaseVal > 80) timePhaseStr = "🌙 밤 (Night)";
+            document.getElementById('time-phase').innerText = timePhaseStr;
+
+            document.getElementById('game-score').innerText = Math.floor(gameScore);
+            document.getElementById('p1-hp').innerText = Math.max(0, p1.hp);
+            document.getElementById('p2-hp').innerText = Math.max(0, p2.hp);
+        }
+
+        function checkObstacleCollision(p, obs) {
+            if (p.x + 16 > obs.x && p.x - 16 < obs.x + obs.width) {
+                if (obs.type === 'log') {
+                    if (p.y > groundY - obs.height + 12) {
+                        if (p.invincible === 0) { p.hp -= 15; p.invincible = 30; }
+                    }
+                } else if (obs.type === 'tunnel') {
+                    if (!p.isDuck) {
+                        if (p.invincible === 0) { p.hp -= 15; p.invincible = 30; }
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // --- Time Cycle Gradient Calculation ---
+            let cycle = Math.sin(gameTime * 0.03); 
+            let skyTop = '#134e38';
+            let skyBottom = '#072218';
+            let phaseVal = Math.floor(gameTime) % 120;
+            
+            if (phaseVal > 40 && phaseVal <= 80) {
+                // Sunset
+                skyTop = '#9a3412';
+                skyBottom = '#431407';
+            } else if (phaseVal > 80) {
+                // Night
+                skyTop = '#020617';
+                skyBottom = '#0f172a';
+            }
+
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+            bgGrad.addColorStop(0, skyTop);
+            bgGrad.addColorStop(1, skyBottom);
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, groundY);
+
+            // --- Top-Left Golden Sunbeam Lighting ---
+            let sunbeamGrad = ctx.createRadialGradient(80, 40, 10, 150, 150, 600);
+            if (phaseVal <= 40) {
+                sunbeamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+                sunbeamGrad.addColorStop(0.5, 'rgba(253, 224, 71, 0.18)');
+                sunbeamGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+            } else if (phaseVal > 40 && phaseVal <= 80) {
+                sunbeamGrad.addColorStop(0, 'rgba(249, 115, 22, 0.45)');
+                sunbeamGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.15)');
+                sunbeamGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+            } else {
+                sunbeamGrad.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
+                sunbeamGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+            }
+            ctx.fillStyle = sunbeamGrad;
+            ctx.fillRect(0, 0, canvas.width, groundY);
+
+            // --- Draw Dense Background Trees (Vision blockers) ---
+            trees.forEach(tr => {
+                ctx.save();
+                // Thick Trunk
+                ctx.fillStyle = phaseVal > 80 ? '#0f172a' : '#27190f';
+                ctx.fillRect(tr.x, groundY - tr.height + 50, tr.width * 0.4, tr.height);
+
+                // Lush Multi-layered Canopy
+                ctx.fillStyle = phaseVal > 80 ? '#064e3b' : '#14532d';
+                ctx.beginPath();
+                ctx.arc(tr.x + tr.width * 0.2, groundY - tr.height + 55, tr.width * 0.85, 0, Math.PI * 2);
+                ctx.arc(tr.x + tr.width * 0.05, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
+                ctx.arc(tr.x + tr.width * 0.35, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Branch for Squirrels
+                if (tr.hasBranch) {
+                    ctx.fillStyle = phaseVal > 80 ? '#1e293b' : '#3d2314';
+                    ctx.fillRect(tr.x - 40, groundY - tr.height + 130, 55, 12);
+                }
+                ctx.restore();
+            });
+
+            // --- Canopy Shadows (나무에 가려져 그림자가 져서 어두워지는 효과) ---
+            trees.forEach(tr => {
+                let shadowGrad = ctx.createRadialGradient(tr.x + 30, groundY - 120, 20, tr.x + 30, groundY - 120, 160);
+                shadowGrad.addColorStop(0, 'rgba(2, 20, 13, 0.65)');
+                shadowGrad.addColorStop(1, 'rgba(2, 20, 13, 0)');
+                ctx.fillStyle = shadowGrad;
+                ctx.fillRect(tr.x - 120, groundY - 250, 280, 260);
+            });
+
+            // --- Draw Ground and Moss / Grass ---
+            ctx.fillStyle = phaseVal > 80 ? '#022c22' : '#06281c';
+            ctx.fillRect(0, groundY + 12, canvas.width, canvas.height - groundY - 12);
+            ctx.fillStyle = phaseVal > 80 ? '#047857' : '#059669';
+            ctx.fillRect(0, groundY + 6, canvas.width, 8);
+
+            // --- Draw Ground Fallen Leaves (바닥에 떨어진 풀잎들) ---
+            groundLeaves.forEach(gl => {
+                ctx.save();
+                ctx.translate(gl.x, gl.y);
+                ctx.rotate(gl.rotation);
+                ctx.fillStyle = gl.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, gl.size, gl.size * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // --- Draw Realistic Fallen Logs & Tunnels (리얼한 통나무 장애물) ---
+            obstacles.forEach(obs => {
+                ctx.save();
+                if (obs.type === 'log') {
+                    // Realistic Textured Log
+                    ctx.fillStyle = '#78350f';
+                    ctx.beginPath();
+                    ctx.roundRect(obs.x, groundY - obs.height, obs.width, obs.height, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = '#451a03';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    // Wood ring details
+                    ctx.fillStyle = '#92400e';
+                    ctx.fillRect(obs.x + 8, groundY - obs.height + 6, 6, obs.height - 12);
+                    ctx.fillRect(obs.x + 24, groundY - obs.height + 6, 5, obs.height - 12);
+                } else {
+                    // Underground Tunnel Entrance
+                    ctx.fillStyle = '#064e3b';
+                    ctx.beginPath();
+                    ctx.ellipse(obs.x + obs.width/2, groundY, obs.width/2, obs.height, 0, Math.PI, 0, true);
+                    ctx.fill();
+                    ctx.fillStyle = '#022c22';
+                    ctx.beginPath();
+                    ctx.ellipse(obs.x + obs.width/2, groundY, obs.width/3, obs.height * 0.65, 0, Math.PI, 0, true);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            // --- Draw Falling Leaf Motions (나뭇잎 떨어지는 모션) ---
+            fallenLeaves.forEach(fl => {
+                ctx.save();
+                ctx.translate(fl.x, fl.y);
+                ctx.rotate(fl.angle);
+                ctx.fillStyle = fl.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, fl.size, fl.size * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // --- Draw Helper Squirrels & Acorns ---
+            squirrels.forEach(sq => {
+                ctx.save();
+                // Drawn Quadrupedal Squirrel character
+                ctx.fillStyle = '#d97706';
+                ctx.beginPath();
+                ctx.ellipse(sq.x, sq.y, 12, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Tail
+                ctx.fillStyle = '#b45309';
+                ctx.beginPath();
+                ctx.ellipse(sq.x - 10, sq.y - 6, 8, 12, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                // Head & Ear
+                ctx.fillStyle = '#d97706';
+                ctx.beginPath();
+                ctx.arc(sq.x + 10, sq.y - 4, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            acorns.forEach(ac => {
+                ctx.save();
+                ctx.fillStyle = '#92400e';
+                ctx.beginPath();
+                ctx.arc(ac.x, ac.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#451a03';
+                ctx.fillRect(ac.x - 4, ac.y - 7, 8, 4);
+                ctx.restore();
+            });
+
+            // --- Draw Four-Legged Quadrupedal Enemies (사냥개와 여우) ---
+            enemies.forEach(en => {
+                drawQuadrupedEnemy(en);
+            });
+
+            // --- Draw Connecting Glowing Rope between Bunnies ---
+            ctx.strokeStyle = '#fef08a';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y - 12);
+            ctx.lineTo(p2.x, p2.y - 12);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // --- Draw Quadrupedal Bunnies (네발로 걷는 토끼 캐릭터 형태) ---
+            drawQuadrupedBunny(p1, 'P1 🐰');
+            drawQuadrupedBunny(p2, 'P2 🐰');
+        }
+
+        // Detailed Four-Legged Quadruped Bunny Rendering Function
+        function drawQuadrupedBunny(p, label) {
+            ctx.save();
+            if (p.invincible > 0 && Math.floor(Date.now() / 80) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+
+            let bodyHeight = p.isDuck ? 12 : 18;
+            let legOffset = Math.sin(p.animFrame) * 4;
+
+            // Body (Quadruped shape)
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y - bodyHeight, 18, bodyHeight * 0.75, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x + 12, p.y - bodyHeight - 6, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ears
+            if (!p.isDuck) {
+                ctx.fillStyle = p.darkColor;
+                ctx.beginPath();
+                ctx.ellipse(p.x + 9, p.y - bodyHeight - 20, 3.5, 11, -0.2, 0, Math.PI * 2);
+                ctx.ellipse(p.x + 15, p.y - bodyHeight - 20, 3.5, 11, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Four Legs
+            ctx.fillStyle = p.darkColor;
+            ctx.fillRect(p.x - 10 + legOffset, p.y - 8, 4, 8);
+            ctx.fillRect(p.x - 2 - legOffset, p.y - 8, 4, 8);
+            ctx.fillRect(p.x + 6 + legOffset, p.y - 8, 4, 8);
+            ctx.fillRect(p.x + 12 - legOffset, p.y - 8, 4, 8);
+
+            // Fluffy Tail
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(p.x - 16, p.y - bodyHeight, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 9px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, p.x, p.y - bodyHeight - 28);
+
+            ctx.restore();
+        }
+
+        // Detailed Four-Legged Quadruped Enemy Rendering Function (Hound & Fox)
+        function drawQuadrupedEnemy(en) {
+            ctx.save();
+            let legOffset = Math.sin(en.animFrame) * 5;
+
+            if (en.type === 'hound') {
+                // Hunting Hound (사냥개 - 네발로 달리는 모션)
+                ctx.fillStyle = '#475569';
+                // Body
+                ctx.beginPath();
+                ctx.ellipse(en.x, groundY - 14, 22, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Head & Snout
+                ctx.beginPath();
+                ctx.arc(en.x - 18, groundY - 18, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillRect(en.x - 28, groundY - 21, 12, 5); // Snout
+                // Floppy ears
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.ellipse(en.x - 16, groundY - 24, 4, 7, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                // Four Legs
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(en.x - 14 + legOffset, groundY - 8, 5, 8);
+                ctx.fillRect(en.x - 6 - legOffset, groundY - 8, 5, 8);
+                ctx.fillRect(en.x + 4 + legOffset, groundY - 8, 5, 8);
+                ctx.fillRect(en.x + 12 - legOffset, groundY - 8, 5, 8);
+
+                if (en.stunnedTimer > 0) {
+                    ctx.fillStyle = '#fde047';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText('💫 (도토리 명중!)', en.x - 30, groundY - 35);
+                }
+            } else {
+                // Fox (여우 - 붉은색 네발로 달리는 모션)
+                ctx.fillStyle = '#ea580c';
+                // Body
+                ctx.beginPath();
+                ctx.ellipse(en.x, groundY - 13, 20, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Head & Pointy Snout
+                ctx.beginPath();
+                ctx.arc(en.x - 16, groundY - 18, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillRect(en.x - 26, groundY - 20, 12, 4);
+                // Big Bushy Tail
+                ctx.fillStyle = '#c2410c';
+                ctx.beginPath();
+                ctx.ellipse(en.x + 18, groundY - 16, 14, 7, -0.4, 0, Math.PI * 2);
+                ctx.fill();
+                // White tail tip
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(en.x + 28, groundY - 18, 4, 0, Math.PI * 2);
+                ctx.fill();
+                // Four Legs
+                ctx.fillStyle = '#9a3412';
+                ctx.fillRect(en.x - 12 + legOffset, groundY - 7, 4, 7);
+                ctx.fillRect(en.x - 4 - legOffset, groundY - 7, 4, 7);
+                ctx.fillRect(en.x + 4 + legOffset, groundY - 7, 4, 7);
+                ctx.fillRect(en.x + 10 - legOffset, groundY - 7, 4, 7);
+            }
+            ctx.restore();
+        }
+
+        function endGame() {
+            gameRunning = false;
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.display = 'flex';
+            document.getElementById('game-status').innerText = 'GAME OVER';
+            document.getElementById('game-status').className = 'pixel-font text-[8px] text-red-400 px-2 py-1 bg-slate-900 rounded border border-red-500/50';
+            startScreen.querySelector('h2').innerText = `숲속 탈출 실패! (기록: ${Math.floor(gameScore)}m)`;
+            startScreen.querySelector('button').innerText = '다시 도전하기';
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        draw();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

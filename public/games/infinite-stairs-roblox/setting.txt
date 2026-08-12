@@ -1,0 +1,4 @@
+1.kor_name=[로블무한계단]
+2.eng_name=[Infinite Stairs Roblox]
+3.maker=[부안 재인]
+3.genre=[*]

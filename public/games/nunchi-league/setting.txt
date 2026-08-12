@@ -1,0 +1,4 @@
+1.kor_name=[눈치리그]
+2.eng_name=[NunChi League]
+3.maker=[전주 도담]
+3.genre=[*]
