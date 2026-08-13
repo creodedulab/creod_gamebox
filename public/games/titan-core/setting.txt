@@ -1,0 +1,4 @@
+1.kor_name=[타이탄 코어]
+2.eng_name=[Titan Core]
+3.maker=[전주 김제]
+4.genre=[*]

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>황금빛 숲속의 탈출: 묶인 토끼의 야간 도주</title>
+    <title>울창한 숲의 탈출: 묶인 토끼의 야간 도주</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #051610;
+            background-color: #03100b;
             color: #f8fafc;
             user-select: none;
         }
@@ -17,7 +17,7 @@
             font-family: 'Press Start 2P', monospace;
         }
         canvas {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
         }
     </style>
 </head>
@@ -25,12 +25,12 @@
 
     <header class="text-center my-1">
         <h1 class="pixel-font text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-emerald-300 mb-0.5">
-            🌲 SUNSET FOREST BUNNY ESCAPE 🐰
+            🌲 ULTRA-DENSE FOREST BUNNY ESCAPE 🐰
         </h1>
-        <p class="text-[11px] text-emerald-200">시간에 따라 변하는 숲, 사냥개와 여우를 피해 밧줄로 묶인 두 토끼의 협동 탈출!</p>
+        <p class="text-[11px] text-emerald-200">햇살 가득한 빽빽한 나뭇잎 숲속! 뒤따라오는 사냥개를 피해 당근을 먹으며 탈출하세요!</p>
     </header>
 
-    <div class="w-full max-w-4xl flex justify-between items-center px-4 py-1.5 bg-emerald-950/90 backdrop-blur rounded-xl border border-emerald-700/60 shadow-lg">
+    <div class="w-full max-w-4xl flex justify-between items-center px-4 py-1.5 bg-emerald-950/95 backdrop-blur rounded-xl border border-emerald-700/70 shadow-lg">
         <!-- Player 1 Status -->
         <div class="flex items-center space-x-2">
             <div class="w-3.5 h-3.5 rounded-full bg-blue-400 animate-pulse"></div>
@@ -47,8 +47,12 @@
                 <span id="game-score" class="text-lg font-black text-yellow-300">0</span>m
             </div>
             <div>
+                <span class="text-[10px] text-amber-400 block font-bold">🏆 최고 기록</span>
+                <span id="high-score" class="text-lg font-black text-amber-400">0</span>m
+            </div>
+            <div>
                 <span class="text-[10px] text-orange-300 block font-bold">시간대</span>
-                <span id="time-phase" class="text-xs font-bold text-amber-200">☀️ 낮 (Sunlit)</span>
+                <span id="time-phase" class="text-xs font-bold text-amber-200">☀️ 낮 (Day)</span>
             </div>
             <span id="game-status" class="pixel-font text-[8px] text-yellow-300 px-2 py-1 bg-slate-900 rounded border border-yellow-500/50">SPACE TO START</span>
         </div>
@@ -64,34 +68,36 @@
     </div>
 
     <div class="relative w-full max-w-4xl flex justify-center items-center my-1">
-        <canvas id="gameCanvas" width="900" height="420" class="rounded-2xl border-2 border-amber-700/60 w-full max-w-[900px] aspect-[45/21]"></canvas>
+        <canvas id="gameCanvas" width="900" height="420" class="rounded-2xl border-2 border-amber-800/80 w-full max-w-[900px] aspect-[45/21]"></canvas>
         
         <!-- Controls Overlay / Instructions Modal -->
-        <div id="start-screen" class="absolute inset-0 bg-slate-950/88 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl p-6 text-center">
-            <h2 class="pixel-font text-sm text-yellow-400 mb-2">🌲 숲속의 묶인 토끼 탈출 🥕</h2>
+        <div id="start-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl p-6 text-center z-50">
+            <h2 class="pixel-font text-sm text-yellow-400 mb-2">🌲 빽빽한 심림 탈출 🥕</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-left w-full max-w-lg">
                 <div class="bg-emerald-950/90 border border-blue-500/40 p-2.5 rounded-xl">
-                    <h3 class="text-blue-300 font-bold text-xs mb-0.5">💙 토끼 1 (네발로 걷기)</h3>
-                    <p class="text-[11px] text-slate-300"><b>이동:</b> A/D | <b>점프:</b> W | <b>땅굴:</b> S</p>
+                    <h3 class="text-blue-300 font-bold text-xs mb-0.5">💙 토끼 1 (미니멀 스타일)</h3>
+                    <p class="text-[11px] text-slate-300"><b>이동:</b> A/D | <b>점프:</b> W</p>
                 </div>
                 <div class="bg-emerald-950/90 border border-pink-500/40 p-2.5 rounded-xl">
-                    <h3 class="text-pink-300 font-bold text-xs mb-0.5">💖 토끼 2 (네발로 걷기)</h3>
-                    <p class="text-[11px] text-slate-300"><b>이동:</b> ←/→ | <b>점프:</b> ↑ | <b>땅굴:</b> ↓</p>
+                    <h3 class="text-pink-300 font-bold text-xs mb-0.5">💖 토끼 2 (미니멀 스타일)</h3>
+                    <p class="text-[11px] text-slate-300"><b>이동:</b> ←/→ | <b>점프:</b> ↑</p>
                 </div>
             </div>
             <div class="text-[11px] text-emerald-200 mb-3 bg-emerald-900/60 p-2.5 rounded-lg border border-emerald-500/30 max-w-lg space-y-1 text-left">
-                <div>✨ <b>구석 햇살 & 시간 변화:</b> 좌측 상단에서 내리쬐는 햇살과 함께 시간이 흐르며 <b>노을</b>과 <b>밤</b>으로 변합니다!</div>
-                <div>🪵 <b>리얼한 통나무 & 시야 장애:</b> 울창한 나무와 거대한 통나무 장애물을 점프와 땅굴로 극복하세요.</div>
-                <div>🐿️ <b>다람쥐와 적들:</b> 네발로 달리는 사냥개와 여우를 피해, 다람쥐가 던져주는 도토리로 사냥개를 저지하세요!</div>
+                <div>☀️ <b>단 하나의 태양빛:</b> 나뭇잎을 뚫고 내리쬐는 하나의 선명한 햇살 빛줄기!</div>
+                <div>🐕 <b>주기적인 사냥개 습격:</b> 경고 알림 후 사냥개가 돌진해옵니다! 점프로 피하거나 다람쥐의 도토리로 저지하세요.</div>
+                <div>🪵 <b>통나무 장애물:</b> 20초마다 등장하는 통나무! 부딪혀도 체력이 깎이지 않으며 언제든 점프해 넘어갈 수 있습니다.</div>
+                <div>🥕 <b>체력 회복 당근:</b> 당근을 먹어 **체력(+25 HP)**을 유지하세요!</div>
+                <div>🐿️ <b>다람쥐 조력자:</b> 돌진하는 사냥개에게 도토리를 던져 기절시키고 쫓아냅니다.</div>
             </div>
             <button onclick="startGame()" class="pixel-font bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-slate-950 text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg transition transform hover:scale-105 active:scale-95 cursor-pointer">
-                게임 시작하기!
+                게임 시작!
             </button>
         </div>
     </div>
 
     <footer class="text-[11px] text-emerald-300 text-center">
-        <span>팁: 두 토끼가 밧줄 거리 안에서 호흡을 맞춰 사냥개와 여우를 따돌리세요!</span>
+        <span>팁: 장애물에 걸리면 뒤에서 쫓아오는 사냥개에게 물릴 수 있습니다!</span>
     </footer>
 
     <script>
@@ -101,59 +107,55 @@
         let gameRunning = false;
         let keys = {};
         let gameScore = 0;
-        let worldSpeed = 4;
-        let gameTime = 0; // Time counter for day -> sunset -> night cycle
+        let highScore = parseInt(localStorage.getItem('bunny_high_score') || '0');
+        let worldSpeed = 3.5;
+        let gameTime = 0;
 
-        const groundY = 320;
+        const groundY = 330;
 
         // Player 1 (Blue Bunny)
         let p1 = {
-            x: 200,
-            y: groundY,
-            vy: 0,
-            width: 32,
-            height: 22,
-            speed: 4,
-            jumpPower: -10.5,
-            isDuck: false,
-            color: '#93c5fd',
-            darkColor: '#3b82f6',
-            hp: 100,
-            invincible: 0,
-            animFrame: 0
+            x: 220, y: groundY, vy: 0, width: 34, height: 24,
+            speed: 4.2, jumpPower: -11.0,
+            color: '#93c5fd', darkColor: '#3b82f6',
+            hp: 100, invincible: 0, animFrame: 0
         };
 
         // Player 2 (Pink Bunny)
         let p2 = {
-            x: 255,
+            x: 280, y: groundY, vy: 0, width: 34, height: 24,
+            speed: 4.2, jumpPower: -11.0,
+            color: '#f472b6', darkColor: '#db2777',
+            hp: 100, invincible: 0, animFrame: 0
+        };
+
+        // Hound performing repeated attack runs (State Machine)
+        let hound = {
+            x: -120,
             y: groundY,
-            vy: 0,
-            width: 32,
-            height: 22,
-            speed: 4,
-            jumpPower: -10.5,
-            isDuck: false,
-            color: '#f472b6',
-            darkColor: '#db2777',
-            hp: 100,
-            invincible: 0,
+            vx: 0,
+            state: 'COOLDOWN', // 'COOLDOWN', 'WARNING', 'CHARGE', 'RETREAT'
+            timer: 120,        // Timer for attack cycle
+            stunnedTimer: 0,
             animFrame: 0
         };
 
-        const maxRopeLength = 110;
-        const gravity = 0.55;
+        const maxRopeLength = 115;
+        const gravity = 0.6;
 
-        let trees = [];       
-        let obstacles = [];   // Logs and tunnels
-        let enemies = [];     // Hounds and Foxes (four-legged quadrupeds)
-        let squirrels = [];   
-        let acorns = [];      
-        let fallenLeaves = []; // Falling leaf particles on ground and air
-        let groundLeaves = []; // Accumulated fallen leaves on ground
+        let backgroundTrees = []; 
+        let obstacles = [];       
+        let enemies = [];         // Foxes appearing ahead
+        let squirrels = [];       
+        let acorns = [];          
+        let carrots = [];         
+        let floatingTexts = [];   
+        let groundLeaves = [];    
+        let fallingLeaves = [];   
 
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
-            if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
                 e.preventDefault();
             }
             if (!gameRunning && e.code === 'Space') {
@@ -170,140 +172,143 @@
             gameRunning = true;
             gameScore = 0;
             gameTime = 0;
-            worldSpeed = 4.2;
-            p1.x = 180; p1.y = groundY; p1.vy = 0; p1.hp = 100; p1.invincible = 0;
-            p2.x = 235; p2.y = groundY; p2.vy = 0; p2.hp = 100; p2.invincible = 0;
-            trees = [];
-            obstacles = [];
-            enemies = [];
-            squirrels = [];
-            acorns = [];
-            fallenLeaves = [];
-            groundLeaves = [];
+            worldSpeed = 3.5;
+            p1.x = 210; p1.y = groundY; p1.vy = 0; p1.hp = 100; p1.invincible = 0;
+            p2.x = 270; p2.y = groundY; p2.vy = 0; p2.hp = 100; p2.invincible = 0;
             
-            // Initialize initial trees
-            for(let i=0; i<5; i++) {
-                trees.push({
-                    x: i * 240 + Math.random() * 80,
-                    width: 70 + Math.random() * 30,
-                    height: 280 + Math.random() * 60,
-                    hasBranch: Math.random() > 0.3
-                });
+            // Reset hound attack state
+            hound.x = -120; hound.state = 'COOLDOWN'; hound.timer = 150; hound.stunnedTimer = 0; hound.animFrame = 0;
+
+            backgroundTrees = []; obstacles = []; enemies = []; squirrels = []; acorns = []; carrots = []; floatingTexts = []; groundLeaves = []; fallingLeaves = [];
+            
+            // Fill tree grid across forest
+            for(let x = -100; x < canvas.width + 150; x += 35) {
+                createDenseTreeCluster(x);
             }
 
-            // Initialize ground leaves
-            for(let i=0; i<35; i++) {
-                groundLeaves.push({
-                    x: Math.random() * canvas.width,
-                    y: groundY + 10 + Math.random() * 70,
-                    size: 4 + Math.random() * 6,
-                    color: Math.random() > 0.5 ? '#b45309' : '#15803d',
-                    rotation: Math.random() * Math.PI
-                });
-            }
+            for(let i=0; i<50; i++) { createGroundLeaf(); }
 
+            document.getElementById('high-score').innerText = highScore;
             document.getElementById('game-status').innerText = 'RUNNING';
             document.getElementById('game-status').className = 'pixel-font text-[8px] text-green-400 px-2 py-1 bg-slate-900 rounded border border-green-500/50';
+        }
+
+        function createDenseTreeCluster(xPos) {
+            backgroundTrees.push({ 
+                x: xPos + (Math.random() * 20 - 10), 
+                width: Math.random() * 50 + 40, 
+                height: Math.random() * 60 + 260, 
+                layer: 'far-back', 
+                opacity: Math.random() * 0.25 + 0.35 
+            });
+            backgroundTrees.push({ 
+                x: xPos + (Math.random() * 20 - 10), 
+                width: Math.random() * 60 + 50, 
+                height: Math.random() * 80 + 270, 
+                layer: 'back', 
+                opacity: Math.random() * 0.3 + 0.6 
+            });
+            // Front tree density reduced (appears only occasionally) with higher transparency
+            if (Math.random() > 0.82) {
+                backgroundTrees.push({ 
+                    x: xPos + (Math.random() * 25 - 10), 
+                    width: Math.random() * 40 + 30, 
+                    height: Math.random() * 90 + 290, 
+                    layer: 'front', 
+                    opacity: 0.35 
+                });
+            }
+        }
+
+        function createGroundLeaf() {
+            groundLeaves.push({ x: Math.random() * canvas.width, y: groundY + 15 + Math.random() * 65, size: 4 + Math.random() * 6, color: Math.random() > 0.5 ? '#b45309' : '#15803d', rotation: Math.random() * Math.PI });
         }
 
         let spawnTimer = 0;
         function handleSpawns() {
             spawnTimer++;
 
-            // Spawn background trees
-            if (spawnTimer % 80 === 0) {
-                trees.push({
-                    x: canvas.width + 80,
-                    width: Math.random() * 40 + 65,
-                    height: Math.random() * 70 + 260,
-                    hasBranch: Math.random() > 0.3
+            if (spawnTimer % 8 === 0) {
+                createDenseTreeCluster(canvas.width + 80);
+            }
+
+            // Spawn log obstacles exactly every 20 seconds (1200 frames at 60fps)
+            if (spawnTimer % 1200 === 0) {
+                obstacles.push({ x: canvas.width + 50, type: 'log', width: 90, height: 36 });
+            }
+
+            // Spawn Health Recovery Carrots (Reduced frequency: changed from 200 frames to 480 frames ~8 sec)
+            if (spawnTimer % 480 === 0) {
+                carrots.push({
+                    x: canvas.width + 40,
+                    y: groundY - 18 - (Math.random() > 0.5 ? 0 : 50),
+                    width: 22,
+                    height: 22,
+                    bounceFrame: Math.random() * Math.PI
                 });
             }
 
-            // Spawn Realistic Fallen Logs or Tunnels
-            if (spawnTimer % 120 === 0) {
-                const type = Math.random() > 0.4 ? 'log' : 'tunnel';
-                obstacles.push({
-                    x: canvas.width + 50,
-                    type: type, 
-                    width: type === 'log' ? 70 : 75,
-                    height: type === 'log' ? 32 : 40
-                });
+            // Spawn Fox obstacles coming from ahead
+            if (spawnTimer % 220 === 0) {
+                enemies.push({ x: canvas.width + 60, y: groundY, type: 'fox', vx: -4.8, animFrame: 0 });
             }
 
-            // Spawn Quadrupedal Enemies (Hound or Fox)
-            if (spawnTimer % 150 === 0) {
-                const isHound = Math.random() > 0.35;
-                enemies.push({
-                    x: canvas.width + 60,
-                    y: groundY,
-                    type: isHound ? 'hound' : 'fox',
-                    vx: isHound ? -5.0 : -4.2,
-                    stunnedTimer: 0,
-                    animFrame: 0
-                });
+            // Spawn helper squirrel on tree canopy
+            if (spawnTimer % 2400 === 0 && Math.random() < 0.6) {
+                squirrels.push({ x: canvas.width + 60, y: groundY - 180, thrown: false });
             }
 
-            // Spawn Helper Squirrel
-            if (spawnTimer % 200 === 0) {
-                squirrels.push({
-                    x: canvas.width + 60,
-                    y: groundY - 170,
-                    thrown: false
-                });
-            }
-
-            // Spawn falling leaf particle
-            if (spawnTimer % 15 === 0) {
-                fallenLeaves.push({
-                    x: Math.random() * canvas.width,
-                    y: -10,
-                    vx: -1.5 - Math.random() * 1.5,
-                    vy: 1.5 + Math.random() * 2,
-                    size: 5 + Math.random() * 5,
-                    color: Math.random() > 0.4 ? '#d97706' : '#16a34a',
-                    angle: Math.random() * Math.PI
-                });
+            // Falling leaves
+            if (spawnTimer % 10 === 0) {
+                fallingLeaves.push({ x: Math.random() * canvas.width, y: -10, vx: -2.0 - Math.random() * 1.8, vy: 2.0 + Math.random() * 2.5, size: 5 + Math.random() * 5, color: Math.random() > 0.4 ? '#d97706' : '#16a34a', angle: Math.random() * Math.PI });
             }
         }
 
         function update() {
             if (!gameRunning) return;
+            gameScore += 0.25; gameTime += 0.06;
+            worldSpeed = 3.5 + Math.floor(gameScore / 200) * 0.5;
 
-            gameScore += 0.15;
-            gameTime += 0.05; // Drives lighting / time of day transition
-            worldSpeed = 4.2 + Math.floor(gameScore / 180) * 0.4;
+            // Log floor detection
+            let p1Floor = groundY;
+            let p2Floor = groundY;
 
-            // --- Player 1 Controls (WASD) ---
-            if (keys['KeyA']) { p1.x -= p1.speed; p1.animFrame += 0.2; }
-            if (keys['KeyD']) { p1.x += p1.speed; p1.animFrame += 0.2; }
-            if (keys['KeyW'] && p1.y >= groundY) {
-                p1.vy = p1.jumpPower;
+            for (let obs of obstacles) {
+                if (obs.type === 'log') {
+                    let logTop = groundY - obs.height;
+                    if (p1.x + 12 > obs.x && p1.x - 12 < obs.x + obs.width) {
+                        if (p1.y - p1.vy <= logTop + 10) { p1Floor = Math.min(p1Floor, logTop); }
+                    }
+                    if (p2.x + 12 > obs.x && p2.x - 12 < obs.x + obs.width) {
+                        if (p2.y - p2.vy <= logTop + 10) { p2Floor = Math.min(p2Floor, logTop); }
+                    }
+                }
             }
-            p1.isDuck = !!keys['KeyS'];
 
-            // --- Player 2 Controls (Arrow Keys) ---
-            if (keys['ArrowLeft']) { p2.x -= p2.speed; p2.animFrame += 0.2; }
-            if (keys['ArrowRight']) { p2.x += p2.speed; p2.animFrame += 0.2; }
-            if (keys['ArrowUp'] && p2.y >= groundY) {
-                p2.vy = p2.jumpPower;
-            }
-            p2.isDuck = !!keys['ArrowDown'];
+            // Player 1 Controls
+            let p1OnGround = (p1.y >= p1Floor);
+            if (keys['KeyA']) { p1.x -= p1.speed; p1.animFrame += 0.25; }
+            if (keys['KeyD']) { p1.x += p1.speed; p1.animFrame += 0.25; }
+            if (keys['KeyW'] && p1OnGround) { p1.vy = p1.jumpPower; }
 
-            // Apply Gravity & Vertical motion
-            p1.vy += gravity;
-            p1.y += p1.vy;
-            if (p1.y > groundY) { p1.y = groundY; p1.vy = 0; }
+            // Player 2 Controls
+            let p2OnGround = (p2.y >= p2Floor);
+            if (keys['ArrowLeft']) { p2.x -= p2.speed; p2.animFrame += 0.25; }
+            if (keys['ArrowRight']) { p2.x += p2.speed; p2.animFrame += 0.25; }
+            if (keys['ArrowUp'] && p2OnGround) { p2.vy = p2.jumpPower; }
 
-            p2.vy += gravity;
-            p2.y += p2.vy;
-            if (p2.y > groundY) { p2.y = groundY; p2.vy = 0; }
+            // Gravity & Physics
+            p1.vy += gravity; p1.y += p1.vy;
+            if (p1.y > p1Floor) { p1.y = p1Floor; p1.vy = 0; }
 
-            // Screen boundaries
-            p1.x = Math.max(30, Math.min(canvas.width - 50, p1.x));
-            p2.x = Math.max(30, Math.min(canvas.width - 50, p2.x));
+            p2.vy += gravity; p2.y += p2.vy;
+            if (p2.y > p2Floor) { p2.y = p2Floor; p2.vy = 0; }
 
-            // --- Rope Constraint Physics ---
+            // Boundaries
+            p1.x = Math.max(40, Math.min(canvas.width - 50, p1.x));
+            p2.x = Math.max(40, Math.min(canvas.width - 50, p2.x));
+
+            // Rope constraint
             const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
             if (dist > maxRopeLength) {
                 const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
@@ -317,20 +322,76 @@
             if (p1.invincible > 0) p1.invincible--;
             if (p2.invincible > 0) p2.invincible--;
 
-            // Move & clean Trees
-            for (let i = trees.length - 1; i >= 0; i--) {
-                trees[i].x -= worldSpeed;
-                if (trees[i].x < -130) trees.splice(i, 1);
+            // Hound Attack State Machine (Repeated attack runs)
+            hound.animFrame += 0.3;
+
+            if (hound.stunnedTimer > 0) {
+                hound.stunnedTimer--;
+                hound.state = 'RETREAT';
             }
 
-            // Move & clean Ground Leaves
+            if (hound.state === 'COOLDOWN') {
+                hound.x = -120;
+                hound.timer--;
+                if (hound.timer <= 0) {
+                    hound.state = 'WARNING';
+                    hound.timer = 75; // Warning duration before charge
+                }
+            } else if (hound.state === 'WARNING') {
+                hound.x = -100;
+                hound.timer--;
+                if (hound.timer <= 0) {
+                    hound.state = 'CHARGE';
+                    hound.vx = 7.2 + (worldSpeed * 0.25); // Fast charging speed
+                }
+            } else if (hound.state === 'CHARGE') {
+                hound.x += hound.vx;
+
+                // Check collision with P1 & P2
+                if (Math.abs(p1.x - hound.x) < 28 && Math.abs(p1.y - hound.y) < 26) {
+                    if (p1.invincible === 0) {
+                        p1.hp -= 25;
+                        p1.invincible = 45;
+                        floatingTexts.push({ x: p1.x, y: p1.y - 30, text: '💥 물렸다! (-25 HP)', alpha: 1.0 });
+                        hound.state = 'RETREAT';
+                    }
+                }
+                if (Math.abs(p2.x - hound.x) < 28 && Math.abs(p2.y - hound.y) < 26) {
+                    if (p2.invincible === 0) {
+                        p2.hp -= 25;
+                        p2.invincible = 45;
+                        floatingTexts.push({ x: p2.x, y: p2.y - 30, text: '💥 물렸다! (-25 HP)', alpha: 1.0 });
+                        hound.state = 'RETREAT';
+                    }
+                }
+
+                // Retreat if past the bunnies
+                let maxBunnyX = Math.max(p1.x, p2.x);
+                if (hound.x > maxBunnyX + 110) {
+                    hound.state = 'RETREAT';
+                }
+            } else if (hound.state === 'RETREAT') {
+                hound.x -= 5.0;
+                if (hound.x < -140) {
+                    hound.state = 'COOLDOWN';
+                    hound.timer = Math.floor(Math.random() * 120) + 180; // Next attack in 3 ~ 5 seconds
+                }
+            }
+
+            // Move background trees
+            for (let i = backgroundTrees.length - 1; i >= 0; i--) {
+                backgroundTrees[i].x -= worldSpeed;
+                if (backgroundTrees[i].x < -150) backgroundTrees.splice(i, 1);
+            }
+
+            // Move ground leaves
             for (let i = groundLeaves.length - 1; i >= 0; i--) {
                 groundLeaves[i].x -= worldSpeed;
                 if (groundLeaves[i].x < -20) {
                     groundLeaves.splice(i, 1);
                     groundLeaves.push({
                         x: canvas.width + Math.random() * 50,
-                        y: groundY + 10 + Math.random() * 70,
+                        y: groundY + 15 + Math.random() * 65,
                         size: 4 + Math.random() * 6,
                         color: Math.random() > 0.5 ? '#b45309' : '#15803d',
                         rotation: Math.random() * Math.PI
@@ -338,82 +399,92 @@
                 }
             }
 
-            // Move & clean Falling Leaves
-            for (let i = fallenLeaves.length - 1; i >= 0; i--) {
-                let fl = fallenLeaves[i];
-                fl.x += fl.vx - (worldSpeed * 0.5);
+            // Move falling leaves
+            for (let i = fallingLeaves.length - 1; i >= 0; i--) {
+                let fl = fallingLeaves[i];
+                fl.x += fl.vx - (worldSpeed * 0.4);
                 fl.y += fl.vy;
                 fl.angle += 0.05;
-                if (fl.y > canvas.height || fl.x < -20) {
-                    fallenLeaves.splice(i, 1);
-                }
+                if (fl.y > canvas.height || fl.x < -20) fallingLeaves.splice(i, 1);
             }
 
-            // Move & check Obstacles
+            // Obstacles (Logs)
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.x -= worldSpeed;
-                if (obs.x < -90) { obstacles.splice(i, 1); continue; }
-
+                if (obs.x < -100) { obstacles.splice(i, 1); continue; }
                 checkObstacleCollision(p1, obs);
                 checkObstacleCollision(p2, obs);
             }
 
-            // Move & check Quadruped Enemies
+            // Health Recovery Carrots
+            for (let i = carrots.length - 1; i >= 0; i--) {
+                let cr = carrots[i];
+                cr.x -= worldSpeed;
+                cr.bounceFrame += 0.08;
+
+                let hitP1 = Math.hypot(p1.x - cr.x, (p1.y - 12) - cr.y) < 26;
+                let hitP2 = Math.hypot(p2.x - cr.x, (p2.y - 12) - cr.y) < 26;
+
+                if (hitP1 || hitP2) {
+                    p1.hp = Math.min(100, p1.hp + 25);
+                    p2.hp = Math.min(100, p2.hp + 25);
+
+                    floatingTexts.push({ x: cr.x, y: cr.y - 10, text: '+25 HP 🥕', alpha: 1.0 });
+                    carrots.splice(i, 1);
+                    continue;
+                }
+
+                if (cr.x < -40) carrots.splice(i, 1);
+            }
+
+            // Update Floating Text FX
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ft.y -= 1.2; ft.alpha -= 0.02;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+
+            // Fox Enemies coming from ahead
             for (let i = enemies.length - 1; i >= 0; i--) {
                 let en = enemies[i];
                 en.animFrame += 0.25;
-                if (en.stunnedTimer > 0) {
-                    en.stunnedTimer--;
-                    en.x += 3.5; 
-                } else {
-                    en.x += en.vx - (worldSpeed * 0.35);
-                }
+                en.x += en.vx - (worldSpeed * 0.35);
                 if (en.x < -80) { enemies.splice(i, 1); continue; }
 
-                if (Math.abs(p1.x - (en.x + 20)) < 24 && Math.abs(p1.y - en.y) < 22) {
-                    if (p1.invincible === 0) { p1.hp -= 25; p1.invincible = 40; }
+                if (Math.abs(p1.x - en.x) < 24 && Math.abs(p1.y - en.y) < 22) {
+                    if (p1.invincible === 0) { p1.hp -= 20; p1.invincible = 40; }
                 }
-                if (Math.abs(p2.x - (en.x + 20)) < 24 && Math.abs(p2.y - en.y) < 22) {
-                    if (p2.invincible === 0) { p2.hp -= 25; p2.invincible = 40; }
+                if (Math.abs(p2.x - en.x) < 24 && Math.abs(p2.y - en.y) < 22) {
+                    if (p2.invincible === 0) { p2.hp -= 20; p2.invincible = 40; }
                 }
             }
 
-            // Move Squirrels
+            // Squirrels (Throwing acorns at charging hound)
             for (let i = squirrels.length - 1; i >= 0; i--) {
                 let sq = squirrels[i];
                 sq.x -= worldSpeed;
                 if (sq.x < -60) { squirrels.splice(i, 1); continue; }
 
-                if (!sq.thrown) {
-                    let targetHound = enemies.find(en => en.type === 'hound' && Math.abs(en.x - sq.x) < 280);
-                    if (targetHound) {
-                        sq.thrown = true;
-                        acorns.push({
-                            x: sq.x,
-                            y: sq.y + 20,
-                            vx: 6.5,
-                            vy: -4.5
-                        });
-                    }
+                if (!sq.thrown && (hound.state === 'WARNING' || hound.state === 'CHARGE') && sq.x > hound.x) {
+                    sq.thrown = true;
+                    acorns.push({ x: sq.x, y: sq.y + 20, vx: -6.5, vy: -1.5 });
                 }
             }
 
-            // Move Acorns
+            // Acorns targeting charging hound
             for (let i = acorns.length - 1; i >= 0; i--) {
                 let ac = acorns[i];
-                ac.x += ac.vx;
-                ac.y += ac.vy;
-                ac.vy += 0.45;
+                ac.x += ac.vx; ac.y += ac.vy; ac.vy += 0.35;
 
-                for (let en of enemies) {
-                    if (en.type === 'hound' && Math.hypot(en.x - ac.x, en.y - ac.y) < 28) {
-                        en.stunnedTimer = 80;
-                        acorns.splice(i, 1);
-                        break;
-                    }
+                if ((hound.state === 'CHARGE' || hound.state === 'WARNING') && Math.hypot(hound.x - ac.x, (hound.y - 12) - ac.y) < 35) {
+                    hound.stunnedTimer = 90;
+                    hound.state = 'RETREAT';
+                    floatingTexts.push({ x: hound.x + 20, y: hound.y - 40, text: '🐿️ 도토리 명중! 기절!', alpha: 1.0 });
+                    acorns.splice(i, 1);
+                    continue;
                 }
-                if (ac && ac.y > groundY + 10) acorns.splice(i, 1);
+                if (ac.y > groundY + 10 || ac.x < -20) acorns.splice(i, 1);
             }
 
             handleSpawns();
@@ -422,14 +493,19 @@
                 endGame();
             }
 
-            // Update Time phase text
-            let timePhaseStr = "☀️ 낮 (Sunlit)";
+            let timePhaseStr = "☀️ 낮 (Day)";
             let phaseVal = Math.floor(gameTime) % 120;
             if (phaseVal > 40 && phaseVal <= 80) timePhaseStr = "🌅 노을 (Sunset)";
             else if (phaseVal > 80) timePhaseStr = "🌙 밤 (Night)";
             document.getElementById('time-phase').innerText = timePhaseStr;
 
-            document.getElementById('game-score').innerText = Math.floor(gameScore);
+            let currentIntScore = Math.floor(gameScore);
+            document.getElementById('game-score').innerText = currentIntScore;
+            if (currentIntScore > highScore) {
+                highScore = currentIntScore;
+                document.getElementById('high-score').innerText = highScore;
+            }
+
             document.getElementById('p1-hp').innerText = Math.max(0, p1.hp);
             document.getElementById('p2-hp').innerText = Math.max(0, p2.hp);
         }
@@ -437,12 +513,10 @@
         function checkObstacleCollision(p, obs) {
             if (p.x + 16 > obs.x && p.x - 16 < obs.x + obs.width) {
                 if (obs.type === 'log') {
-                    if (p.y > groundY - obs.height + 12) {
-                        if (p.invincible === 0) { p.hp -= 15; p.invincible = 30; }
-                    }
-                } else if (obs.type === 'tunnel') {
-                    if (!p.isDuck) {
-                        if (p.invincible === 0) { p.hp -= 15; p.invincible = 30; }
+                    let logTop = groundY - obs.height;
+                    // 통나무 전면에 닿았을 때 통과만 막고, 데미지 및 조작 스턴 제거 (즉시 점프 가능)
+                    if (p.y > logTop + 6) {
+                        p.x = obs.x - 16;
                     }
                 }
             }
@@ -451,84 +525,40 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // --- Time Cycle Gradient Calculation ---
-            let cycle = Math.sin(gameTime * 0.03); 
-            let skyTop = '#134e38';
-            let skyBottom = '#072218';
             let phaseVal = Math.floor(gameTime) % 120;
+            let skyTop = '#062e22';
+            let skyBottom = '#02140e';
             
             if (phaseVal > 40 && phaseVal <= 80) {
-                // Sunset
-                skyTop = '#9a3412';
-                skyBottom = '#431407';
+                skyTop = '#7c2d12'; skyBottom = '#360d05';
             } else if (phaseVal > 80) {
-                // Night
-                skyTop = '#020617';
-                skyBottom = '#0f172a';
+                skyTop = '#020617'; skyBottom = '#090d16';
             }
 
+            // Sky background
             let bgGrad = ctx.createLinearGradient(0, 0, 0, groundY);
             bgGrad.addColorStop(0, skyTop);
             bgGrad.addColorStop(1, skyBottom);
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, canvas.width, groundY);
 
-            // --- Top-Left Golden Sunbeam Lighting ---
-            let sunbeamGrad = ctx.createRadialGradient(80, 40, 10, 150, 150, 600);
-            if (phaseVal <= 40) {
-                sunbeamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
-                sunbeamGrad.addColorStop(0.5, 'rgba(253, 224, 71, 0.18)');
-                sunbeamGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
-            } else if (phaseVal > 40 && phaseVal <= 80) {
-                sunbeamGrad.addColorStop(0, 'rgba(249, 115, 22, 0.45)');
-                sunbeamGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.15)');
-                sunbeamGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
-            } else {
-                sunbeamGrad.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
-                sunbeamGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-            }
-            ctx.fillStyle = sunbeamGrad;
-            ctx.fillRect(0, 0, canvas.width, groundY);
-
-            // --- Draw Dense Background Trees (Vision blockers) ---
-            trees.forEach(tr => {
-                ctx.save();
-                // Thick Trunk
-                ctx.fillStyle = phaseVal > 80 ? '#0f172a' : '#27190f';
-                ctx.fillRect(tr.x, groundY - tr.height + 50, tr.width * 0.4, tr.height);
-
-                // Lush Multi-layered Canopy
-                ctx.fillStyle = phaseVal > 80 ? '#064e3b' : '#14532d';
-                ctx.beginPath();
-                ctx.arc(tr.x + tr.width * 0.2, groundY - tr.height + 55, tr.width * 0.85, 0, Math.PI * 2);
-                ctx.arc(tr.x + tr.width * 0.05, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
-                ctx.arc(tr.x + tr.width * 0.35, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Branch for Squirrels
-                if (tr.hasBranch) {
-                    ctx.fillStyle = phaseVal > 80 ? '#1e293b' : '#3d2314';
-                    ctx.fillRect(tr.x - 40, groundY - tr.height + 130, 55, 12);
-                }
-                ctx.restore();
+            // Draw FAR-BACK tree layer
+            backgroundTrees.filter(t => t.layer === 'far-back').forEach(tr => {
+                drawTree(tr, phaseVal, '#031f16');
             });
 
-            // --- Canopy Shadows (나무에 가려져 그림자가 져서 어두워지는 효과) ---
-            trees.forEach(tr => {
-                let shadowGrad = ctx.createRadialGradient(tr.x + 30, groundY - 120, 20, tr.x + 30, groundY - 120, 160);
-                shadowGrad.addColorStop(0, 'rgba(2, 20, 13, 0.65)');
-                shadowGrad.addColorStop(1, 'rgba(2, 20, 13, 0)');
-                ctx.fillStyle = shadowGrad;
-                ctx.fillRect(tr.x - 120, groundY - 250, 280, 260);
+            // Draw BACK tree layer
+            backgroundTrees.filter(t => t.layer === 'back').forEach(tr => {
+                drawTree(tr, phaseVal, '#063023');
             });
 
-            // --- Draw Ground and Moss / Grass ---
+            // Ground surface
             ctx.fillStyle = phaseVal > 80 ? '#022c22' : '#06281c';
             ctx.fillRect(0, groundY + 12, canvas.width, canvas.height - groundY - 12);
             ctx.fillStyle = phaseVal > 80 ? '#047857' : '#059669';
             ctx.fillRect(0, groundY + 6, canvas.width, 8);
 
-            // --- Draw Ground Fallen Leaves (바닥에 떨어진 풀잎들) ---
+            // Ground leaves
             groundLeaves.forEach(gl => {
                 ctx.save();
                 ctx.translate(gl.x, gl.y);
@@ -540,38 +570,53 @@
                 ctx.restore();
             });
 
-            // --- Draw Realistic Fallen Logs & Tunnels (리얼한 통나무 장애물) ---
+            // Obstacles (Logs)
             obstacles.forEach(obs => {
                 ctx.save();
                 if (obs.type === 'log') {
-                    // Realistic Textured Log
                     ctx.fillStyle = '#78350f';
                     ctx.beginPath();
-                    ctx.roundRect(obs.x, groundY - obs.height, obs.width, obs.height, 8);
+                    ctx.roundRect(obs.x, groundY - obs.height + 6, obs.width, obs.height, 8);
                     ctx.fill();
                     ctx.strokeStyle = '#451a03';
                     ctx.lineWidth = 3;
                     ctx.stroke();
-                    // Wood ring details
                     ctx.fillStyle = '#92400e';
-                    ctx.fillRect(obs.x + 8, groundY - obs.height + 6, 6, obs.height - 12);
-                    ctx.fillRect(obs.x + 24, groundY - obs.height + 6, 5, obs.height - 12);
-                } else {
-                    // Underground Tunnel Entrance
-                    ctx.fillStyle = '#064e3b';
-                    ctx.beginPath();
-                    ctx.ellipse(obs.x + obs.width/2, groundY, obs.width/2, obs.height, 0, Math.PI, 0, true);
-                    ctx.fill();
-                    ctx.fillStyle = '#022c22';
-                    ctx.beginPath();
-                    ctx.ellipse(obs.x + obs.width/2, groundY, obs.width/3, obs.height * 0.65, 0, Math.PI, 0, true);
-                    ctx.fill();
+                    ctx.fillRect(obs.x + 8, groundY - obs.height + 10, 6, obs.height - 12);
+                    ctx.fillRect(obs.x + 28, groundY - obs.height + 10, 5, obs.height - 12);
                 }
                 ctx.restore();
             });
 
-            // --- Draw Falling Leaf Motions (나뭇잎 떨어지는 모션) ---
-            fallenLeaves.forEach(fl => {
+            // Draw Health Recovery Carrots 🥕
+            carrots.forEach(cr => {
+                ctx.save();
+                let bounceY = cr.y + Math.sin(cr.bounceFrame) * 4;
+
+                ctx.fillStyle = 'rgba(251, 146, 60, 0.35)';
+                ctx.beginPath();
+                ctx.arc(cr.x, bounceY, 14, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath();
+                ctx.moveTo(cr.x - 7, bounceY - 8);
+                ctx.lineTo(cr.x + 7, bounceY - 8);
+                ctx.lineTo(cr.x, bounceY + 10);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.ellipse(cr.x - 4, bounceY - 12, 3, 6, -0.4, 0, Math.PI * 2);
+                ctx.ellipse(cr.x, bounceY - 13, 3, 7, 0, 0, Math.PI * 2);
+                ctx.ellipse(cr.x + 4, bounceY - 12, 3, 6, 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Falling leaves
+            fallingLeaves.forEach(fl => {
                 ctx.save();
                 ctx.translate(fl.x, fl.y);
                 ctx.rotate(fl.angle);
@@ -582,27 +627,28 @@
                 ctx.restore();
             });
 
-            // --- Draw Helper Squirrels & Acorns ---
+            // Squirrels on canopy branches
             squirrels.forEach(sq => {
                 ctx.save();
-                // Drawn Quadrupedal Squirrel character
                 ctx.fillStyle = '#d97706';
                 ctx.beginPath();
-                ctx.ellipse(sq.x, sq.y, 12, 8, 0, 0, Math.PI * 2);
+                ctx.ellipse(sq.x - 8, sq.y - 8, 10, 7, -0.6, 0, Math.PI * 2);
                 ctx.fill();
-                // Tail
+
                 ctx.fillStyle = '#b45309';
                 ctx.beginPath();
-                ctx.ellipse(sq.x - 10, sq.y - 6, 8, 12, -0.5, 0, Math.PI * 2);
+                ctx.ellipse(sq.x, sq.y, 11, 7, 0, 0, Math.PI * 2);
                 ctx.fill();
-                // Head & Ear
+
                 ctx.fillStyle = '#d97706';
                 ctx.beginPath();
-                ctx.arc(sq.x + 10, sq.y - 4, 6, 0, Math.PI * 2);
+                ctx.arc(sq.x + 8, sq.y - 4, 6, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.fillRect(sq.x + 6, sq.y - 11, 2.5, 5);
                 ctx.restore();
             });
 
+            // Acorns
             acorns.forEach(ac => {
                 ctx.save();
                 ctx.fillStyle = '#92400e';
@@ -614,14 +660,28 @@
                 ctx.restore();
             });
 
-            // --- Draw Four-Legged Quadrupedal Enemies (사냥개와 여우) ---
+            // Persistent Hound running behind bunnies
+            drawHound(hound);
+
+            // Foxes ahead
             enemies.forEach(en => {
-                drawQuadrupedEnemy(en);
+                drawFox(en);
             });
 
-            // --- Draw Connecting Glowing Rope between Bunnies ---
+            // Floating FX Text
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = '#4ade80';
+                ctx.font = 'bold 12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+
+            // Rope connecting P1 and P2
             ctx.strokeStyle = '#fef08a';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 3.5;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y - 12);
@@ -629,138 +689,284 @@
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // --- Draw Quadrupedal Bunnies (네발로 걷는 토끼 캐릭터 형태) ---
-            drawQuadrupedBunny(p1, 'P1 🐰');
-            drawQuadrupedBunny(p2, 'P2 🐰');
+            // Draw Bunnies
+            drawQuadrupedBunny(p1, '토끼 1 💙');
+            drawQuadrupedBunny(p2, '토끼 2 💖');
+
+            // Draw FRONT tree layer (Leaves and trunks in foreground)
+            backgroundTrees.filter(t => t.layer === 'front').forEach(tr => {
+                drawTree(tr, phaseVal, '#0f3a21');
+            });
+
+            // Overarching dense canopy top shadow
+            let canopyGrad = ctx.createLinearGradient(0, 0, 0, 100);
+            canopyGrad.addColorStop(0, phaseVal > 80 ? 'rgba(2, 8, 18, 0.95)' : 'rgba(3, 30, 20, 0.85)');
+            canopyGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = canopyGrad;
+            ctx.fillRect(0, 0, canvas.width, 100);
+
+            // SINGLE MAIN SUNLIGHT RAY & PARTICLES (Rendered over tree leaves and directly over bunnies!)
+            ctx.save();
+            const beamAlpha = phaseVal <= 40 ? 0.48 : (phaseVal <= 80 ? 0.42 : 0.12);
+            const beamColor = phaseVal <= 40 ? '254, 240, 138' : (phaseVal <= 80 ? '251, 146, 60' : '186, 230, 253');
+
+            // Single focused broad beam from top right
+            let sunX = canvas.width - 150;
+            let beamGrad = ctx.createLinearGradient(sunX, 0, sunX - 350, groundY + 60);
+            beamGrad.addColorStop(0, `rgba(${beamColor}, ${beamAlpha})`);
+            beamGrad.addColorStop(0.5, `rgba(${beamColor}, ${beamAlpha * 0.5})`);
+            beamGrad.addColorStop(1, `rgba(${beamColor}, 0)`);
+
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath();
+            ctx.moveTo(sunX - 20, 0);
+            ctx.lineTo(sunX + 100, 0);
+            ctx.lineTo(sunX - 180, groundY + 50);
+            ctx.lineTo(sunX - 420, groundY + 50);
+            ctx.closePath();
+            ctx.fill();
+
+            // Sun core glow origin at top-right
+            let sunGlow = ctx.createRadialGradient(sunX + 40, 0, 5, sunX + 40, 0, 130);
+            sunGlow.addColorStop(0, `rgba(${beamColor}, ${beamAlpha * 1.5})`);
+            sunGlow.addColorStop(1, `rgba(${beamColor}, 0)`);
+            ctx.fillStyle = sunGlow;
+            ctx.beginPath();
+            ctx.arc(sunX + 40, 0, 130, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Glowing dust motes dancing in sunlight across bunnies & leaves
+            if (phaseVal <= 80) {
+                for (let i = 0; i < 28; i++) {
+                    let particleX = (canvas.width - (i * 35 + gameTime * 18)) % canvas.width;
+                    if (particleX < 0) particleX += canvas.width;
+                    let particleY = (i * 21 + Math.sin(gameTime * 2 + i) * 18) % (groundY + 30);
+                    ctx.fillStyle = `rgba(${beamColor}, ${0.4 + Math.sin(gameTime * 3.0 + i) * 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(particleX, particleY, 1.8 + (i % 2), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
         }
 
-        // Detailed Four-Legged Quadruped Bunny Rendering Function
+        function drawTree(tr, phaseVal, customGreen) {
+            ctx.save();
+            let alpha = tr.opacity || 0.8;
+            if (tr.layer === 'front') {
+                alpha = Math.min(alpha, 0.35); // Soft transparency for front trees to never block vision
+            }
+            ctx.globalAlpha = alpha;
+            
+            // Trunk
+            ctx.fillStyle = phaseVal > 80 ? '#0b1329' : '#1e110a';
+            ctx.fillRect(tr.x, groundY - tr.height + 50, tr.width * 0.45, tr.height);
+
+            // Dense layered foliage
+            ctx.fillStyle = phaseVal > 80 ? '#023425' : (customGreen || '#0f3a21');
+            ctx.beginPath();
+            ctx.arc(tr.x + tr.width * 0.22, groundY - tr.height + 55, tr.width * 0.85, 0, Math.PI * 2);
+            ctx.arc(tr.x + tr.width * 0.05, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
+            ctx.arc(tr.x + tr.width * 0.38, groundY - tr.height + 25, tr.width * 0.65, 0, Math.PI * 2);
+            ctx.arc(tr.x + tr.width * 0.22, groundY - tr.height - 15, tr.width * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
         function drawQuadrupedBunny(p, label) {
             ctx.save();
             if (p.invincible > 0 && Math.floor(Date.now() / 80) % 2 === 0) {
-                ctx.globalAlpha = 0.5;
+                ctx.globalAlpha = 0.4;
             }
 
-            let bodyHeight = p.isDuck ? 12 : 18;
             let legOffset = Math.sin(p.animFrame) * 4;
 
-            // Body (Quadruped shape)
+            // Soft cute body
             ctx.fillStyle = p.color;
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y - bodyHeight, 18, bodyHeight * 0.75, 0, 0, Math.PI * 2);
+            ctx.ellipse(p.x, p.y - 14, 17, 10, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Head
-            ctx.fillStyle = p.color;
+            // Head (Smooth minimal design without eyes)
             ctx.beginPath();
-            ctx.arc(p.x + 12, p.y - bodyHeight - 6, 10, 0, Math.PI * 2);
+            ctx.arc(p.x + 12, p.y - 18, 9, 0, Math.PI * 2);
             ctx.fill();
 
-            // Ears
-            if (!p.isDuck) {
-                ctx.fillStyle = p.darkColor;
-                ctx.beginPath();
-                ctx.ellipse(p.x + 9, p.y - bodyHeight - 20, 3.5, 11, -0.2, 0, Math.PI * 2);
-                ctx.ellipse(p.x + 15, p.y - bodyHeight - 20, 3.5, 11, 0.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Four Legs
+            // Cute ears
             ctx.fillStyle = p.darkColor;
-            ctx.fillRect(p.x - 10 + legOffset, p.y - 8, 4, 8);
-            ctx.fillRect(p.x - 2 - legOffset, p.y - 8, 4, 8);
-            ctx.fillRect(p.x + 6 + legOffset, p.y - 8, 4, 8);
-            ctx.fillRect(p.x + 12 - legOffset, p.y - 8, 4, 8);
+            ctx.beginPath();
+            ctx.ellipse(p.x + 9, p.y - 30, 3.5, 11, -0.15, 0, Math.PI * 2);
+            ctx.ellipse(p.x + 15, p.y - 30, 3.5, 11, 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner ear pink tint
+            ctx.fillStyle = '#fecdd3';
+            ctx.beginPath();
+            ctx.ellipse(p.x + 9, p.y - 30, 1.8, 8, -0.15, 0, Math.PI * 2);
+            ctx.ellipse(p.x + 15, p.y - 30, 1.8, 8, 0.15, 0, Math.PI * 2);
+            ctx.fill();
 
             // Fluffy Tail
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(p.x - 16, p.y - bodyHeight, 5, 0, Math.PI * 2);
+            ctx.arc(p.x - 16, p.y - 14, 5, 0, Math.PI * 2);
             ctx.fill();
+
+            // Paws
+            ctx.fillStyle = p.darkColor;
+            ctx.fillRect(p.x - 10 + legOffset, p.y - 7, 4, 7);
+            ctx.fillRect(p.x - 2 - legOffset, p.y - 7, 4, 7);
+            ctx.fillRect(p.x + 6 + legOffset, p.y - 7, 4, 7);
+            ctx.fillRect(p.x + 12 - legOffset, p.y - 7, 4, 7);
 
             // Label
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 9px Inter';
+            ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(label, p.x, p.y - bodyHeight - 28);
+            ctx.fillText(label, p.x, p.y - 38);
 
             ctx.restore();
         }
 
-        // Detailed Four-Legged Quadruped Enemy Rendering Function (Hound & Fox)
-        function drawQuadrupedEnemy(en) {
+        function drawHound(hd) {
+            if (hd.state === 'COOLDOWN') return; // Hidden off-screen during cooldown
+
+            ctx.save();
+            let legOffset = Math.sin(hd.animFrame) * 6;
+
+            // Warning Indicator Banner when preparing attack
+            if (hd.state === 'WARNING') {
+                if (Math.floor(Date.now() / 150) % 2 === 0) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = 'bold 12px Inter';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('⚠️ 경고! 사냥개 습격!! 🐕', 25, 60);
+                }
+                ctx.restore();
+                return;
+            }
+
+            // Sleek Hound charging or retreating
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.ellipse(hd.x, groundY - 14, 20, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(hd.x + 16, groundY - 18, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(hd.x + 14, groundY - 21, 11, 5);
+
+            // Floppy ear
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.ellipse(hd.x + 14, groundY - 22, 3.5, 7, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Red glowing fierce eye
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(hd.x + 18, groundY - 20, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tail
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(hd.x - 18, groundY - 16);
+            ctx.lineTo(hd.x - 25, groundY - 22);
+            ctx.stroke();
+
+            // Legs
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(hd.x - 12 + legOffset, groundY - 8, 4, 8);
+            ctx.fillRect(hd.x - 4 - legOffset, groundY - 8, 4, 8);
+            ctx.fillRect(hd.x + 6 + legOffset, groundY - 8, 4, 8);
+            ctx.fillRect(hd.x + 12 - legOffset, groundY - 8, 4, 8);
+
+            if (hd.stunnedTimer > 0) {
+                ctx.fillStyle = '#fde047';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText('💫 (기절 후 후퇴!)', hd.x - 20, groundY - 35);
+            } else if (hd.state === 'CHARGE') {
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('🐕 습격 중!', hd.x, groundY - 35);
+            }
+            ctx.restore();
+        }
+
+        function drawFox(en) {
             ctx.save();
             let legOffset = Math.sin(en.animFrame) * 5;
 
-            if (en.type === 'hound') {
-                // Hunting Hound (사냥개 - 네발로 달리는 모션)
-                ctx.fillStyle = '#475569';
-                // Body
-                ctx.beginPath();
-                ctx.ellipse(en.x, groundY - 14, 22, 11, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // Head & Snout
-                ctx.beginPath();
-                ctx.arc(en.x - 18, groundY - 18, 9, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillRect(en.x - 28, groundY - 21, 12, 5); // Snout
-                // Floppy ears
-                ctx.fillStyle = '#1e293b';
-                ctx.beginPath();
-                ctx.ellipse(en.x - 16, groundY - 24, 4, 7, 0.3, 0, Math.PI * 2);
-                ctx.fill();
-                // Four Legs
-                ctx.fillStyle = '#334155';
-                ctx.fillRect(en.x - 14 + legOffset, groundY - 8, 5, 8);
-                ctx.fillRect(en.x - 6 - legOffset, groundY - 8, 5, 8);
-                ctx.fillRect(en.x + 4 + legOffset, groundY - 8, 5, 8);
-                ctx.fillRect(en.x + 12 - legOffset, groundY - 8, 5, 8);
+            ctx.fillStyle = '#ea580c';
+            ctx.beginPath();
+            ctx.ellipse(en.x, groundY - 13, 19, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(en.x - 15, groundY - 17, 7, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Snout
+            ctx.beginPath();
+            ctx.moveTo(en.x - 15, groundY - 20);
+            ctx.lineTo(en.x - 25, groundY - 16);
+            ctx.lineTo(en.x - 15, groundY - 13);
+            ctx.fill();
 
-                if (en.stunnedTimer > 0) {
-                    ctx.fillStyle = '#fde047';
-                    ctx.font = '12px sans-serif';
-                    ctx.fillText('💫 (도토리 명중!)', en.x - 30, groundY - 35);
-                }
-            } else {
-                // Fox (여우 - 붉은색 네발로 달리는 모션)
-                ctx.fillStyle = '#ea580c';
-                // Body
-                ctx.beginPath();
-                ctx.ellipse(en.x, groundY - 13, 20, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // Head & Pointy Snout
-                ctx.beginPath();
-                ctx.arc(en.x - 16, groundY - 18, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillRect(en.x - 26, groundY - 20, 12, 4);
-                // Big Bushy Tail
-                ctx.fillStyle = '#c2410c';
-                ctx.beginPath();
-                ctx.ellipse(en.x + 18, groundY - 16, 14, 7, -0.4, 0, Math.PI * 2);
-                ctx.fill();
-                // White tail tip
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(en.x + 28, groundY - 18, 4, 0, Math.PI * 2);
-                ctx.fill();
-                // Four Legs
-                ctx.fillStyle = '#9a3412';
-                ctx.fillRect(en.x - 12 + legOffset, groundY - 7, 4, 7);
-                ctx.fillRect(en.x - 4 - legOffset, groundY - 7, 4, 7);
-                ctx.fillRect(en.x + 4 + legOffset, groundY - 7, 4, 7);
-                ctx.fillRect(en.x + 10 - legOffset, groundY - 7, 4, 7);
-            }
+            // Bushy tail with white tip
+            ctx.fillStyle = '#c2410c';
+            ctx.beginPath();
+            ctx.ellipse(en.x + 18, groundY - 16, 13, 6, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(en.x + 28, groundY - 19, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ears & Eye
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.ellipse(en.x - 13, groundY - 24, 2.5, 6, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(en.x - 17, groundY - 18, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Legs
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(en.x - 16 + legOffset, groundY - 7, 3.5, 7);
+            ctx.fillRect(en.x - 8 - legOffset, groundY - 7, 3.5, 7);
+            ctx.fillRect(en.x + 2 + legOffset, groundY - 7, 3.5, 7);
+            ctx.fillRect(en.x + 8 - legOffset, groundY - 7, 3.5, 7);
             ctx.restore();
         }
 
         function endGame() {
             gameRunning = false;
+            let finalScore = Math.floor(gameScore);
+            let isNewRecord = false;
+
+            if (finalScore >= highScore) {
+                highScore = finalScore;
+                localStorage.setItem('bunny_high_score', highScore);
+                isNewRecord = true;
+            }
+
             const startScreen = document.getElementById('start-screen');
             startScreen.style.display = 'flex';
             document.getElementById('game-status').innerText = 'GAME OVER';
             document.getElementById('game-status').className = 'pixel-font text-[8px] text-red-400 px-2 py-1 bg-slate-900 rounded border border-red-500/50';
-            startScreen.querySelector('h2').innerText = `숲속 탈출 실패! (기록: ${Math.floor(gameScore)}m)`;
-            startScreen.querySelector('button').innerText = '다시 도전하기';
+            
+            if (isNewRecord && finalScore > 0) {
+                startScreen.querySelector('h2').innerText = `🎉 최고 기록 달성! (${finalScore}m)`;
+            } else {
+                startScreen.querySelector('h2').innerText = `울창한 숲 탈출 실패! (기록: ${finalScore}m / 최고: ${highScore}m)`;
+            }
+            
+            startScreen.querySelector('button').innerText = '다시 시작하기';
         }
 
         function loop() {
@@ -769,6 +975,7 @@
             requestAnimationFrame(loop);
         }
 
+        document.getElementById('high-score').innerText = highScore;
         draw();
         requestAnimationFrame(loop);
     </script>

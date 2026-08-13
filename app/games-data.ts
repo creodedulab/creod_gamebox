@@ -83,16 +83,16 @@ export const games: Game[] = [
     "maker": "\ubd80\uc548 \uc774\uc7ac",
     "genres": [
       "\uc810\ud504",
+      "\uc2ac\ub798\uc2dc",
       "2D",
       "3D",
-      "\uc288\ud305",
       "2\uc778\uce6d",
       "\uc544\ucf00\uc774\ub4dc"
     ],
     "genre": "\uc810\ud504",
     "poster": "/games/dense-forest-bunny-escape/poster.png",
     "posterAlt": "\ubc84\ub2c8\uc758 \uc232 \ud0c8\ucd9c \uac8c\uc784 \ud3ec\uc2a4\ud130",
-    "description": "\ubc84\ub2c8\uc758 \uc232 \ud0c8\ucd9c\uc740 \uc801\uacfc \uc7a5\uc560\ubb3c\uc744 \ud53c\ud558\uac70\ub098 \uacf5\uaca9\ud558\uba70 \uc810\uc218\ub97c \uc313\ub294 \uc288\ud305 \uc911\uc2ec \uac8c\uc784\uc785\ub2c8\ub2e4.",
+    "description": "\ubc84\ub2c8\uc758 \uc232 \ud0c8\ucd9c\uc740 \uc810\ud504\uc640 \ub300\uc2dc, \uc808\ub2e8 \uc561\uc158\uc744 \ud65c\uc6a9\ud574 \uc7a5\uc560\ubb3c\uc744 \ub3cc\ud30c\ud558\uba70 \ub192\uc740 \uae30\ub85d\uc5d0 \ub3c4\uc804\ud558\ub294 \uc561\uc158 \uc544\ucf00\uc774\ub4dc \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\ubc29\ud5a5\ud0a4, WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/dense-forest-bunny-escape/index.html",
     "accent": "#ef4444"
@@ -148,7 +148,7 @@ export const games: Game[] = [
     "description": "\uc720\ub2db \ud06c\ub798\ud504\ud2b8 \uacfc\ud559 \uae30\ud638\uc740 \uaddc\uce59\uc744 \ud30c\uc545\ud558\uace0 \ubb38\uc81c\ub97c \ud574\uacb0\ud558\uba70 \ubaa9\ud45c\uc5d0 \ub3c4\ub2ec\ud558\ub294 \ud37c\uc990 \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/unit-craft-science-code/index.html",
-    "accent": "#f5a524"
+    "accent": "#22c55e"
   },
   {
     "id": "cut-jump-180",
@@ -168,6 +168,25 @@ export const games: Game[] = [
     "controls": "\ubc29\ud5a5\ud0a4, WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/cut-jump-180/index.html",
     "accent": "#22c55e"
+  },
+  {
+    "id": "titan-core",
+    "korName": "\ud0c0\uc774\ud0c4 \ucf54\uc5b4",
+    "engName": "Titan Core",
+    "maker": "\uc804\uc8fc \uae40\uc81c",
+    "genres": [
+      "\uc810\ud504",
+      "2D",
+      "3D",
+      "\uc288\ud305"
+    ],
+    "genre": "\uc810\ud504",
+    "poster": "/games/titan-core/poster.jpg",
+    "posterAlt": "\ud0c0\uc774\ud0c4 \ucf54\uc5b4 \uac8c\uc784 \ud3ec\uc2a4\ud130",
+    "description": "\ud0c0\uc774\ud0c4 \ucf54\uc5b4\uc740 \uc801\uacfc \uc7a5\uc560\ubb3c\uc744 \ud53c\ud558\uac70\ub098 \uacf5\uaca9\ud558\uba70 \uc810\uc218\ub97c \uc313\ub294 \uc288\ud305 \uc911\uc2ec \uac8c\uc784\uc785\ub2c8\ub2e4.",
+    "controls": "WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
+    "gameUrl": "/games/titan-core/index.html",
+    "accent": "#f5a524"
   },
   {
     "id": "cozy_aquarium_studio",
