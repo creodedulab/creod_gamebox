@@ -414,6 +414,7 @@ function GamePlayer({
   const playerPanelRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [frameScale, setFrameScale] = useState(1);
 
   useEffect(() => {
     function handleFullscreenChange() {
@@ -444,34 +445,25 @@ function GamePlayer({
   }
 
   function resetIframeViewportScale() {
-    const iframeDocument = iframeRef.current?.contentDocument;
-    const body = iframeDocument?.body;
-    const html = iframeDocument?.documentElement;
-    if (!body || !html) return;
-
-    html.style.removeProperty("overflow");
-    body.style.removeProperty("overflow");
-    body.style.removeProperty("transform");
-    body.style.removeProperty("transform-origin");
-    body.style.removeProperty("width");
-    body.style.removeProperty("min-height");
-    body.style.removeProperty("height");
+    setFrameScale(1);
   }
 
   function fitPortraitIframeContent() {
     const iframe = iframeRef.current;
     const iframeDocument = iframe?.contentDocument;
+    const frame = iframe?.parentElement;
     const body = iframeDocument?.body;
     const html = iframeDocument?.documentElement;
-    if (!iframe || !body || !html) return;
+    if (!iframe || !frame || !body || !html) return;
 
-    resetIframeViewportScale();
-
-    if (document.fullscreenElement === playerPanelRef.current) return;
+    if (document.fullscreenElement === playerPanelRef.current) {
+      setFrameScale(1);
+      return;
+    }
 
     window.requestAnimationFrame(() => {
-      const viewportWidth = iframe.clientWidth;
-      const viewportHeight = iframe.clientHeight;
+      const viewportWidth = frame.clientWidth;
+      const viewportHeight = frame.clientHeight;
       const primaryElements = [
         ...Array.from(
           iframeDocument.querySelectorAll<HTMLElement>(
@@ -535,20 +527,23 @@ function GamePlayer({
         contentHeight >= contentWidth * 0.85 || contentWidth <= viewportWidth * 0.78;
       const isTooTall = contentHeight > viewportHeight + 16;
 
-      if (!viewportWidth || !viewportHeight || !shouldFitContent || !isTooTall) return;
+      if (!viewportWidth || !viewportHeight || !shouldFitContent || !isTooTall) {
+        setFrameScale(1);
+        return;
+      }
 
       const scale = Math.max(
         0.35,
         Math.min(1, (viewportWidth - 2) / contentWidth, (viewportHeight - 2) / contentHeight),
       );
 
-      html.style.overflow = "hidden";
-      body.style.overflow = "hidden";
-      body.style.transform = `scale(${scale})`;
-      body.style.transformOrigin = "top center";
-      body.style.width = `${100 / scale}%`;
-      body.style.height = `${viewportHeight / scale}px`;
-      body.style.minHeight = `${viewportHeight / scale}px`;
+      setFrameScale(scale);
+    });
+  }
+
+  function scheduleFrameFitChecks() {
+    [150, 350, 700, 1200, 2000, 3200].forEach((delay) => {
+      window.setTimeout(fitPortraitIframeContent, delay);
     });
   }
 
@@ -579,17 +574,25 @@ function GamePlayer({
             </button>
           </div>
         </div>
-        <iframe
-          ref={iframeRef}
-          title={`${game.korName} 실행 화면`}
-          src={game.gameUrl}
-          allowFullScreen
-          onLoad={() => {
-            blockIframeContextMenu();
-            fitPortraitIframeContent();
-            window.setTimeout(fitPortraitIframeContent, 250);
-          }}
-        />
+        <div className="player-frame">
+          <iframe
+            ref={iframeRef}
+            title={`${game.korName} 실행 화면`}
+            src={game.gameUrl}
+            allowFullScreen
+            style={
+              {
+                "--frame-scale": frameScale,
+                "--frame-size": `${100 / frameScale}%`,
+              } as CSSProperties
+            }
+            onLoad={() => {
+              blockIframeContextMenu();
+              resetIframeViewportScale();
+              scheduleFrameFitChecks();
+            }}
+          />
+        </div>
       </div>
     </section>
   );
