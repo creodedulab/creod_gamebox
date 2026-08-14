@@ -455,6 +455,7 @@ function GamePlayer({
     body.style.removeProperty("transform-origin");
     body.style.removeProperty("width");
     body.style.removeProperty("min-height");
+    body.style.removeProperty("height");
   }
 
   function fitPortraitIframeContent() {
@@ -471,14 +472,36 @@ function GamePlayer({
     window.requestAnimationFrame(() => {
       const viewportWidth = iframe.clientWidth;
       const viewportHeight = iframe.clientHeight;
-      const contentWidth = Math.max(body.scrollWidth, html.scrollWidth, body.offsetWidth, html.offsetWidth);
-      const contentHeight = Math.max(
-        body.scrollHeight,
-        html.scrollHeight,
-        body.offsetHeight,
-        html.offsetHeight,
+      const candidateElements = [
+        ...Array.from(
+          iframeDocument.querySelectorAll<HTMLElement>(
+            "#game-container, #game, #app, #root, main, canvas, [class*='game'], [class*='container']",
+          ),
+        ),
+        ...Array.from(body.children) as HTMLElement[],
+      ];
+      const fallbackSize = {
+        width: Math.max(body.scrollWidth, html.scrollWidth, body.offsetWidth, html.offsetWidth),
+        height: Math.max(body.scrollHeight, html.scrollHeight, body.offsetHeight, html.offsetHeight),
+      };
+      const measuredContent = candidateElements.reduce(
+        (largest, element) => {
+          const rect = element.getBoundingClientRect();
+          const width = Math.max(rect.width, element.scrollWidth, element.offsetWidth);
+          const height = Math.max(rect.height, element.scrollHeight, element.offsetHeight);
+          const visibleArea = Math.max(0, rect.width) * Math.max(0, rect.height);
+          const contentArea = width * height;
+          const overflowPriority = Math.max(0, height - rect.height) * Math.max(1, width);
+          const score = overflowPriority + contentArea + visibleArea;
+
+          if (width < 120 || height < 180) return largest;
+          return score > largest.score ? { width, height, score } : largest;
+        },
+        { ...fallbackSize, score: 0 },
       );
-      const isPortraitContent = contentHeight >= contentWidth * 1.1;
+      const contentWidth = measuredContent.width;
+      const contentHeight = measuredContent.height;
+      const isPortraitContent = contentHeight >= contentWidth * 1.1 || contentWidth <= viewportWidth * 0.55;
       const isTooTall = contentHeight > viewportHeight + 16;
 
       if (!viewportWidth || !viewportHeight || !isPortraitContent || !isTooTall) return;
@@ -493,6 +516,7 @@ function GamePlayer({
       body.style.transform = `scale(${scale})`;
       body.style.transformOrigin = "top center";
       body.style.width = `${100 / scale}%`;
+      body.style.height = `${viewportHeight / scale}px`;
       body.style.minHeight = `${viewportHeight / scale}px`;
     });
   }
