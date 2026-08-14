@@ -1,0 +1,4 @@
+1.kor_name=[똥룡 게임]
+2.eng_name=[The Game of DungRyong]
+3.maker=[김제 린하]
+3.genre=[*]

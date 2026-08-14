@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>날아가는 새 게임 - Sky Bird Adventure</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .glass-dark {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); }
+      50% { filter: drop-shadow(0 0 22px rgba(245, 158, 11, 1)); }
+    }
+    .boss-warning-anim {
+      animation: pulseGlow 1s infinite alternate;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-screen w-screen overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4">
+
+  <!-- Main Game Container -->
+  <div class="relative w-full max-w-md h-[92vh] max-h-[780px] bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-700 flex flex-col">
+
+    <!-- Top Navigation HUD -->
+    <div class="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-center pointer-events-none">
+      <!-- Score & Coins -->
+      <div class="flex gap-2 items-center">
+        <div class="glass-dark px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg border border-white/10">
+          <span class="text-amber-400 font-black text-sm">🏆</span>
+          <span id="hudScore" class="font-extrabold text-lg text-white">0</span>
+        </div>
+        <div class="glass-dark px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg border border-white/10">
+          <span class="text-yellow-400 font-black text-sm">🪙</span>
+          <span id="hudCoins" class="font-extrabold text-base text-yellow-300">0</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-2 pointer-events-auto">
+        <button id="soundBtn" class="w-10 h-10 rounded-full glass-dark flex items-center justify-center text-amber-400 hover:bg-white/20 active:scale-95 transition-all shadow-lg border border-white/10">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <button id="pauseBtn" class="w-10 h-10 rounded-full glass-dark flex items-center justify-center text-slate-200 hover:bg-white/20 active:scale-95 transition-all shadow-lg border border-white/10">
+          <i class="fa-solid fa-pause"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Powerups HUD Indicator -->
+    <div id="powerupContainer" class="absolute top-16 left-4 z-20 flex flex-col gap-1.5 pointer-events-none">
+      <!-- Active items dynamically injected here -->
+    </div>
+
+    <!-- Boss Health Bar HUD -->
+    <div id="bossHud" class="hidden absolute top-16 left-1/2 -translate-x-1/2 z-20 w-64 glass-dark p-2 rounded-2xl border border-red-500/50 shadow-xl flex flex-col items-center gap-1 transition-all">
+      <div class="flex justify-between w-full px-1 text-xs font-black text-red-400">
+        <span id="bossName">🐲 거대 화염 드래곤</span>
+        <span id="bossHpText">HP 15/15</span>
+      </div>
+      <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+        <div id="bossHpBar" class="h-full bg-gradient-to-r from-red-500 to-amber-400 transition-all duration-150" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <!-- Game Canvas Element -->
+    <div class="relative w-full h-full flex-grow flex items-center justify-center">
+      <canvas id="gameCanvas" class="w-full h-full block bg-slate-900 cursor-pointer"></canvas>
+    </div>
+
+    <!-- Start Screen Overlay -->
+    <div id="startOverlay" class="absolute inset-0 z-30 glass-dark flex flex-col items-center justify-between p-6 text-center transition-opacity duration-300">
+      <div class="mt-8 flex flex-col items-center">
+        <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-200 rounded-3xl flex items-center justify-center shadow-xl shadow-amber-500/20 mb-3 border-2 border-amber-300">
+          <span class="text-4xl">🐥</span>
+        </div>
+        <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 drop-shadow">
+          스카이 버드 어드벤처
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">Sky Bird Adventure</p>
+      </div>
+
+      <!-- Instructions Card -->
+      <div class="glass p-4 rounded-2xl w-full max-w-xs space-y-2 border border-white/10 text-xs text-slate-200 text-left">
+        <div class="flex items-center gap-2 font-bold text-amber-300 text-sm">
+          <i class="fa-solid fa-gamepad"></i> 조작 방법
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>클릭 / 스페이스 / ↑ 키</span>
+          <span class="font-bold text-amber-400">점프 🚀</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>단축키 [ V 키 ]</span>
+          <span class="font-bold text-emerald-400">즉시 다시 시작 🔄</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>단축키 [ C 키 / Home ]</span>
+          <span class="font-bold text-sky-400">홈 화면 🏠</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>장애물 3개 통과</span>
+          <span class="font-bold text-red-400">드래곤 보스 출현 🐲</span>
+        </div>
+      </div>
+
+      <!-- Item Preview Guide -->
+      <div class="flex gap-3 text-xs bg-slate-900/60 p-2.5 rounded-2xl border border-white/5">
+        <div class="flex items-center gap-1 text-sky-300"><span class="text-sm">🛡️</span> 보호막</div>
+        <div class="flex items-center gap-1 text-amber-300"><span class="text-sm">🧲</span> 자석</div>
+        <div class="flex items-center gap-1 text-emerald-300"><span class="text-sm">⏳</span> 슬로우</div>
+        <div class="flex items-center gap-1 text-red-400 font-bold"><span class="text-sm">💣</span> 폭탄10</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="w-full max-w-xs space-y-2 mb-4">
+        <button id="startBtn" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-2xl text-lg shadow-lg shadow-amber-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-play"></i> 게임 시작 (V키 가능)
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Over Screen Overlay -->
+    <div id="gameOverOverlay" class="hidden absolute inset-0 z-30 glass-dark flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+      <div class="w-20 h-20 bg-red-500/20 border-2 border-red-500/50 rounded-full flex items-center justify-center text-4xl mb-2 text-red-400">
+        💥
+      </div>
+      <h2 class="text-3xl font-black text-red-400 mb-1">GAME OVER</h2>
+      <p class="text-xs text-slate-400 mb-4">새가 추락하거나 장애물에 충돌했습니다!</p>
+
+      <!-- Score Summary Box -->
+      <div class="glass p-4 rounded-2xl w-full max-w-xs space-y-3 border border-white/10 mb-6">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-300">최종 점수</span>
+          <span id="goScore" class="font-black text-xl text-amber-300">0</span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-300">획득한 코인</span>
+          <span id="goCoins" class="font-bold text-lg text-yellow-400">🪙 0</span>
+        </div>
+        <div class="h-px bg-white/10 w-full"></div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-400">최고 기록</span>
+          <span id="goHighScore" class="font-black text-slate-200">0</span>
+        </div>
+      </div>
+
+      <!-- Restart Actions -->
+      <div class="w-full max-w-xs space-y-2">
+        <button id="restartBtn" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-2xl text-base shadow-lg shadow-amber-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i> 다시 도전하기 [ V 키 ]
+        </button>
+        <button id="goHomeBtn" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-2xl text-sm border border-slate-700 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-house"></i> 홈 화면으로 [ C 키 ]
+        </button>
+      </div>
+    </div>
+
+    <!-- Pause Screen Overlay -->
+    <div id="pauseOverlay" class="hidden absolute inset-0 z-30 glass-dark flex flex-col items-center justify-center p-6 text-center">
+      <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-3xl mb-3 text-amber-400 border border-amber-500/30">
+        ⏸️
+      </div>
+      <h2 class="text-2xl font-black text-white mb-6">일시 정지</h2>
+      <div class="w-full max-w-xs space-y-2">
+        <button id="resumeBtn" class="w-full py-3.5 bg-amber-500 text-slate-950 font-black rounded-2xl text-base shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+          이어서 하기
+        </button>
+        <button id="pauseHomeBtn" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-2xl text-sm border border-slate-700 active:scale-95 transition-all">
+          홈 화면으로 [ C 키 ]
+        </button>
+      </div>
+    </div>
+
+    <!-- Pause Screen Overlay -->
+    <div id="pauseOverlay" class="hidden absolute inset-0 z-30 glass-dark flex flex-col items-center justify-center p-6 text-center">
+      <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-3xl mb-3 text-amber-400 border border-amber-500/30">
+        ⏸️
+      </div>
+      <h2 class="text-2xl font-black text-white mb-6">일시 정지</h2>
+      <button id="resumeBtn" class="w-full max-w-xs py-3.5 bg-amber-500 text-slate-950 font-black rounded-2xl text-base shadow-lg hover:scale-105 active:scale-95 transition-all">
+        이어서 하기
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // Audio FX Engine using Web Audio API
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playJump() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+      }
+
+      playCoin() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, this.ctx.currentTime); // B5
+        osc.frequency.setValueAtTime(1318.51, this.ctx.currentTime + 0.08); // E6
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+
+      playHit() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.2);
+      }
+
+      playPowerup() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+
+      playExplosion() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.35);
+      }
+
+      playBossWarning() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(320, this.ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.3);
+      }
+
+      playShoot() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playBossHit() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(70, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+      }
+    }
+
+    const sound = new SoundFX();
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = 0;
+    let height = 0;
+
+    function resizeCanvas() {
+      const parent = canvas.parentElement;
+      width = parent.clientWidth;
+      height = parent.clientHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Game Variables
+    let gameState = 'START'; // START, PLAYING, PAUSED, GAMEOVER
+    let score = 0;
+    let coins = 0;
+    let highScore = parseInt(localStorage.getItem('sky_bird_highscore') || '0', 10);
+    let frames = 0;
+
+    // Bomb Destroy Powerup State
+    let bombDestroyCount = 0;
+
+    // Boss Battle Variables
+    let bossTriggered = false;
+    let bullets = [];
+    let bossProjectiles = [];
+    let warningTimer = 0;
+
+    const boss = {
+      active: false,
+      x: 0,
+      y: 0,
+      radius: 36,
+      hp: 15,
+      maxHp: 15,
+      vy: 2.2,
+      shootTimer: 0,
+
+      init() {
+        this.active = true;
+        this.x = width + 60;
+        this.y = height * 0.35;
+        this.hp = 15;
+        this.maxHp = 15;
+        this.shootTimer = 0;
+        warningTimer = 120; // 2초간 경고 문구 표시
+        sound.playBossWarning();
+        updateBossHUD();
+      },
+
+      update() {
+        if (!this.active) return;
+
+        // 화면 내로 진입
+        if (this.x > width - 75) {
+          this.x -= 2;
+        } else {
+          // 상하 이동
+          this.y += this.vy;
+          if (this.y < 80 || this.y > height - 120) {
+            this.vy *= -1;
+          }
+        }
+
+        // 보스 공격탄 발사
+        this.shootTimer++;
+        if (this.shootTimer % 65 === 0 && warningTimer <= 0) {
+          const angle = Math.atan2(bird.y - this.y, bird.x - this.x);
+          bossProjectiles.push({
+            x: this.x - 20,
+            y: this.y,
+            vx: Math.cos(angle) * 4.2,
+            vy: Math.sin(angle) * 4.2,
+            radius: 8
+          });
+          sound.playHit();
+        }
+      },
+
+      draw() {
+        if (!this.active) return;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // 화염 오라 효과
+        const auraGradient = ctx.createRadialGradient(0, 0, 10, 0, 0, 50);
+        auraGradient.addColorStop(0, 'rgba(239, 68, 68, 0.6)');
+        auraGradient.addColorStop(0.7, 'rgba(245, 158, 11, 0.3)');
+        auraGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        ctx.fillStyle = auraGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, 50, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 보스 본체 (드래곤 head)
+        ctx.fillStyle = '#DC2626';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#7F1D1D';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 눈
+        ctx.fillStyle = '#FEF08A';
+        ctx.beginPath();
+        ctx.arc(-10, -8, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-12, -8, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 이빨
+        ctx.fillStyle = '#0F172A';
+        ctx.beginPath();
+        ctx.arc(-15, 8, 10, 0, Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.moveTo(-20, 8); ctx.lineTo(-17, 14); ctx.lineTo(-14, 8);
+        ctx.moveTo(-14, 8); ctx.lineTo(-11, 14); ctx.lineTo(-8, 8);
+        ctx.fill();
+
+        // 날개 애니메이션
+        const wingY = Math.sin(frames * 0.2) * 8;
+        ctx.fillStyle = '#991B1B';
+        ctx.beginPath();
+        ctx.moveTo(10, -10);
+        ctx.lineTo(35, -25 + wingY);
+        ctx.lineTo(20, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    };
+
+    function updateBossHUD() {
+      const hud = document.getElementById('bossHud');
+      if (boss.active) {
+        hud.classList.remove('hidden');
+        document.getElementById('bossHpText').innerText = `HP ${boss.hp}/${boss.maxHp}`;
+        const pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+        document.getElementById('bossHpBar').style.width = `${pct}%`;
+      } else {
+        hud.classList.add('hidden');
+      }
+    }
+
+    // Physics Settings
+    const gravity = 0.38;
+    const jumpForce = -7.2;
+    const basePipeSpeed = 2.4;
+
+    // Player Bird Object
+    const bird = {
+      x: 70,
+      y: 250,
+      radius: 14,
+      velocity: 0,
+      rotation: 0,
+      color: '#FBBF24',
+      shieldActive: false,
+      magnetActive: false,
+      slowActive: false,
+      shieldTimer: 0,
+      magnetTimer: 0,
+      slowTimer: 0,
+
+      reset() {
+        this.y = height * 0.4;
+        this.velocity = 0;
+        this.rotation = 0;
+        this.shieldActive = false;
+        this.magnetActive = false;
+        this.slowActive = false;
+        this.shieldTimer = 0;
+        this.magnetTimer = 0;
+        this.slowTimer = 0;
+        bombDestroyCount = 0;
+      },
+
+      jump() {
+        this.velocity = jumpForce;
+        sound.playJump();
+        createSparkles(this.x, this.y + 10, '#FFF', 5);
+      },
+
+      update() {
+        this.velocity += gravity;
+        this.y += this.velocity;
+
+        // Rotation according to velocity
+        this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 6, (this.velocity * 0.08)));
+
+        // Ceiling collision
+        if (this.y - this.radius < 0) {
+          this.y = this.radius;
+          this.velocity = 0;
+        }
+
+        // Ground collision
+        if (this.y + this.radius >= height - 40) {
+          this.y = height - 40 - this.radius;
+          return true; // Crashed
+        }
+
+        // Update Timers
+        if (this.shieldActive) {
+          this.shieldTimer--;
+          if (this.shieldTimer <= 0) this.shieldActive = false;
+        }
+        if (this.magnetActive) {
+          this.magnetTimer--;
+          if (this.magnetTimer <= 0) this.magnetActive = false;
+        }
+        if (this.slowActive) {
+          this.slowTimer--;
+          if (this.slowTimer <= 0) this.slowActive = false;
+        }
+
+        return false;
+      },
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Shield Aura
+        if (this.shieldActive) {
+          ctx.strokeStyle = '#60A5FA';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(96, 165, 250, 0.2)';
+          ctx.fill();
+        }
+
+        // Bird Body
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Eye
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.arc(5, -4, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(6.5, -4, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Beak
+        ctx.fillStyle = '#F97316';
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.lineTo(18, 4);
+        ctx.lineTo(10, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Wing
+        const wingAngle = Math.sin(frames * 0.3) * 0.3;
+        ctx.fillStyle = '#F59E0B';
+        ctx.save();
+        ctx.translate(-4, 2);
+        ctx.rotate(wingAngle);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+      }
+    };
+
+    // Obstacle Pipes Array
+    let pipes = [];
+    const pipeGap = 135;
+
+    function spawnPipe() {
+      // 폭탄으로 인해 파이프 생성이 유예되는 경우
+      if (bombDestroyCount > 0) {
+        bombDestroyCount--;
+        updateHUDPowerups();
+        return;
+      }
+
+      const minHeight = 60;
+      const maxHeight = height - 40 - pipeGap - minHeight;
+      const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+
+      const newPipe = {
+        x: width,
+        topHeight: topHeight,
+        bottomY: topHeight + pipeGap,
+        width: 52,
+        passed: false,
+        item: null // 'COIN', 'SHIELD', 'MAGNET', 'SLOW', 'BOMB'
+      };
+
+      // Spawn Coins / Powerups inside gap
+      const rand = Math.random();
+      if (rand < 0.10) {
+        newPipe.item = 'BOMB';
+      } else if (rand < 0.22) {
+        newPipe.item = 'SHIELD';
+      } else if (rand < 0.34) {
+        newPipe.item = 'MAGNET';
+      } else if (rand < 0.46) {
+        newPipe.item = 'SLOW';
+      } else if (rand < 0.85) {
+        newPipe.item = 'COIN';
+      }
+
+      if (newPipe.item) {
+        newPipe.itemY = topHeight + pipeGap / 2;
+        newPipe.itemCollected = false;
+      }
+
+      pipes.push(newPipe);
+    }
+
+    // Particles System
+    let particles = [];
+    function createSparkles(x, y, color, count = 8) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 5,
+          vy: (Math.random() - 0.5) * 5,
+          radius: Math.random() * 3 + 1,
+          color: color,
+          alpha: 1,
+          draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          },
+          update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= 0.03;
+          }
+        });
+      }
+    }
+
+    function updateGame() {
+      if (gameState !== 'PLAYING') return;
+
+      frames++;
+
+      // 3개 장애물 통과 시 보스 출현 트리거!
+      if (!boss.active && !bossTriggered && score >= 3) {
+        bossTriggered = true;
+        boss.init();
+      }
+
+      // Boss Update
+      if (boss.active) {
+        boss.update();
+
+        // 자동 미사일 발사 (새가 보스를 향해 총알 발사)
+        if (frames % 16 === 0) {
+          bullets.push({
+            x: bird.x + bird.radius,
+            y: bird.y,
+            vx: 8
+          });
+          sound.playShoot();
+        }
+      }
+
+      // 플레이어 총알 이동 및 보스 충돌 감지
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
+
+        if (boss.active && Math.hypot(b.x - boss.x, b.y - boss.y) < boss.radius + 6) {
+          boss.hp--;
+          sound.playBossHit();
+          createSparkles(b.x, b.y, '#F59E0B', 8);
+          bullets.splice(i, 1);
+          updateBossHUD();
+
+          if (boss.hp <= 0) {
+            // 보스 처치!
+            sound.playExplosion();
+            createSparkles(boss.x, boss.y, '#EF4444', 30);
+            createSparkles(boss.x, boss.y, '#F59E0B', 30);
+            boss.active = false;
+            score += 10;
+            coins += 10;
+            updateHUD();
+            updateBossHUD();
+          }
+          continue;
+        }
+
+        if (b.x > width + 20) {
+          bullets.splice(i, 1);
+        }
+      }
+
+      // 보스 공격탄 이동 및 새 충돌 감지
+      for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+        const bp = bossProjectiles[i];
+        bp.x += bp.vx;
+        bp.y += bp.vy;
+
+        const distToBird = Math.hypot(bird.x - bp.x, bird.y - bp.y);
+        if (distToBird < bird.radius + bp.radius) {
+          if (bird.shieldActive) {
+            bird.shieldActive = false;
+            sound.playPowerup();
+            createSparkles(bird.x, bird.y, '#3B82F6', 15);
+            bossProjectiles.splice(i, 1);
+            updateHUDPowerups();
+          } else {
+            handleGameOver();
+            return;
+          }
+          continue;
+        }
+
+        if (bp.x < -20 || bp.y < -20 || bp.y > height + 20) {
+          bossProjectiles.splice(i, 1);
+        }
+      }
+
+      // Pipe Speed Calculation
+      const speedMultiplier = bird.slowActive ? 0.5 : 1.0;
+      const currentSpeed = (basePipeSpeed + Math.floor(score / 10) * 0.3) * speedMultiplier;
+
+      // Update Bird
+      const crashedGround = bird.update();
+      if (crashedGround) {
+        handleGameOver();
+        return;
+      }
+
+      // Spawn Pipes (보스전 중에는 신규 파이프 생성을 멈춤)
+      const spawnInterval = Math.max(80, Math.floor(130 / (currentSpeed / 2.4)));
+      if (!boss.active && frames % spawnInterval === 0) {
+        spawnPipe();
+      }
+
+      // Update Pipes & Collectibles
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        const p = pipes[i];
+        p.x -= currentSpeed;
+
+        // Magnet Effect for Items
+        if (bird.magnetActive && p.item && !p.itemCollected) {
+          const dx = bird.x - (p.x + p.width / 2);
+          const dy = bird.y - p.itemY;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 140) {
+            p.itemY += dy * 0.1;
+            p.x += dx * 0.05;
+          }
+        }
+
+        // Check Item Collection
+        if (p.item && !p.itemCollected) {
+          const itemX = p.x + p.width / 2;
+          const dist = Math.hypot(bird.x - itemX, bird.y - p.itemY);
+          if (dist < bird.radius + 16) {
+            p.itemCollected = true;
+            if (p.item === 'COIN') {
+              coins++;
+              sound.playCoin();
+              createSparkles(itemX, p.itemY, '#FBBF24', 10);
+            } else if (p.item === 'SHIELD') {
+              bird.shieldActive = true;
+              bird.shieldTimer = 300; // 5 seconds
+              sound.playPowerup();
+              createSparkles(itemX, p.itemY, '#60A5FA', 12);
+            } else if (p.item === 'MAGNET') {
+              bird.magnetActive = true;
+              bird.magnetTimer = 360; // 6 seconds
+              sound.playPowerup();
+              createSparkles(itemX, p.itemY, '#F59E0B', 12);
+            } else if (p.item === 'SLOW') {
+              bird.slowActive = true;
+              bird.slowTimer = 300; // 5 seconds
+              sound.playPowerup();
+              createSparkles(itemX, p.itemY, '#34D399', 12);
+            } else if (p.item === 'BOMB') {
+              // 폭탄 아이템 획득 시 10개 파이프 파괴!
+              sound.playExplosion();
+              triggerBombExplosion(10);
+            }
+            updateHUDPowerups();
+            updateHUD();
+          }
+        }
+
+        // Pipe Pass Score Check
+        if (!p.passed && p.x + p.width < bird.x) {
+          p.passed = true;
+          score++;
+          sound.playCoin();
+          updateHUD();
+        }
+
+        // Collision Check with Pipe
+        const inPipeX = (bird.x + bird.radius > p.x) && (bird.x - bird.radius < p.x + p.width);
+        const inTopPipeY = bird.y - bird.radius < p.topHeight;
+        const inBottomPipeY = bird.y + bird.radius > p.bottomY;
+
+        if (inPipeX && (inTopPipeY || inBottomPipeY)) {
+          if (bird.shieldActive) {
+            bird.shieldActive = false;
+            sound.playPowerup();
+            createSparkles(bird.x, bird.y, '#60A5FA', 15);
+            pipes.splice(i, 1);
+            updateHUDPowerups();
+            continue;
+          } else {
+            handleGameOver();
+            return;
+          }
+        }
+
+        // Remove Offscreen Pipes
+        if (p.x + p.width < -10) {
+          pipes.splice(i, 1);
+        }
+      }
+
+      // Update Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) particles.splice(i, 1);
+      }
+    }
+
+    // 폭탄 획득 시 장애물 10개 연속 파괴 트리거
+    function triggerBombExplosion(count) {
+      let destroyedSoFar = 0;
+
+      // 1. 현재 화면에 보이는 모든 장애물 폭파
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        const p = pipes[i];
+        createSparkles(p.x + p.width / 2, p.topHeight, '#EF4444', 15);
+        createSparkles(p.x + p.width / 2, p.bottomY, '#F59E0B', 15);
+        pipes.splice(i, 1);
+        score++;
+        destroyedSoFar++;
+        if (destroyedSoFar >= count) break;
+      }
+
+      // 2. 남은 파괴 개수는 이후 생길 파이프 생성 차단 카운트로 설정
+      bombDestroyCount += (count - destroyedSoFar);
+      updateHUD();
+      updateHUDPowerups();
+    }
+
+    function renderGame() {
+      // Clear Background (Sky Gradient)
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+      skyGrad.addColorStop(0, '#0F172A');
+      skyGrad.addColorStop(0.6, '#1E293B');
+      skyGrad.addColorStop(1, '#334155');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Render Parallax Clouds
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      const cloudOffset = (frames * 0.4) % width;
+      ctx.beginPath();
+      ctx.arc(width - cloudOffset, 80, 30, 0, Math.PI * 2);
+      ctx.arc(width - cloudOffset + 25, 70, 40, 0, Math.PI * 2);
+      ctx.arc(width - cloudOffset + 50, 80, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Render Pipes
+      pipes.forEach(p => {
+        const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x + p.width, 0);
+        pipeGrad.addColorStop(0, '#10B981');
+        pipeGrad.addColorStop(0.5, '#34D399');
+        pipeGrad.addColorStop(1, '#059669');
+
+        ctx.fillStyle = pipeGrad;
+        ctx.strokeStyle = '#064E3B';
+        ctx.lineWidth = 2.5;
+
+        // Top Pipe
+        ctx.fillRect(p.x, 0, p.width, p.topHeight);
+        ctx.strokeRect(p.x, -5, p.width, p.topHeight + 5);
+        ctx.fillRect(p.x - 3, p.topHeight - 16, p.width + 6, 16);
+        ctx.strokeRect(p.x - 3, p.topHeight - 16, p.width + 6, 16);
+
+        // Bottom Pipe
+        const bottomHeight = height - 40 - p.bottomY;
+        ctx.fillRect(p.x, p.bottomY, p.width, bottomHeight);
+        ctx.strokeRect(p.x, p.bottomY, p.width, bottomHeight + 5);
+        ctx.fillRect(p.x - 3, p.bottomY, p.width + 6, 16);
+        ctx.strokeRect(p.x - 3, p.bottomY, p.width + 6, 16);
+
+        // Render Item inside Gap
+        if (p.item && !p.itemCollected) {
+          const itemX = p.x + p.width / 2;
+          const bounceY = Math.sin(frames * 0.1) * 4;
+
+          ctx.save();
+          ctx.translate(itemX, p.itemY + bounceY);
+          ctx.font = '20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          if (p.item === 'COIN') ctx.fillText('🪙', 0, 0);
+          else if (p.item === 'SHIELD') ctx.fillText('🛡️', 0, 0);
+          else if (p.item === 'MAGNET') ctx.fillText('🧲', 0, 0);
+          else if (p.item === 'SLOW') ctx.fillText('⏳', 0, 0);
+          else if (p.item === 'BOMB') ctx.fillText('💣', 0, 0);
+
+          ctx.restore();
+        }
+      });
+
+      // Render Ground
+      const groundY = height - 40;
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(0, groundY, width, 40);
+      ctx.fillStyle = '#10B981';
+      ctx.fillRect(0, groundY, width, 6);
+
+      // Render Particles
+      particles.forEach(pt => pt.draw(ctx));
+
+      // Render Bullets & Boss Projectiles
+      bullets.forEach(b => {
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      bossProjectiles.forEach(bp => {
+        ctx.fillStyle = '#EF4444';
+        ctx.strokeStyle = '#FEF08A';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(bp.x, bp.y, bp.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Render Boss
+      boss.draw();
+
+      // Render Boss Warning Overlay
+      if (warningTimer > 0) {
+        warningTimer--;
+        ctx.save();
+        ctx.fillStyle = '#EF4444';
+        ctx.font = '900 22px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 8;
+        ctx.fillText('⚠️ BOSS WARNING ⚠️', width / 2, height * 0.22 + Math.sin(frames * 0.3) * 3);
+        ctx.restore();
+      }
+
+      // Render Bird
+      bird.draw();
+    }
+
+    // Update Top HUD
+    function updateHUD() {
+      document.getElementById('hudScore').innerText = score;
+      document.getElementById('hudCoins').innerText = coins;
+    }
+
+    // Update Active Powerups HUD
+    function updateHUDPowerups() {
+      const container = document.getElementById('powerupContainer');
+      container.innerHTML = '';
+
+      if (bird.shieldActive) {
+        container.innerHTML += `<div class="glass-dark px-2.5 py-1 rounded-full text-xs font-bold text-sky-300 flex items-center gap-1 border border-sky-500/30">🛡️ 보호막</div>`;
+      }
+      if (bird.magnetActive) {
+        container.innerHTML += `<div class="glass-dark px-2.5 py-1 rounded-full text-xs font-bold text-amber-300 flex items-center gap-1 border border-amber-500/30">🧲 자석</div>`;
+      }
+      if (bird.slowActive) {
+        container.innerHTML += `<div class="glass-dark px-2.5 py-1 rounded-full text-xs font-bold text-emerald-300 flex items-center gap-1 border border-emerald-500/30">⏳ 슬로우</div>`;
+      }
+      if (bombDestroyCount > 0) {
+        container.innerHTML += `<div class="glass-dark px-2.5 py-1 rounded-full text-xs font-bold text-red-400 flex items-center gap-1 border border-red-500/30 animate-pulse">💣 폭파 ${bombDestroyCount}개 남음</div>`;
+      }
+    }
+
+    // Game Over Handler
+    function handleGameOver() {
+      gameState = 'GAMEOVER';
+      sound.playHit();
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('sky_bird_highscore', highScore.toString());
+      }
+
+      document.getElementById('goScore').innerText = score;
+      document.getElementById('goCoins').innerText = `🪙 ${coins}`;
+      document.getElementById('goHighScore').innerText = highScore;
+
+      document.getElementById('gameOverOverlay').classList.remove('hidden');
+    }
+
+    // Start Game
+    function startGame() {
+      sound.init();
+      score = 0;
+      coins = 0;
+      pipes = [];
+      particles = [];
+      bullets = [];
+      bossProjectiles = [];
+      bossTriggered = false;
+      boss.active = false;
+      warningTimer = 0;
+      frames = 0;
+      bird.reset();
+      updateHUD();
+      updateHUDPowerups();
+      updateBossHUD();
+
+      document.getElementById('startOverlay').classList.add('hidden');
+      document.getElementById('gameOverOverlay').classList.add('hidden');
+      document.getElementById('pauseOverlay').classList.add('hidden');
+
+      gameState = 'PLAYING';
+    }
+
+    // Go to Home (Start Screen)
+    function goToHome() {
+      gameState = 'START';
+      boss.active = false;
+      updateBossHUD();
+      document.getElementById('startOverlay').classList.remove('hidden');
+      document.getElementById('gameOverOverlay').classList.add('hidden');
+      document.getElementById('pauseOverlay').classList.add('hidden');
+    }
+
+    // User Controls (Space / Click / Key Down)
+    function handleInput() {
+      if (gameState === 'PLAYING') {
+        bird.jump();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        handleInput();
+      }
+      // V 키 누르면 게임 언제든 재시작
+      if (e.code === 'KeyV') {
+        e.preventDefault();
+        startGame();
+      }
+      // C 키 또는 Home 키 누르면 메인/홈 화면으로 이동
+      if (e.code === 'KeyC' || e.code === 'Home') {
+        e.preventDefault();
+        goToHome();
+      }
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      handleInput();
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handleInput();
+    }, { passive: false });
+
+    // UI Buttons Binding
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('goHomeBtn').addEventListener('click', goToHome);
+    document.getElementById('pauseHomeBtn').addEventListener('click', goToHome);
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
+        document.getElementById('pauseOverlay').classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('resumeBtn').addEventListener('click', () => {
+      if (gameState === 'PAUSED') {
+        gameState = 'PLAYING';
+        document.getElementById('pauseOverlay').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      const btn = document.getElementById('soundBtn');
+      btn.innerHTML = sound.enabled
+        ? `<i class="fa-solid fa-volume-high"></i>`
+        : `<i class="fa-solid fa-volume-xmark text-slate-500"></i>`;
+    });
+
+    // Main Game Loop
+    function gameLoop() {
+      updateGame();
+      renderGame();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start Game Loop on Window Load
+    window.onload = () => {
+      gameLoop();
+    };
+  </script>
+</body>
+</html>

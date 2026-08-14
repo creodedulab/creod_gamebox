@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2초의 온기 - 무한 엘리베이터 점프</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;700;900&display=swap">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'sans-serif'],
+                    },
+                    colors: {
+                        warm: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            accent: '#ff7e5f'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            overflow: hidden;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 860px;
+            margin: 0 auto;
+            overflow: hidden;
+            background: #020617;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+            50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
+        }
+
+        .btn-pulse {
+            animation: pulse-glow 1.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="game-container" class="relative flex flex-col justify-between">
+
+        <!-- TOP HUD DISPLAY -->
+        <div class="absolute top-0 left-0 right-0 p-4 z-20 pointer-events-none flex flex-col gap-2">
+            <div class="flex justify-between items-center glass-panel p-3 rounded-2xl shadow-xl">
+                <!-- Current Height Floor Counter -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-slate-400 font-bold">높이</span>
+                    <div class="bg-amber-500/20 border border-amber-400/50 px-3 py-1 rounded-xl flex items-center space-x-1">
+                        <span class="text-xs text-amber-300">🏢</span>
+                        <span id="hud-floor" class="font-mono text-xl font-black text-amber-400">1F</span>
+                    </div>
+                </div>
+
+                <!-- Coffee Coins & Total Score -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-500/20 border border-amber-400/40 px-2.5 py-1 rounded-xl flex items-center space-x-1">
+                        <span class="text-sm">☕</span>
+                        <span id="hud-coffee" class="font-mono text-sm font-extrabold text-amber-300">0</span>
+                    </div>
+                    <div class="text-right">
+                        <div id="hud-combo" class="text-xs font-black text-amber-300 tracking-wider hidden">COMBO x2</div>
+                        <div class="text-xs text-slate-400 font-bold">온기 점수</div>
+                        <div id="hud-score" class="font-mono text-lg font-extrabold text-white">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warmth Energy Bar -->
+            <div class="glass-panel p-2 rounded-xl flex items-center space-x-2">
+                <span class="text-xs font-bold text-amber-300 flex items-center space-x-1">
+                    <span>온기</span>
+                    <span id="hud-warmth-emoji">☀️</span>
+                </span>
+                <div class="flex-1 h-3.5 bg-slate-900/90 rounded-full p-0.5 border border-slate-700/80 relative overflow-hidden">
+                    <div id="hud-warmth-bar" class="h-full bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 rounded-full transition-all duration-150 w-full"></div>
+                </div>
+                <span id="hud-warmth-val" class="font-mono text-xs font-bold text-amber-300 w-10 text-right">100%</span>
+            </div>
+        </div>
+
+        <!-- CANVAS GAME AREA -->
+        <canvas id="gameCanvas" class="w-full h-full z-10"></canvas>
+
+        <!-- TOUCH CONTROLS FOR MOBILE (LEFT/RIGHT TAP ZONES) -->
+        <div id="touch-controls" class="absolute bottom-4 left-4 right-4 z-20 flex justify-between pointer-events-auto md:hidden">
+            <button id="btn-left" class="w-24 h-16 glass-panel active:bg-amber-500/30 rounded-2xl flex items-center justify-center text-3xl text-amber-300 border border-amber-400/40 shadow-lg active:scale-95 transition-transform">
+                ◀
+            </button>
+            <button id="btn-right" class="w-24 h-16 glass-panel active:bg-amber-500/30 rounded-2xl flex items-center justify-center text-3xl text-amber-300 border border-amber-400/40 shadow-lg active:scale-95 transition-transform">
+                ▶
+            </button>
+        </div>
+
+        <!-- START OVERLAY SCREEN -->
+        <div id="overlay-start" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-30 flex flex-col items-center justify-between p-4 text-center overflow-y-auto">
+            <div class="my-auto space-y-3 max-w-xs w-full py-4">
+                <div class="w-16 h-16 bg-amber-500/20 border-2 border-amber-400/60 rounded-3xl flex items-center justify-center text-3xl mx-auto shadow-2xl animate-bounce">
+                    🛗
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">2초의 온기</h1>
+                <p class="text-amber-300 text-xs font-semibold">무한 엘리베이터 점프 클라이머</p>
+                
+                <!-- CHARACTER SELECTOR UI -->
+                <div class="bg-slate-900/90 border border-amber-500/30 p-3 rounded-2xl text-left space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-amber-300">🐾 캐릭터 선택</span>
+                        <span id="selected-char-name" class="text-[11px] font-extrabold text-white bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">사람 (유리)</span>
+                    </div>
+                    <div id="char-grid" class="grid grid-cols-5 gap-1.5 pt-1">
+                        <!-- JS populated character cards -->
+                    </div>
+                </div>
+
+                <!-- TRAIL SHOP UI -->
+                <div class="bg-slate-900/90 border border-amber-500/30 p-3 rounded-2xl text-left space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-amber-300">✨ 점프 트레일 상점</span>
+                        <span id="shop-coffee-count" class="text-[11px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">☕ 0개 보유</span>
+                    </div>
+                    <div id="trail-grid" class="grid grid-cols-4 gap-1.5 pt-1">
+                        <!-- JS populated trail cards -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-2xl text-xs text-slate-300 text-left space-y-1.5">
+                    <p class="font-bold text-amber-400">💡 게임 방법:</p>
+                    <p>1. **좌/우 방향키** 또는 **화면 좌/우 터치**로 엘리베이터를 밟고 올라가세요!</p>
+                    <p>2. **⏱️ 2초 놋쇠 엘리베이터**: 2초 뒤 사라지니 빠르게 jump!</p>
+                    <p>3. **✨ 2초 온기 부스터**: 2초간 고속 수직 상승!</p>
+                </div>
+
+                <button id="btn-start" class="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-base rounded-2xl shadow-xl btn-pulse active:scale-95 transition-transform">
+                    선택한 캐릭터로 점프! 🚀
+                </button>
+            </div>
+            <div class="text-[11px] text-slate-500 pb-2">동화 《2초 동안 무슨 일이?》 모티브 수직 점프 게임</div>
+        </div>
+
+        <!-- GAME OVER OVERLAY SCREEN -->
+        <div id="overlay-result" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-4 text-center opacity-0 pointer-events-none transition-opacity duration-300 overflow-y-auto">
+            <div class="bg-slate-900 border border-amber-500/40 p-5 rounded-3xl max-w-xs w-full shadow-2xl space-y-3 my-auto">
+                <div id="result-icon" class="text-4xl my-1">🌇</div>
+                <h2 id="result-title" class="text-xl font-black text-white">더 높이 도달했습니다!</h2>
+                <p id="result-subtitle" class="text-xs text-amber-300 font-medium">따뜻한 마음으로 엘리베이터를 밟고 올라갔군요!</p>
+
+                <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800 space-y-1.5 text-xs text-left">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">도달한 높이:</span>
+                        <span id="res-floor" class="font-extrabold text-amber-400">1F</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">최종 점수:</span>
+                        <span id="res-score" class="font-extrabold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">최고 연속 콤보:</span>
+                        <span id="res-maxcombo" class="font-extrabold text-emerald-400">0회</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">최고 기록:</span>
+                        <span id="res-highscore" class="font-extrabold text-amber-300">0F</span>
+                    </div>
+                </div>
+
+                <!-- CHARACTER SELECTOR ON GAME OVER SCREEN -->
+                <div class="bg-slate-950/80 border border-amber-500/30 p-2.5 rounded-2xl text-left space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-amber-300">🐾 캐릭터 변경</span>
+                        <span id="result-selected-char-name" class="text-[10px] font-extrabold text-white bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">사람 (유리)</span>
+                    </div>
+                    <div id="result-char-grid" class="grid grid-cols-5 gap-1 pt-0.5">
+                        <!-- JS populated character cards -->
+                    </div>
+                </div>
+
+                <!-- TRAIL SELECTOR ON GAME OVER SCREEN -->
+                <div class="bg-slate-950/80 border border-amber-500/30 p-2.5 rounded-2xl text-left space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-amber-300">✨ 트레일 변경</span>
+                        <span id="result-coffee-count" class="text-[10px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">☕ 0개</span>
+                    </div>
+                    <div id="result-trail-grid" class="grid grid-cols-4 gap-1 pt-0.5">
+                        <!-- JS populated trail cards -->
+                    </div>
+                </div>
+
+                <p id="res-story-quote" class="text-xs text-slate-300 italic bg-amber-500/10 border border-amber-500/20 p-2 rounded-xl">
+                    "단 2초의 용기와 망설임 없는 점프! 당신의 따뜻한 발걸음이 아파트 높이만큼 빛납니다."
+                </p>
+
+                <div class="flex gap-2">
+                    <button id="btn-restart" class="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg transition-transform active:scale-95">
+                        다시 점프! 🔄
+                    </button>
+                    <button id="btn-home" class="py-3 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs rounded-xl border border-slate-700 transition-transform active:scale-95">
+                        메인으로 🏠
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+            }
+
+            playJump() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(260, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+
+            playSuperJump() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.25);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            playWarmthPickup() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.05);
+
+                    gain.gain.setValueAtTime(0.12, now + i * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + i * 0.05);
+                    osc.stop(now + i * 0.05 + 0.3);
+                });
+            }
+
+            playTick() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.04);
+            }
+
+            playFall() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.4);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
+
+        const audio = new AudioEngine();
+
+        // 10 UNIQUE CHARACTERS DEFINITION
+        const CHARACTERS = [
+            { id: 'human', name: '사람 (유리)', emoji: '🧑', color: '#f59e0b', desc: '원작 주인공' },
+            { id: 'cat', name: '고양이', emoji: '🐱', color: '#f97316', desc: '호기심 많은 냥이' },
+            { id: 'dog', name: '강아지', emoji: '🐶', color: '#eab308', desc: '활발한 댕댕이' },
+            { id: 'hamster', name: '햄스터', emoji: '🐹', color: '#fbbf24', desc: '볼빵빵 귀요미' },
+            { id: 'fox', name: '여우', emoji: '🦊', color: '#ea580c', desc: '재빠른 여우' },
+            { id: 'penguin', name: '펭귄', emoji: '🐧', color: '#0284c7', desc: '뒤뚱뒤뚱 펭귄' },
+            { id: 'panda', name: '판다', emoji: '🐼', color: '#10b981', desc: '느긋한 판다' },
+            { id: 'dragon', name: '드래곤', emoji: '🐲', color: '#8b5cf6', desc: '전설의 아기용' },
+            { id: 'bear', name: '곰', emoji: '🐻', color: '#78350f', desc: '든든한 아기곰' },
+            { id: 'rabbit', name: '토끼', emoji: '🐰', color: '#ec4899', desc: '깡총깡총 토끼' }
+        ];
+
+        // TRAIL DEFINITIONS (5 COFFEE INCREMENTS)
+        const TRAILS = [
+            { id: 'none', name: '없음', color: null, cost: 0, hex: '#64748b' },
+            { id: 'red', name: '빨강', color: '#ef4444', cost: 5, hex: '#ef4444' },
+            { id: 'orange', name: '주황', color: '#f97316', cost: 10, hex: '#f97316' },
+            { id: 'yellow', name: '노랑', color: '#eab308', cost: 15, hex: '#eab308' },
+            { id: 'green', name: '초록', color: '#10b981', cost: 20, hex: '#10b981' },
+            { id: 'blue', name: '파랑', color: '#3b82f6', cost: 25, hex: '#3b82f6' },
+            { id: 'purple', name: '보라', color: '#a855f7', cost: 30, hex: '#a855f7' },
+            { id: 'white', name: '흰색', color: '#ffffff', cost: 35, hex: '#ffffff' }
+        ];
+
+        let state = {
+            isPlaying: false,
+            selectedChar: 'human',
+            selectedTrail: localStorage.getItem('warmth_jump_trail') || 'none',
+            unlockedTrails: JSON.parse(localStorage.getItem('warmth_jump_unlocked_trails')) || ['none'],
+            totalCoffee: parseInt(localStorage.getItem('warmth_jump_coffee')) || 0,
+            score: 0,
+            highScore: localStorage.getItem('warmth_jump_high') || 0,
+            maxFloor: 1,
+            warmth: 100,
+            combo: 0,
+            maxCombo: 0,
+            cameraY: 0,
+            keys: { left: false, right: false },
+            boostTimer: 0,
+            boostDuration: 120, // 2 seconds at 60fps
+            particles: [],
+            floatingTexts: [],
+            platforms: [],
+            items: []
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const hudFloor = document.getElementById('hud-floor');
+        const hudScore = document.getElementById('hud-score');
+        const hudCoffee = document.getElementById('hud-coffee');
+        const hudWarmthBar = document.getElementById('hud-warmth-bar');
+        const hudWarmthVal = document.getElementById('hud-warmth-val');
+        const hudWarmthEmoji = document.getElementById('hud-warmth-emoji');
+        const hudCombo = document.getElementById('hud-combo');
+
+        const overlayStart = document.getElementById('overlay-start');
+        const overlayResult = document.getElementById('overlay-result');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
+
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Player {
+            constructor() {
+                this.width = 36;
+                this.height = 48;
+                this.x = canvas.width / 2 - this.width / 2;
+                this.y = canvas.height - 150;
+                this.vx = 0;
+                this.vy = 0;
+                this.gravity = 0.42;
+                this.jumpForce = -12.5;
+                this.moveSpeed = 0.8;
+                this.friction = 0.86;
+                this.facing = 'right';
+            }
+
+            update() {
+                // Horizontal Acceleration
+                if (state.keys.left) {
+                    this.vx -= this.moveSpeed;
+                    this.facing = 'left';
+                }
+                if (state.keys.right) {
+                    this.vx += this.moveSpeed;
+                    this.facing = 'right';
+                }
+
+                this.vx *= this.friction;
+                this.x += this.vx;
+
+                if (this.x < -this.width) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = -this.width;
+
+                // Spawn Trail Particles if Trail active
+                if (state.selectedTrail !== 'none') {
+                    const trailObj = TRAILS.find(t => t.id === state.selectedTrail);
+                    if (trailObj && trailObj.color && (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1)) {
+                        state.particles.push({
+                            x: this.x + this.width / 2 + (Math.random() * 8 - 4),
+                            y: this.y + this.height - 4,
+                            vx: (Math.random() - 0.5) * 1.2,
+                            vy: Math.random() * 1.5 + 0.2,
+                            radius: Math.random() * 3.5 + 1.5,
+                            color: trailObj.color,
+                            alpha: 0.85
+                        });
+                    }
+                }
+
+                if (state.boostTimer > 0) {
+                    this.vy = -14;
+                    state.boostTimer--;
+                    if (Math.random() < 0.6) {
+                        spawnParticles(this.x + this.width / 2, this.y + this.height, '#f59e0b', 2);
+                    }
+                } else {
+                    this.vy += this.gravity;
+                }
+
+                this.y += this.vy;
+            }
+
+            jump(force = this.jumpForce) {
+                this.vy = force;
+                spawnParticles(this.x + this.width / 2, this.y + this.height, '#fbbf24', 6);
+            }
+
+            draw() {
+                ctx.save();
+
+                const drawX = this.x;
+                const drawY = this.y - state.cameraY;
+                const charType = state.selectedChar;
+                const isJumping = this.vy < 0;
+                const isBoosting = state.boostTimer > 0;
+                const eyeOffset = this.facing === 'right' ? 3 : -3;
+
+                // Warm Boost Aura Effect
+                if (isBoosting) {
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2, drawY + this.height / 2, 28, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // --- CHARACTER DRAWING LOGIC ---
+                if (charType === 'human') {
+                    // Backpack
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillRect(this.facing === 'right' ? drawX + 3 : drawX + this.width - 8, drawY + 16, 5, 14);
+
+                    // Yuri Coat (Yellow)
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 6, drawY + 15, this.width - 12, 16, 6);
+                    ctx.fill();
+
+                    // Shorts
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 7, drawY + 29, this.width - 14, 7, 3);
+                    ctx.fill();
+
+                    // Head
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2, drawY + 11, 10, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Eyes
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 10, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                } 
+                else if (charType === 'cat') {
+                    // Cat Tail
+                    ctx.strokeStyle = '#f97316';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + (this.facing === 'right' ? 6 : this.width - 6), drawY + 30);
+                    ctx.quadraticCurveTo(drawX + (this.facing === 'right' ? -6 : this.width + 6), drawY + 20, drawX + (this.facing === 'right' ? -2 : this.width + 2), drawY + 12);
+                    ctx.stroke();
+
+                    // Cat Body
+                    ctx.fillStyle = '#f97316';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 6, drawY + 16, this.width - 12, 20, 8);
+                    ctx.fill();
+
+                    // Cat Head
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2, drawY + 13, 11, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Cat Pointy Ears
+                    ctx.fillStyle = '#ea580c';
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + 6, drawY + 8); ctx.lineTo(drawX + 11, drawY - 2); ctx.lineTo(drawX + 15, drawY + 6); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + this.width - 6, drawY + 8); ctx.lineTo(drawX + this.width - 11, drawY - 2); ctx.lineTo(drawX + this.width - 15, drawY + 6); ctx.fill();
+
+                    // Cat Eyes & Whiskers
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 12, 2.3, 0, Math.PI * 2); ctx.fill();
+
+                    ctx.strokeStyle = '#fdba74';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + this.width/2 + eyeOffset, drawY + 14);
+                    ctx.lineTo(drawX + this.width/2 + eyeOffset + (this.facing === 'right' ? 8 : -8), drawY + 13);
+                    ctx.moveTo(drawX + this.width/2 + eyeOffset, drawY + 15);
+                    ctx.lineTo(drawX + this.width/2 + eyeOffset + (this.facing === 'right' ? 8 : -8), drawY + 17);
+                    ctx.stroke();
+                }
+                else if (charType === 'dog') {
+                    // Dog Body
+                    ctx.fillStyle = '#eab308';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 5, drawY + 16, this.width - 10, 20, 8);
+                    ctx.fill();
+
+                    // Dog Head
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2, drawY + 13, 11, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Floppy Ears
+                    ctx.fillStyle = '#ca8a04';
+                    ctx.beginPath();
+                    ctx.ellipse(drawX + 5, drawY + 14, 4, 8, Math.PI / 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(drawX + this.width - 5, drawY + 14, 4, 8, -Math.PI / 6, 0, Math.PI * 2); ctx.fill();
+
+                    // Snout & Nose
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 15, 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#422006';
+                    ctx.beginPath();
+                    ctx.arc(drawX + this.width / 2 + eyeOffset + (this.facing==='right'?2:-2), drawY + 13.5, 2, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'hamster') {
+                    // Hamster Round Chubby Body
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.ellipse(drawX + this.width / 2, drawY + 22, 14, 16, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // White Belly
+                    ctx.fillStyle = '#fef3c7';
+                    ctx.beginPath();
+                    ctx.ellipse(drawX + this.width / 2, drawY + 25, 9, 11, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Tiny Ears
+                    ctx.fillStyle = '#f43f5e';
+                    ctx.beginPath(); ctx.arc(drawX + 8, drawY + 8, 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(drawX + this.width - 8, drawY + 8, 4.5, 0, Math.PI * 2); ctx.fill();
+
+                    // Black Eyes
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'fox') {
+                    // Fox Bushy Tail
+                    ctx.fillStyle = '#ea580c';
+                    ctx.beginPath();
+                    ctx.ellipse(drawX + (this.facing === 'right' ? -2 : this.width + 2), drawY + 24, 8, 14, Math.PI / 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(drawX + (this.facing === 'right' ? -6 : this.width + 6), drawY + 16, 4, 0, Math.PI * 2); ctx.fill();
+
+                    // Fox Body
+                    ctx.fillStyle = '#ea580c';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 6, drawY + 16, this.width - 12, 20, 7); ctx.fill();
+
+                    // White Chest
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.roundRect(drawX + 11, drawY + 18, this.width - 22, 12, 4); ctx.fill();
+
+                    // Head
+                    ctx.fillStyle = '#ea580c';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2, drawY + 12, 11, 0, Math.PI * 2); ctx.fill();
+
+                    // Big Fox Ears
+                    ctx.fillStyle = '#ea580c';
+                    ctx.beginPath(); ctx.moveTo(drawX + 5, drawY + 8); ctx.lineTo(drawX + 10, drawY - 5); ctx.lineTo(drawX + 15, drawY + 7); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(drawX + this.width - 5, drawY + 8); ctx.lineTo(drawX + this.width - 10, drawY - 5); ctx.lineTo(drawX + this.width - 15, drawY + 7); ctx.fill();
+                    ctx.fillStyle = '#1e293b'; // Ear tips
+                    ctx.beginPath(); ctx.arc(drawX + 10, drawY - 3, 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(drawX + this.width - 10, drawY - 3, 2, 0, Math.PI * 2); ctx.fill();
+
+                    // Eye
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 12, 2.2, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'penguin') {
+                    // Penguin Body (Black)
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.roundRect(drawX + 5, drawY + 10, this.width - 10, 26, 12); ctx.fill();
+
+                    // White Tuxedo Belly
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.ellipse(drawX + this.width / 2, drawY + 24, 8, 12, 0, 0, Math.PI * 2); ctx.fill();
+
+                    // Eyes
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 16, 2.2, 0, Math.PI * 2); ctx.fill();
+
+                    // Orange Beak
+                    ctx.fillStyle = '#f97316';
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + this.width / 2 + eyeOffset, drawY + 17);
+                    ctx.lineTo(drawX + this.width / 2 + eyeOffset + (this.facing === 'right' ? 6 : -6), drawY + 19);
+                    ctx.lineTo(drawX + this.width / 2 + eyeOffset, drawY + 21);
+                    ctx.fill();
+                }
+                else if (charType === 'panda') {
+                    // Panda Body
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.roundRect(drawX + 6, drawY + 16, this.width - 12, 20, 8); ctx.fill();
+
+                    // Black Arms/Paws
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.roundRect(drawX + 4, drawY + 18, this.width - 8, 7, 3); ctx.fill();
+
+                    // Head
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2, drawY + 12, 11, 0, Math.PI * 2); ctx.fill();
+
+                    // Black Ears
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(drawX + 6, drawY + 4, 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(drawX + this.width - 6, drawY + 4, 4.5, 0, Math.PI * 2); ctx.fill();
+
+                    // Black Eye Patch
+                    ctx.beginPath(); ctx.ellipse(drawX + this.width / 2 + eyeOffset, drawY + 12, 4, 3, Math.PI / 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 12, 1.5, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'dragon') {
+                    // Dragon Tail
+                    ctx.strokeStyle = '#8b5cf6';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + (this.facing === 'right' ? 6 : this.width - 6), drawY + 30);
+                    ctx.lineTo(drawX + (this.facing === 'right' ? -8 : this.width + 8), drawY + 24); ctx.stroke();
+
+                    // Dragon Wings
+                    ctx.fillStyle = '#c084fc';
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + 4, drawY + 16); ctx.lineTo(drawX - 6, drawY + 10); ctx.lineTo(drawX + 2, drawY + 24); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + this.width - 4, drawY + 16); ctx.lineTo(drawX + this.width + 6, drawY + 10); ctx.lineTo(drawX + this.width - 2, drawY + 24); ctx.fill();
+
+                    // Dragon Body
+                    ctx.fillStyle = '#8b5cf6';
+                    ctx.beginPath(); ctx.roundRect(drawX + 6, drawY + 16, this.width - 12, 20, 8); ctx.fill();
+
+                    // Horns
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath(); ctx.moveTo(drawX + 9, drawY + 6); ctx.lineTo(drawX + 6, drawY - 2); ctx.lineTo(drawX + 13, drawY + 5); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(drawX + this.width - 9, drawY + 6); ctx.lineTo(drawX + this.width - 6, drawY - 2); ctx.lineTo(drawX + this.width - 13, drawY + 5); ctx.fill();
+
+                    // Head
+                    ctx.fillStyle = '#8b5cf6';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2, drawY + 12, 11, 0, Math.PI * 2); ctx.fill();
+
+                    // Eyes (Glowing Yellow)
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 12, 2.5, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'bear') {
+                    // Bear Body
+                    ctx.fillStyle = '#78350f';
+                    ctx.beginPath(); ctx.roundRect(drawX + 5, drawY + 16, this.width - 10, 20, 8); ctx.fill();
+
+                    // Head
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2, drawY + 12, 11, 0, Math.PI * 2); ctx.fill();
+
+                    // Round Bear Ears
+                    ctx.beginPath(); ctx.arc(drawX + 6, drawY + 4, 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(drawX + this.width - 6, drawY + 4, 4.5, 0, Math.PI * 2); ctx.fill();
+
+                    // Snout
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 15, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#422006';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 14, 1.8, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (charType === 'rabbit') {
+                    // Long Rabbit Ears
+                    ctx.fillStyle = '#ec4899';
+                    ctx.beginPath(); ctx.ellipse(drawX + 10, drawY - 2, 3.5, 10, -0.1, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(drawX + this.width - 10, drawY - 2, 3.5, 10, 0.1, 0, Math.PI * 2); ctx.fill();
+
+                    // Inner Pink Ears
+                    ctx.fillStyle = '#fbcfe8';
+                    ctx.beginPath(); ctx.ellipse(drawX + 10, drawY - 2, 1.8, 7, -0.1, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(drawX + this.width - 10, drawY - 2, 1.8, 7, 0.1, 0, Math.PI * 2); ctx.fill();
+
+                    // Rabbit Body
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.roundRect(drawX + 6, drawY + 16, this.width - 12, 20, 8); ctx.fill();
+
+                    // Head
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2, drawY + 13, 10.5, 0, Math.PI * 2); ctx.fill();
+
+                    // Cute Pink Nose & Eye
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset, drawY + 12, 2.2, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ec4899';
+                    ctx.beginPath(); ctx.arc(drawX + this.width / 2 + eyeOffset + (this.facing === 'right' ? 2 : -2), drawY + 14, 1.8, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // --- CHARACTER-SPECIFIC LEGS & FEET ANIMATION ---
+                const legSwing = Math.sin(Date.now() * 0.02) * (Math.abs(this.vx) > 0.1 ? 5 : 2);
+
+                const lLegX = drawX + 11;
+                const rLegX = drawX + this.width - 11;
+                const lFootX = isJumping ? lLegX - 3 : lLegX + legSwing;
+                const rFootX = isJumping ? rLegX + 3 : rLegX - legSwing;
+
+                if (charType === 'human') {
+                    // Human legs and sneakers
+                    const lLegStartY = drawY + 36;
+                    const lFootY = drawY + 44 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 44 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#fde047';
+                    ctx.lineWidth = 3.5;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    // Blue Shoes
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY + 1, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY + 1, 3.5, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'cat') {
+                    // Cat Orange Legs & White Paw Tips
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#f97316';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    // White Paws
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 3.5, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'dog') {
+                    // Dog Yellow/Brown Legs & Paws
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#eab308';
+                    ctx.lineWidth = 4.5;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    ctx.fillStyle = '#a16207';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 3.8, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 3.8, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'hamster') {
+                    // Tiny Chubby Pink Feet under round body
+                    const footY = drawY + 38 + (isJumping ? -1 : 1);
+                    ctx.fillStyle = '#f43f5e';
+                    ctx.beginPath(); ctx.ellipse(lFootX, footY, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(rFootX, footY, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'fox') {
+                    // Fox Black Legs & White Tips
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#1e293b';
+                    ctx.lineWidth = 3.8;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 3, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'penguin') {
+                    // Penguin Orange Waddling Flipper Feet
+                    const footY = drawY + 37 + (isJumping ? -1 : 1);
+                    ctx.fillStyle = '#f97316';
+                    ctx.beginPath(); ctx.ellipse(lFootX - 1, footY, 5, 3, -0.2, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(rFootX + 1, footY, 5, 3, 0.2, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'panda') {
+                    // Thick Black Panda Legs
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 4, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'dragon') {
+                    // Purple Dragon Legs & Claws
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#8b5cf6';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    // Claws
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 3, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'bear') {
+                    // Thick Brown Bear Legs & Paws
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#78350f';
+                    ctx.lineWidth = 5.5;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 3.5, 0, Math.PI * 2); ctx.fill();
+                } else if (charType === 'rabbit') {
+                    // Fluffy White Legs & Long Bunny Feet
+                    const lLegStartY = drawY + 34;
+                    const lFootY = drawY + 43 + (isJumping ? -1 : 2);
+                    const rFootY = drawY + 43 + (isJumping ? -1 : 2);
+
+                    ctx.strokeStyle = '#f8fafc';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(lLegX, lLegStartY); ctx.lineTo(lFootX, lFootY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(rLegX, lLegStartY); ctx.lineTo(rFootX, rFootY); ctx.stroke();
+
+                    // Long Bunny Feet with Pink Sole
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath(); ctx.ellipse(lFootX, lFootY, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(rFootX, rFootY, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+
+                    ctx.fillStyle = '#fbcfe8';
+                    ctx.beginPath(); ctx.arc(lFootX, lFootY, 1.8, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(rFootX, rFootY, 1.8, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // 2초 Boost Wings Effect
+                if (isBoosting) {
+                    ctx.fillStyle = '#fef08a';
+                    ctx.font = '16px serif';
+                    ctx.fillText('✨', drawX - 10, drawY + 20);
+                    ctx.fillText('✨', drawX + this.width - 2, drawY + 20);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Platform {
+            constructor(x, y, width = 85, type = 'normal') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = 16;
+                this.type = type; // 'normal', 'timed_2s', 'moving', 'golden'
+                this.vx = type === 'moving' ? (Math.random() < 0.5 ? 1.8 : -1.8) : 0;
+                this.timer2s = 120; // 2 seconds countdown (120 frames at 60fps)
+                this.isTouched = false;
+                this.isBroken = false;
+            }
+
+            update() {
+                if (this.type === 'moving') {
+                    this.x += this.vx;
+                    if (this.x <= 10 || this.x + this.width >= canvas.width - 10) {
+                        this.vx *= -1;
+                    }
+                }
+
+                // 2초 Platform Countdown logic
+                if (this.type === 'timed_2s' && this.isTouched) {
+                    this.timer2s--;
+                    if (this.timer2s % 30 === 0 && this.timer2s > 0) {
+                        audio.playTick();
+                    }
+                    if (this.timer2s <= 0) {
+                        this.isBroken = true;
+                        spawnParticles(this.x + this.width / 2, this.y, '#d97706', 15);
+                    }
+                }
+            }
+
+            draw() {
+                if (this.isBroken) return;
+
+                const drawY = this.y - state.cameraY;
+
+                ctx.save();
+
+                // Color Themes based on Elevator Type
+                if (this.type === 'normal') {
+                    ctx.fillStyle = '#334155';
+                    ctx.strokeStyle = '#94a3b8';
+                } else if (this.type === 'timed_2s') {
+                    ctx.fillStyle = '#78350f';
+                    ctx.strokeStyle = '#f59e0b';
+                } else if (this.type === 'moving') {
+                    ctx.fillStyle = '#0284c7';
+                    ctx.strokeStyle = '#38bdf8';
+                } else if (this.type === 'golden') {
+                    ctx.fillStyle = '#d97706';
+                    ctx.strokeStyle = '#fef08a';
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.shadowBlur = 12;
+                }
+
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.roundRect(this.x, drawY, this.width, this.height, 6);
+                ctx.fill();
+                ctx.stroke();
+
+                // Elevator Doors lines
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, drawY + 2);
+                ctx.lineTo(this.x + this.width / 2, drawY + this.height - 2);
+                ctx.stroke();
+
+                // 2-Second Timer Display above 'timed_2s' elevator
+                if (this.type === 'timed_2s') {
+                    ctx.fillStyle = '#fef08a';
+                    ctx.font = 'bold 11px "Noto Sans KR"';
+                    const remainingSec = (this.timer2s / 60).toFixed(1);
+                    ctx.fillText(`⏱️ ${remainingSec}초`, this.x + this.width / 2 - 18, drawY - 6);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Item {
+            constructor(x, y, type = 'warmth') {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'warmth', 'booster_2s'
+                this.width = 22;
+                this.height = 22;
+                this.floatOffset = Math.random() * Math.PI * 2;
+                this.isCollected = false;
+            }
+
+            update() {
+                this.floatOffset += 0.05;
+            }
+
+            draw() {
+                if (this.isCollected) return;
+
+                const drawY = (this.y + Math.sin(this.floatOffset) * 4) - state.cameraY;
+
+                ctx.save();
+                ctx.font = '20px serif';
+                if (this.type === 'warmth') {
+                    ctx.fillText('☕', this.x, drawY + 16);
+                } else {
+                    ctx.fillText('✨', this.x, drawY + 16);
+                }
+                ctx.restore();
+            }
+        }
+
+        let player = new Player();
+
+        function spawnParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                state.particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5 - 1,
+                    radius: Math.random() * 3 + 2,
+                    color: color,
+                    alpha: 1
+                });
+            }
+        }
+
+        function spawnFloatingText(text, x, y, color = '#fbbf24') {
+            state.floatingTexts.push({
+                text: text,
+                x: x,
+                y: y,
+                vy: -1.2,
+                alpha: 1,
+                color: color
+            });
+        }
+
+        function spawnPlatformAt(y) {
+            const width = Math.floor(Math.random() * 20) + 75;
+            const x = Math.random() * (canvas.width - width - 20) + 10;
+            
+            // Randomize platform type
+            const rand = Math.random();
+            let type = 'normal';
+            if (rand < 0.28) type = 'timed_2s';
+            else if (rand < 0.48) type = 'moving';
+            else if (rand < 0.58) type = 'golden';
+
+            const platform = new Platform(x, y, width, type);
+            state.platforms.push(platform);
+
+            // Chance to spawn collectible items above platform
+            if (Math.random() < 0.25) {
+                const itemType = Math.random() < 0.75 ? 'warmth' : 'booster_2s';
+                state.items.push(new Item(x + width / 2 - 11, y - 28, itemType));
+            }
+        }
+
+        function generateInitialPlatforms() {
+            state.platforms = [];
+            state.items = [];
+
+            // Spawn base landing platform right under player
+            const baseWidth = 140;
+            const baseX = (canvas.width - baseWidth) / 2;
+            state.platforms.push(new Platform(baseX, canvas.height - 100, baseWidth, 'normal'));
+
+            // Generate ascending platforms initial stack
+            let currentY = canvas.height - 180;
+            while (currentY > -300) {
+                spawnPlatformAt(currentY);
+                currentY -= (Math.floor(Math.random() * 30) + 65);
+            }
+        }
+
+        function initCharacterGrid() {
+            const charGrid = document.getElementById('char-grid');
+            const selectedCharName = document.getElementById('selected-char-name');
+            const resultCharGrid = document.getElementById('result-char-grid');
+            const resultSelectedCharName = document.getElementById('result-selected-char-name');
+
+            const updateGrid = (gridEl) => {
+                if (!gridEl) return;
+                gridEl.innerHTML = '';
+                CHARACTERS.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    const isSelected = c.id === state.selectedChar;
+                    btn.className = `p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                        isSelected 
+                            ? 'bg-amber-500/30 border-amber-400 scale-105 shadow-md shadow-amber-500/20' 
+                            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 active:scale-95'
+                    }`;
+
+                    btn.innerHTML = `
+                        <span class="text-xl">${c.emoji}</span>
+                        <span class="text-[9px] text-slate-300 font-medium truncate w-full text-center">${c.name.split(' ')[0]}</span>
+                    `;
+
+                    btn.addEventListener('click', () => {
+                        state.selectedChar = c.id;
+                        initCharacterGrid(); // Re-render selected style on all character grids
+                        if (audio && audio.ctx) audio.playJump();
+                    });
+
+                    gridEl.appendChild(btn);
+                });
+            };
+
+            const currentChar = CHARACTERS.find(c => c.id === state.selectedChar);
+            if (currentChar) {
+                if (selectedCharName) selectedCharName.innerText = currentChar.name;
+                if (resultSelectedCharName) resultSelectedCharName.innerText = currentChar.name;
+            }
+
+            updateGrid(charGrid);
+            updateGrid(resultCharGrid);
+
+            initTrailGrid();
+        }
+
+        function updateGame() {
+            if (!state.isPlaying) return;
+
+            player.update();
+
+            // Camera Smooth Follow
+            const targetCameraY = player.y - canvas.height * 0.55;
+            if (targetCameraY < state.cameraY) {
+                state.cameraY += (targetCameraY - state.cameraY) * 0.1;
+            }
+
+            // Calculate Reached Floor (Every 80px = 1 Floor)
+            const currentFloorNum = Math.max(1, Math.floor((-player.y + canvas.height) / 80));
+            if (currentFloorNum > state.maxFloor) {
+                state.maxFloor = currentFloorNum;
+                state.score += (currentFloorNum - state.maxFloor + 1) * 20;
+            }
+
+            // Platform Collision Detection (Precision Landing Check)
+            if (player.vy >= 0) {
+                const prevFeetY = (player.y - player.vy) + player.height;
+                const currentFeetY = player.y + player.height;
+
+                state.platforms.forEach(p => {
+                    if (!p.isBroken &&
+                        player.x + player.width > p.x + 4 &&
+                        player.x < p.x + p.width - 4 &&
+                        prevFeetY <= p.y + 10 &&
+                        currentFeetY >= p.y) {
+                        
+                        // Snap player precisely to top of platform
+                        player.y = p.y - player.height;
+
+                        // Bounce!
+                        if (p.type === 'golden') {
+                            player.jump(-16.5);
+                            audio.playSuperJump();
+                            state.combo++;
+                            state.warmth = Math.min(100, state.warmth + 15);
+                            spawnFloatingText(`✨ 황금 2초 점프! +${state.combo * 100}`, player.x, player.y - 20, '#fef08a');
+                        } else {
+                            player.jump();
+                            audio.playJump();
+                            state.combo++;
+                            state.warmth = Math.min(100, state.warmth + 3);
+                        }
+
+                        p.isTouched = true;
+                        state.maxCombo = Math.max(state.maxCombo, state.combo);
+                        state.score += 10 * state.combo;
+                    }
+                });
+            }
+
+            // Update Platforms & Recycling
+            state.platforms.forEach(p => p.update());
+            state.platforms = state.platforms.filter(p => p.y - state.cameraY < canvas.height + 100 && !p.isBroken);
+
+            // Maintain continuous platforms above camera
+            const highestPlatform = state.platforms.reduce((min, p) => p.y < min ? p.y : min, 999999);
+            if (highestPlatform > state.cameraY - 200) {
+                spawnPlatformAt(highestPlatform - (Math.floor(Math.random() * 35) + 65));
+            }
+
+            // Items Collision
+            state.items.forEach(item => {
+                item.update();
+                if (!item.isCollected &&
+                    player.x + player.width > item.x &&
+                    player.x < item.x + item.width &&
+                    player.y + player.height > item.y &&
+                    player.y < item.y + item.height) {
+                    
+                    item.isCollected = true;
+                    if (item.type === 'warmth') {
+                        audio.playWarmthPickup();
+                        state.warmth = Math.min(100, state.warmth + 20);
+                        state.score += 150;
+                        state.totalCoffee += 1; // +1 Coffee Coin!
+                        localStorage.setItem('warmth_jump_coffee', state.totalCoffee);
+                        spawnFloatingText(`☕ 커피 획득! (+1)`, item.x, item.y, '#f59e0b');
+                    } else if (item.type === 'booster_2s') {
+                        audio.playSuperJump();
+                        state.boostTimer = state.boostDuration; // 2 Seconds flight
+                        state.score += 300;
+                        spawnFloatingText(`🚀 2초 온기 부스터!`, item.x, item.y, '#fef08a');
+                    }
+                }
+            });
+            state.items = state.items.filter(i => i.y - state.cameraY < canvas.height + 100 && !i.isCollected);
+
+            // Passive Warmth Gauge Decay
+            state.warmth = Math.max(0, state.warmth - 0.04);
+            updateHUD();
+
+            // Check Fall Below Camera or Zero Warmth (Game Over)
+            if (player.y - state.cameraY > canvas.height + 80 || state.warmth <= 0) {
+                endGame();
+                return;
+            }
+
+            // Particles Update
+            state.particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+            });
+            state.particles = state.particles.filter(p => p.alpha > 0);
+
+            // Floating Text Update
+            state.floatingTexts.forEach(t => {
+                t.y += t.vy;
+                t.alpha -= 0.02;
+            });
+            state.floatingTexts = state.floatingTexts.filter(t => t.alpha > 0);
+        }
+
+        function updateHUD() {
+            hudFloor.innerText = `${state.maxFloor}F`;
+            hudScore.innerText = Math.round(state.score).toLocaleString();
+            if (hudCoffee) hudCoffee.innerText = state.totalCoffee;
+
+            const warmthPct = Math.round(state.warmth);
+            hudWarmthBar.style.width = `${warmthPct}%`;
+            hudWarmthVal.innerText = `${warmthPct}%`;
+
+            if (warmthPct < 30) hudWarmthEmoji.innerText = '🧊';
+            else if (warmthPct < 70) hudWarmthEmoji.innerText = '😐';
+            else hudWarmthEmoji.innerText = '☀️';
+
+            if (state.combo > 1) {
+                hudCombo.classList.remove('hidden');
+                hudCombo.innerText = `COMBO x${state.combo}`;
+            } else {
+                hudCombo.classList.add('hidden');
+            }
+        }
+
+        function initTrailGrid() {
+            const trailGrid = document.getElementById('trail-grid');
+            const resultTrailGrid = document.getElementById('result-trail-grid');
+            const shopCoffeeCount = document.getElementById('shop-coffee-count');
+            const resultCoffeeCount = document.getElementById('result-coffee-count');
+
+            if (shopCoffeeCount) shopCoffeeCount.innerText = `☕ ${state.totalCoffee}개 보유`;
+            if (resultCoffeeCount) resultCoffeeCount.innerText = `☕ ${state.totalCoffee}개 보유`;
+
+            const updateTrails = (gridEl) => {
+                if (!gridEl) return;
+                gridEl.innerHTML = '';
+
+                TRAILS.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    const isUnlocked = state.unlockedTrails.includes(t.id);
+                    const isSelected = t.id === state.selectedTrail;
+                    const canAfford = state.totalCoffee >= t.cost;
+
+                    btn.className = `p-1 rounded-xl border flex flex-col items-center justify-center transition-all relative ${
+                        isSelected
+                            ? 'bg-amber-500/30 border-amber-400 scale-105 shadow-md shadow-amber-500/20'
+                            : isUnlocked
+                            ? 'bg-slate-900 border-slate-700 hover:border-slate-500 active:scale-95'
+                            : canAfford
+                            ? 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/20 active:scale-95'
+                            : 'bg-slate-950/40 border-slate-800 opacity-60'
+                    }`;
+
+                    let badgeHtml = '';
+                    if (isSelected) {
+                        badgeHtml = `<span class="text-[8px] font-bold text-amber-300">장착중</span>`;
+                    } else if (isUnlocked) {
+                        badgeHtml = `<span class="text-[8px] font-medium text-emerald-400">보유</span>`;
+                    } else {
+                        badgeHtml = `<span class="text-[8px] font-bold text-amber-400">☕ ${t.cost}</span>`;
+                    }
+
+                    btn.innerHTML = `
+                        <div class="w-3.5 h-3.5 rounded-full border border-white/20 my-0.5 shadow-sm" style="background-color: ${t.hex}"></div>
+                        <span class="text-[9px] text-slate-200 font-bold">${t.name}</span>
+                        ${badgeHtml}
+                    `;
+
+                    btn.addEventListener('click', () => {
+                        if (isUnlocked) {
+                            state.selectedTrail = t.id;
+                            localStorage.setItem('warmth_jump_trail', t.id);
+                            if (audio && audio.ctx) audio.playJump();
+                        } else if (canAfford) {
+                            state.totalCoffee -= t.cost;
+                            state.unlockedTrails.push(t.id);
+                            state.selectedTrail = t.id;
+                            localStorage.setItem('warmth_jump_coffee', state.totalCoffee);
+                            localStorage.setItem('warmth_jump_unlocked_trails', JSON.stringify(state.unlockedTrails));
+                            localStorage.setItem('warmth_jump_trail', t.id);
+                            if (audio && audio.ctx) audio.playWarmthPickup();
+                        } else {
+                            if (audio && audio.ctx) audio.playTick();
+                        }
+                        initCharacterGrid();
+                    });
+
+                    gridEl.appendChild(btn);
+                });
+            };
+
+            updateTrails(trailGrid);
+            updateTrails(resultTrailGrid);
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGradient.addColorStop(0, '#020617');
+            bgGradient.addColorStop(1, '#0f172a');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Elevator Shaft Grid Background Lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 40; x < canvas.width; x += 60) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // 3. Draw Platforms & Items
+            state.platforms.forEach(p => p.draw());
+            state.items.forEach(i => i.draw());
+
+            // 4. Draw Player
+            player.draw();
+
+            // 5. Draw Particles
+            state.particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y - state.cameraY, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 6. Draw Floating Texts
+            state.floatingTexts.forEach(t => {
+                ctx.save();
+                ctx.globalAlpha = t.alpha;
+                ctx.fillStyle = t.color;
+                ctx.font = 'bold 14px "Noto Sans KR"';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.text, t.x, t.y - state.cameraY);
+                ctx.restore();
+            });
+        }
+
+        function gameLoop() {
+            updateGame();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            audio.init();
+            audio.playWarmthPickup();
+
+            state.isPlaying = true;
+            state.score = 0;
+            state.maxFloor = 1;
+            state.warmth = 100;
+            state.combo = 0;
+            state.maxCombo = 0;
+            state.cameraY = 0;
+            state.boostTimer = 0;
+
+            player = new Player();
+            generateInitialPlatforms();
+            updateHUD();
+
+            // Launch character immediately with initial jump!
+            player.jump();
+
+            overlayStart.classList.add('opacity-0', 'pointer-events-none');
+            overlayResult.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function endGame() {
+            state.isPlaying = false;
+            audio.playFall();
+
+            if (state.maxFloor > state.highScore) {
+                state.highScore = state.maxFloor;
+                localStorage.setItem('warmth_jump_high', state.highScore);
+            }
+
+            document.getElementById('res-floor').innerText = `${state.maxFloor}F`;
+            document.getElementById('res-score').innerText = Math.round(state.score).toLocaleString();
+            document.getElementById('res-maxcombo').innerText = `${state.maxCombo}회`;
+            document.getElementById('res-highscore').innerText = `${state.highScore}F`;
+
+            initCharacterGrid(); // Refresh result screen character list
+            overlayResult.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        btnStart.addEventListener('click', startGame);
+        btnRestart.addEventListener('click', startGame);
+
+        const btnHome = document.getElementById('btn-home');
+        if (btnHome) {
+            btnHome.addEventListener('click', () => {
+                overlayResult.classList.add('opacity-0', 'pointer-events-none');
+                overlayStart.classList.remove('opacity-0', 'pointer-events-none');
+            });
+        }
+
+        // Keyboard Controls (Arrow Left/Right/Up, A/D/W, Space)
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') state.keys.left = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') state.keys.right = true;
+            
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                if (!state.isPlaying) {
+                    startGame();
+                } else {
+                    // Tap space/up for additional jump thrust if falling close to platform
+                    if (player.vy > 0 && player.vy < 3) {
+                        player.jump(-11);
+                        audio.playJump();
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') state.keys.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') state.keys.right = false;
+        });
+
+        // Mobile & Canvas Direct Touch Controls
+        canvas.addEventListener('touchstart', (e) => {
+            if (!state.isPlaying) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            if (touchX < canvas.width / 2) {
+                state.keys.left = true;
+                state.keys.right = false;
+            } else {
+                state.keys.right = true;
+                state.keys.left = false;
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => {
+            state.keys.left = false;
+            state.keys.right = false;
+        });
+
+        // Mobile Touch Button Events
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); state.keys.left = true; });
+        btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); state.keys.left = false; });
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); state.keys.right = true; });
+        btnRight.addEventListener('touchend', (e) => { e.preventDefault(); state.keys.right = false; });
+
+        btnLeft.addEventListener('mousedown', () => state.keys.left = true);
+        btnLeft.addEventListener('mouseup', () => state.keys.left = false);
+        btnRight.addEventListener('mousedown', () => state.keys.right = true);
+        btnRight.addEventListener('mouseup', () => state.keys.right = false);
+
+        window.onload = function() {
+            resizeCanvas();
+            initCharacterGrid();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>

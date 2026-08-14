@@ -1,0 +1,4 @@
+1.kor_name=[말랑 과일]
+2.eng_name=[Malrang Fruit]
+3.maker=[김제 린하]
+3.genre=[*]

@@ -1,0 +1,4 @@
+1.kor_name=[남산타워 보물찾기]
+2.eng_name=[N-Tower Treasure Hunter]
+3.maker=[김제 민준]
+3.genre=[*]

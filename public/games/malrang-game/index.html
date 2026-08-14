@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>말랑 과일 합치기 (Pastel Fruit Merge)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Matter.js Physics Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Gowun Dodum', 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #FFF5F5 0%, #E8F0FE 50%, #F3E8FF 100%);
+      user-select: none;
+      -webkit-user-select: none;
+      overflow: hidden;
+    }
+
+    .font-fredoka {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    /* Soft pastel glassmorphic container styling */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 30px rgba(180, 160, 200, 0.15);
+    }
+
+    /* Game canvas border pulse when near top limit */
+    canvas {
+      touch-action: none;
+      border-radius: 1.5rem;
+    }
+
+    .bounce-btn {
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .bounce-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 8px 20px rgba(255, 150, 170, 0.3);
+    }
+    .bounce-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* Pop effect overlay text */
+    @keyframes popUp {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5) rotate(-5deg); }
+      50% { transform: translate(-50%, -70%) scale(1.2) rotate(5deg); }
+      100% { opacity: 0; transform: translate(-50%, -100%) scale(0.9) rotate(0deg); }
+    }
+    .floating-text {
+      position: absolute;
+      pointer-events: none;
+      animation: popUp 0.8s ease-out forwards;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center p-2 sm:p-4 text-slate-700">
+
+  <div class="relative flex flex-col md:flex-row items-center justify-center gap-4 max-w-4xl w-full h-full max-h-[900px]">
+    
+    <!-- Sidebar / Left Panel (Scores & Next Fruit) -->
+    <div class="flex flex-row md:flex-col gap-3 w-full md:w-52 justify-between md:justify-start">
+      
+      <!-- Title Badge -->
+      <div class="glass-card rounded-2xl p-3 text-center w-full shadow-sm">
+        <h1 class="text-xl md:text-2xl font-bold text-pink-400 flex items-center justify-center gap-2">
+          <i class="fa-solid font-bold text-yellow-400">🍓</i> 말랑 과일
+        </h1>
+        <p class="text-xs text-slate-400 mt-0.5">같은 과일을 합쳐보세요!</p>
+      </div>
+
+      <!-- Score Card -->
+      <div class="glass-card rounded-2xl p-3 text-center flex-1 md:w-full flex md:flex-col justify-around items-center">
+        <div>
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Score</span>
+          <div id="score" class="text-2xl md:text-3xl font-extrabold text-indigo-500 font-fredoka">0</div>
+        </div>
+        <div class="md:mt-2 border-l md:border-l-0 md:border-t border-slate-200/60 pt-0 md:pt-2 pl-3 md:pl-0">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Best</span>
+          <div id="high-score" class="text-lg md:text-xl font-bold text-purple-400 font-fredoka">0</div>
+        </div>
+      </div>
+
+      <!-- Next Fruit Preview -->
+      <div class="glass-card rounded-2xl p-3 text-center flex-1 md:w-full flex flex-col items-center justify-center">
+        <span class="text-xs font-bold text-slate-400 uppercase mb-1">다음 과일</span>
+        <div class="w-16 h-16 flex items-center justify-center relative">
+          <canvas id="next-canvas" width="70" height="70"></canvas>
+        </div>
+        <span id="next-fruit-name" class="text-xs font-bold text-pink-400 mt-1">블루베리</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="hidden md:flex flex-col gap-2 w-full mt-auto">
+        <button id="btn-restart" class="bounce-btn bg-pink-400 hover:bg-pink-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-solid fa-rotate-right"></i> 다시 시작
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Game Canvas Container -->
+    <div class="relative flex-1 flex flex-col items-center justify-center max-w-[420px] w-full h-full max-h-[640px] glass-card rounded-3xl p-3 shadow-xl">
+      <div class="relative w-full h-full flex items-center justify-center overflow-hidden rounded-2xl bg-white/50 border border-white/60 shadow-inner">
+        <!-- Main Game Canvas -->
+        <canvas id="game-canvas" class="w-full h-full block cursor-crosshair"></canvas>
+        
+        <!-- Floating Text Container -->
+        <div id="floating-container" class="absolute inset-0 pointer-events-none"></div>
+
+        <!-- Danger Line Warning Overlay -->
+        <div id="danger-line" class="absolute left-0 w-full border-b-2 border-dashed border-red-400/60 pointer-events-none transition-opacity duration-300 opacity-40" style="top: 80px;">
+          <span class="absolute right-2 -top-5 text-[10px] font-bold text-red-400 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">위험선</span>
+        </div>
+
+        <!-- Game Over Modal Overlay -->
+        <div id="game-over-modal" class="absolute inset-0 bg-slate-900/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center opacity-0 pointer-events-none transition-all duration-300 z-20">
+          <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full flex flex-col items-center animate-bounce-short">
+            <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-3xl mb-3">
+              😭
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800">게임 오버!</h2>
+            <p class="text-xs text-slate-400 mt-1">과일이 상자를 가득 채웠어요!</p>
+            
+            <div class="bg-slate-50 rounded-2xl p-3 w-full my-4 border border-slate-100">
+              <span class="text-xs text-slate-400 font-bold uppercase">최종 점수</span>
+              <div id="final-score" class="text-3xl font-extrabold text-pink-500 font-fredoka">0</div>
+            </div>
+
+            <button id="modal-btn-restart" class="bounce-btn w-full bg-pink-400 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-2xl text-base shadow-lg flex items-center justify-center gap-2">
+              <i class="fa-solid fa-play"></i> 다시 도전하기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Restart Button Bar -->
+      <div class="flex md:hidden w-full justify-center mt-2">
+        <button id="btn-restart-mobile" class="bounce-btn bg-pink-400 hover:bg-pink-500 text-white font-bold py-2 px-5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-solid fa-rotate-right"></i> 다시 시작
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Fruit Chain Definition with Pastel Colors & Cute Facial Styles
+    const FRUIT_TYPES = [
+      { level: 0, name: '블루베리', radius: 18, color: '#A5B4FC', border: '#818CF8', score: 2, face: 'happy' },
+      { level: 1, name: '딸기', radius: 26, color: '#FDA4AF', border: '#F43F5E', score: 4, face: 'cute' },
+      { level: 2, name: '키위', radius: 36, color: '#C6F6D5', border: '#68D391', score: 8, face: 'wink' },
+      { level: 3, name: '복숭아', radius: 48, color: '#FDE68A', border: '#F6AD55', score: 16, face: 'sleepy' },
+      { level: 4, name: '오렌지', radius: 62, color: '#FBD38D', border: '#ED8936', score: 32, face: 'excited' },
+      { level: 5, name: '사과', radius: 76, color: '#FEB2B2', border: '#E53E3E', score: 64, face: 'love' },
+      { level: 6, name: '멜론', radius: 92, color: '#9AE6B4', border: '#38A169', score: 128, face: 'cool' },
+      { level: 7, name: '수박', radius: 110, color: '#6EE7B7', border: '#059669', score: 256, face: 'star' }
+    ];
+
+    // Cute Synthesizer Sound Generator (Web Audio API)
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+      playPop(pitchMultiplier = 1.0) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const now = this.ctx.currentTime;
+        
+        osc.frequency.setValueAtTime(300 * pitchMultiplier, now);
+        osc.frequency.exponentialRampToValueAtTime(800 * pitchMultiplier, now + 0.08);
+        
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+      playMerge(level) {
+        if (!this.ctx) return;
+        const baseFreq = 400 + level * 80;
+        const now = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.15);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+      playGameOver() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+    }
+
+    const soundMgr = new SoundManager();
+
+    // Game Dimensions & Setup
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('next-canvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    let width = 380;
+    let height = 580;
+    const DANGER_Y = 80; // Top boundary danger line
+
+    // Matter.js Modules
+    const { Engine, World, Bodies, Body, Events, Composite } = Matter;
+    let engine, world;
+
+    // Game States
+    let currentFruit = null;
+    let nextFruitLevel = 0;
+    let isDropping = false;
+    let dropX = width / 2;
+    let score = 0;
+    let highScore = localStorage.getItem('fruit_merge_highscore') || 0;
+    let gameOver = false;
+    let overflowTimer = 0;
+    let particles = [];
+
+    document.getElementById('high-score').innerText = highScore;
+
+    function initPhysics() {
+      engine = Engine.create({
+        gravity: { x: 0, y: 1.2 }
+      });
+      world = engine.world;
+
+      // Container Boundaries (Bottom, Left, Right)
+      const wallOptions = { isStatic: true, friction: 0.5, restitution: 0.2 };
+      const ground = Bodies.rectangle(width / 2, height + 25, width + 100, 50, wallOptions);
+      const leftWall = Bodies.rectangle(-25, height / 2, 50, height * 2, wallOptions);
+      const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height * 2, wallOptions);
+
+      World.add(world, [ground, leftWall, rightWall]);
+
+      // Register collision listener after engine instance is created
+      Events.on(engine, 'collisionStart', handleCollision);
+    }
+
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      width = canvas.width;
+      height = canvas.height;
+      
+      // Re-position danger line DOM
+      const dangerElem = document.getElementById('danger-line');
+      dangerElem.style.top = DANGER_Y + 'px';
+    }
+
+    // Spawn Next Held Fruit
+    function spawnFruit() {
+      if (gameOver) return;
+      
+      const level = nextFruitLevel;
+      nextFruitLevel = Math.floor(Math.random() * 3); // Levels 0, 1, or 2 randomly
+      drawNextPreview();
+
+      const fruitData = FRUIT_TYPES[level];
+      currentFruit = {
+        level: level,
+        x: dropX,
+        y: 40,
+        radius: fruitData.radius,
+        data: fruitData
+      };
+      isDropping = false;
+    }
+
+    function drawNextPreview() {
+      nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+      const fruitData = FRUIT_TYPES[nextFruitLevel];
+      
+      document.getElementById('next-fruit-name').innerText = fruitData.name;
+      
+      nextCtx.save();
+      nextCtx.translate(nextCanvas.width / 2, nextCanvas.height / 2);
+      drawFruitCircle(nextCtx, 0, 0, fruitData, Math.min(fruitData.radius, 24));
+      nextCtx.restore();
+    }
+
+    // Drop current fruit into physics world
+    function dropFruit() {
+      if (!currentFruit || isDropping || gameOver) return;
+      soundMgr.init();
+
+      isDropping = true;
+      const fruitData = currentFruit.data;
+      
+      const body = Bodies.circle(currentFruit.x, currentFruit.y, fruitData.radius, {
+        restitution: 0.3,
+        friction: 0.1,
+        density: 0.002
+      });
+
+      body.fruitLevel = currentFruit.level;
+      body.isFruit = true;
+
+      World.add(world, body);
+      currentFruit = null;
+      soundMgr.playPop(0.9);
+
+      // Cooldown before next drop
+      setTimeout(() => {
+        spawnFruit();
+      }, 500);
+    }
+
+    // Handle Collision & Fruit Merging
+    function handleCollision(event) {
+      const pairs = event.pairs;
+
+      for (let i = 0; i < pairs.length; i++) {
+        const { bodyA, bodyB } = pairs[i];
+
+        if (bodyA.isFruit && bodyB.isFruit && bodyA.fruitLevel === bodyB.fruitLevel) {
+          if (bodyA.isMerging || bodyB.isMerging) continue;
+
+          const currentLevel = bodyA.fruitLevel;
+          if (currentLevel >= FRUIT_TYPES.length - 1) continue; // Max watermelon level reached
+
+          bodyA.isMerging = true;
+          bodyB.isMerging = true;
+
+          // Midpoint for spawn
+          const midX = (bodyA.position.x + bodyB.position.x) / 2;
+          const midY = (bodyA.position.y + bodyB.position.y) / 2;
+          const nextLevel = currentLevel + 1;
+
+          // Schedule removal and replacement body
+          setTimeout(() => {
+            World.remove(world, bodyA);
+            World.remove(world, bodyB);
+
+            const mergedData = FRUIT_TYPES[nextLevel];
+            const newBody = Bodies.circle(midX, midY, mergedData.radius, {
+              restitution: 0.3,
+              friction: 0.1,
+              density: 0.002
+            });
+            newBody.fruitLevel = nextLevel;
+            newBody.isFruit = true;
+
+            World.add(world, newBody);
+
+            // Add score & particles
+            addScore(mergedData.score, midX, midY);
+            createJuiceExplosion(midX, midY, mergedData.color);
+            soundMgr.playMerge(nextLevel);
+          }, 20);
+        }
+      }
+    }
+
+    function addScore(points, x, y) {
+      score += points;
+      document.getElementById('score').innerText = score;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('fruit_merge_highscore', highScore);
+        document.getElementById('high-score').innerText = highScore;
+      }
+
+      // Show floating score popup
+      const container = document.getElementById('floating-container');
+      const floatEl = document.createElement('div');
+      floatEl.className = 'floating-text text-pink-500 font-fredoka text-lg';
+      floatEl.style.left = `${x}px`;
+      floatEl.style.top = `${y}px`;
+      floatEl.innerText = `+${points}`;
+      container.appendChild(floatEl);
+
+      setTimeout(() => floatEl.remove(), 800);
+    }
+
+    // Particle Juice Splash
+    function createJuiceExplosion(x, y, color) {
+      for (let i = 0; i < 12; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 2;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: Math.random() * 4 + 2,
+          color: color,
+          alpha: 1.0,
+          life: 30
+        });
+      }
+    }
+
+    // Helper: Draw Fruit Circle with Cute Face
+    function drawFruitCircle(ctx, x, y, fruitData, radius = null) {
+      const r = radius || fruitData.radius;
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fruitData.color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = fruitData.border;
+      ctx.stroke();
+
+      // Soft Highlight overlay
+      ctx.beginPath();
+      ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fill();
+
+      // Cute Eyes & Mouth based on Fruit Expression
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+
+      const eyeOffset = r * 0.3;
+      const eyeY = y - r * 0.05;
+
+      if (fruitData.face === 'wink') {
+        // Left Eye (open)
+        ctx.beginPath();
+        ctx.arc(x - eyeOffset, eyeY, Math.max(2, r * 0.08), 0, Math.PI * 2);
+        ctx.fill();
+        // Right Eye (wink)
+        ctx.beginPath();
+        ctx.moveTo(x + eyeOffset - 4, eyeY);
+        ctx.lineTo(x + eyeOffset + 4, eyeY);
+        ctx.stroke();
+      } else {
+        // Two Eyes
+        ctx.beginPath();
+        ctx.arc(x - eyeOffset, eyeY, Math.max(2.5, r * 0.08), 0, Math.PI * 2);
+        ctx.arc(x + eyeOffset, eyeY, Math.max(2.5, r * 0.08), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Cute Cheeks
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.3)';
+      ctx.beginPath();
+      ctx.arc(x - eyeOffset - 2, eyeY + r * 0.15, Math.max(2, r * 0.12), 0, Math.PI * 2);
+      ctx.arc(x + eyeOffset + 2, eyeY + r * 0.15, Math.max(2, r * 0.12), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Mouth
+      ctx.beginPath();
+      ctx.arc(x, y + r * 0.1, Math.max(3, r * 0.15), 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+    }
+
+    // Main Animation & Render Loop
+    function render() {
+      Engine.update(engine, 1000 / 60);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Draw Drop Aim Guideline
+      if (currentFruit && !isDropping && !gameOver) {
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = 'rgba(244, 114, 182, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(currentFruit.x, currentFruit.y);
+        ctx.lineTo(currentFruit.x, height);
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw held fruit
+        drawFruitCircle(ctx, currentFruit.x, currentFruit.y, currentFruit.data);
+      }
+
+      // 2. Render Physics Bodies (Fruits)
+      const bodies = Composite.allBodies(world);
+      let isOverflowing = false;
+
+      bodies.forEach(body => {
+        if (body.isFruit) {
+          const fruitData = FRUIT_TYPES[body.fruitLevel];
+          ctx.save();
+          ctx.translate(body.position.x, body.position.y);
+          ctx.rotate(body.angle);
+          drawFruitCircle(ctx, 0, 0, fruitData);
+          ctx.restore();
+
+          // Check if any rested fruit breaches top limit
+          if (body.position.y - fruitData.radius < DANGER_Y && body.speed < 0.8) {
+            isOverflowing = true;
+          }
+        }
+      });
+
+      // 3. Danger Overflow Timer Logic
+      if (isOverflowing && !gameOver) {
+        overflowTimer++;
+        if (overflowTimer > 130) { // Approx 2.2 seconds above line
+          triggerGameOver();
+        }
+      } else {
+        overflowTimer = Math.max(0, overflowTimer - 1);
+      }
+
+      // 4. Update Juice Splash Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        p.life--;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (p.life <= 0 || p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    function triggerGameOver() {
+      gameOver = true;
+      soundMgr.playGameOver();
+      document.getElementById('final-score').innerText = score;
+      const modal = document.getElementById('game-over-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function restartGame() {
+      // Clear world fruits
+      const bodies = Composite.allBodies(world);
+      bodies.forEach(body => {
+        if (body.isFruit) World.remove(world, body);
+      });
+
+      score = 0;
+      overflowTimer = 0;
+      gameOver = false;
+      document.getElementById('score').innerText = score;
+
+      const modal = document.getElementById('game-over-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+
+      nextFruitLevel = Math.floor(Math.random() * 3);
+      spawnFruit();
+    }
+
+    // Input Listeners
+    function handleMove(e) {
+      if (!currentFruit || isDropping || gameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const x = clientX - rect.left;
+      
+      const r = currentFruit.data.radius;
+      currentFruit.x = Math.max(r + 10, Math.min(width - r - 10, x));
+    }
+
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', handleMove);
+
+    canvas.addEventListener('click', () => {
+      soundMgr.init();
+      dropFruit();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        dropFruit();
+      } else if (e.code === 'ArrowLeft' && currentFruit) {
+        currentFruit.x = Math.max(currentFruit.data.radius + 10, currentFruit.x - 20);
+      } else if (e.code === 'ArrowRight' && currentFruit) {
+        currentFruit.x = Math.min(width - currentFruit.data.radius - 10, currentFruit.x + 20);
+      }
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', restartGame);
+    document.getElementById('btn-restart-mobile').addEventListener('click', restartGame);
+    document.getElementById('modal-btn-restart').addEventListener('click', restartGame);
+
+    // Initialization
+    window.onload = () => {
+      initPhysics();
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      nextFruitLevel = Math.floor(Math.random() * 3);
+      spawnFruit();
+      render();
+    };
+  </script>
+</body>
+</html>

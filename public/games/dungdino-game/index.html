@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Dino Run - Pixel Cyber Arcade</title>
+    <!-- Google Pixel & Arcade Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Press Start 2P', 'Orbitron', monospace;
+            background-color: #05070f;
+            color: #00f3ff;
+            touch-action: manipulation;
+            user-select: none;
+            image-rendering: pixelated;
+        }
+
+        .pixel-border {
+            border: 4px solid #00f3ff;
+            box-shadow: 0 0 0 4px #0d0f18, 0 0 15px rgba(0, 243, 255, 0.6);
+        }
+
+        .pixel-border-pink {
+            border: 4px solid #ff007f;
+            box-shadow: 0 0 0 4px #0d0f18, 0 0 15px rgba(255, 0, 127, 0.6);
+        }
+
+        .pixel-btn {
+            background: #111827;
+            border: 3px solid #00f3ff;
+            box-shadow: 3px 3px 0 #000;
+            transition: all 0.1s ease;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #080914;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        /* CRT Scanline effect */
+        .crt::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-2 md:p-4 bg-slate-950 text-white overflow-x-hidden">
+
+    <div class="w-full max-w-4xl flex flex-col items-center gap-3">
+        
+        <!-- Retro Header HUD -->
+        <div class="w-full flex items-center justify-between px-4 py-3 bg-slate-900 rounded-none pixel-border text-xs md:text-sm">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-dragon text-cyan-400 text-lg"></i>
+                <h1 class="text-cyan-400 font-bold hidden sm:block tracking-widest">PIXEL DINO</h1>
+            </div>
+            <div class="flex items-center gap-3 md:gap-5 flex-wrap">
+                <div id="hudCoinShopBtn" class="flex items-center gap-1 cursor-pointer hover:scale-105 transition-transform" title="상점 열기">
+                    <span class="text-amber-300">🪙</span>
+                    <span id="coinHud" class="font-bold text-amber-300">000</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="text-slate-400">POOP:</span>
+                    <span id="poopHud" class="font-bold text-amber-400">💩 10/10</span>
+                </div>
+                <div id="plungerHudContainer" class="hidden flex items-center gap-1">
+                    <span class="text-slate-400">PLUNGER:</span>
+                    <span id="plungerHud" class="font-bold text-slate-200">🪠 10/10</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="text-slate-400">SCORE:</span>
+                    <span id="scoreDisplay" class="font-bold text-cyan-300">00000</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="text-slate-400">HI:</span>
+                    <span id="highScoreDisplay" class="font-bold text-pink-400">00000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Game Frame -->
+        <div class="relative w-full aspect-[2/1] bg-slate-950 pixel-border crt overflow-hidden">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Start / Menu Overlay -->
+            <div id="startOverlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center gap-3 p-4 z-10 text-center overflow-y-auto">
+                <h2 class="text-2xl md:text-4xl font-bold text-cyan-400 tracking-wider animate-pulse">
+                    PIXEL DINO RUN
+                </h2>
+                <p class="text-[10px] md:text-xs text-pink-400">RETRO 8-BIT CYBER EDITION</p>
+                
+                <!-- Skin Selection -->
+                <div class="flex flex-col items-center gap-2 my-1">
+                    <span class="text-[10px] text-cyan-300 uppercase">SELECT SKIN</span>
+                    <div class="flex gap-2">
+                        <button id="skinClassic" class="skin-btn p-2 bg-slate-800 border-2 border-cyan-400 text-xl font-bold hover:scale-105" data-skin="classic">🦖</button>
+                        <button id="skinCyber" class="skin-btn p-2 bg-slate-800 border-2 border-slate-600 text-xl font-bold hover:scale-105" data-skin="cyber">🤖</button>
+                        <button id="skinDragon" class="skin-btn p-2 bg-slate-800 border-2 border-slate-600 text-xl font-bold hover:scale-105" data-skin="dragon">🐉</button>
+                        <button id="skinBlossom" class="skin-btn p-2 bg-slate-800 border-2 border-slate-600 text-xl font-bold hover:scale-105" data-skin="blossom">🦄</button>
+                    </div>
+                </div>
+
+                <!-- Controls Guide -->
+                <div class="bg-slate-900 p-2.5 border-2 border-slate-700 text-[10px] md:text-xs text-slate-300 grid grid-cols-2 gap-x-4 gap-y-1.5 max-w-lg text-left">
+                    <div><span class="text-cyan-400">↑ / W:</span> 점프 (Jump)</div>
+                    <div><span class="text-pink-400">↓ / S:</span> 숙이기 (Duck)</div>
+                    <div><span class="text-amber-400">0 키:</span> 똥 💩 (10개/5초)</div>
+                    <div><span class="text-slate-200">ENTER:</span> 뚫어뻥 🪠 (10개/5초)</div>
+                    <div class="col-span-2"><span class="text-amber-600">숫자키 (1-9):</span> 갈색 방귀 💨</div>
+                    <div class="col-span-2 text-pink-400 font-bold"><span class="text-amber-300">0 + ENTER:</span> 🌈 무지개 똥 폭탄 (무지개 뚫어뻥 필살기)</div>
+                </div>
+
+                <div class="flex gap-3 mt-1">
+                    <button id="startBtn" class="pixel-btn px-6 py-2.5 text-cyan-300 font-bold text-xs md:text-sm cursor-pointer">
+                        START GAME
+                    </button>
+                    <button id="shopBtn" class="pixel-btn px-6 py-2.5 text-amber-300 border-amber-400 font-bold text-xs md:text-sm cursor-pointer">
+                        🛒 SHOP
+                    </button>
+                </div>
+            </div>
+
+            <!-- Shop Overlay Modal -->
+            <div id="shopOverlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-start p-4 z-30 text-center overflow-y-auto">
+                <div class="w-full max-w-2xl flex justify-between items-center mb-3 border-b-2 border-cyan-500 pb-2">
+                    <h2 class="text-lg md:text-2xl font-bold text-amber-400 flex items-center gap-2">
+                        <span>🛒</span> PIXEL ITEM SHOP
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-amber-300 font-bold">🪙 <span id="shopCoinDisplay">0</span></span>
+                        <button id="closeShopBtn" class="pixel-btn px-3 py-1 text-xs text-pink-400 font-bold">✕ CLOSE</button>
+                    </div>
+                </div>
+
+                <div class="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-3 text-left text-[10px] md:text-xs">
+                    <!-- Plungers Section -->
+                    <div class="bg-slate-900 p-3 border-2 border-slate-700 flex flex-col gap-2">
+                        <h3 class="text-cyan-400 font-bold text-sm border-b border-slate-700 pb-1 flex items-center justify-between">
+                            <span>🪠 뚫어뻥 무기 (ENTER)</span>
+                        </h3>
+                        <div id="plungerShopList" class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+
+                    <!-- Poop Colors Section -->
+                    <div class="bg-slate-900 p-3 border-2 border-slate-700 flex flex-col gap-2">
+                        <h3 class="text-amber-400 font-bold text-sm border-b border-slate-700 pb-1 flex items-center justify-between">
+                            <span>💩 똥 색상 스킨</span>
+                        </h3>
+                        <div id="poopColorShopList" class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div id="gameOverOverlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center gap-4 p-4 z-20 text-center">
+                <h2 class="text-3xl md:text-5xl font-bold text-pink-500 animate-bounce">GAME OVER</h2>
+                <p id="finalScore" class="text-sm md:text-lg text-cyan-300">SCORE: 0</p>
+                <div class="flex gap-3 mt-2">
+                    <button id="restartBtn" class="pixel-btn px-6 py-3 text-cyan-300 font-bold text-sm md:text-base cursor-pointer">
+                        PLAY AGAIN
+                    </button>
+                    <button id="gameOverShopBtn" class="pixel-btn px-6 py-3 text-amber-300 border-amber-400 font-bold text-sm md:text-base cursor-pointer">
+                        🛒 SHOP
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="w-full grid grid-cols-5 gap-1.5 sm:hidden text-[9px]">
+            <button id="btnJump" class="pixel-btn py-3 text-cyan-400 font-bold">JUMP (↑)</button>
+            <button id="btnDuck" class="pixel-btn py-3 text-pink-400 font-bold">DUCK (↓)</button>
+            <button id="btnPoop" class="pixel-btn py-3 text-amber-400 font-bold">POOP 💩(0)</button>
+            <button id="btnPlunger" class="pixel-btn py-3 text-slate-200 font-bold">PLUNGER 🪠</button>
+            <button id="btnFart" class="pixel-btn py-3 text-amber-600 font-bold">FART 💨</button>
+            <button id="btnRainbowBomb" class="hidden col-span-5 pixel-btn py-2 text-pink-400 font-bold bg-pink-950 border-pink-500">💣 🌈 무지개 똥 폭탄 (0 + ENTER)</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE_WIDTH = 800;
+        const BASE_HEIGHT = 400;
+        const GROUND_Y = 320;
+
+        // 8-Bit Chiptune Sound Synthesizer
+        class ChiptuneAudio {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    try {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) this.ctx = new AudioCtx();
+                    } catch (e) {}
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playJump() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.12);
+                } catch (e) {}
+            }
+
+            playPoop() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.15);
+                } catch (e) {}
+            }
+
+            playPlunger() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.1);
+                } catch (e) {}
+            }
+
+            playFart() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(90, this.ctx.currentTime);
+                    osc.frequency.setValueAtTime(40, this.ctx.currentTime + 0.08);
+                    osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.18);
+                    osc.frequency.setValueAtTime(30, this.ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.3);
+                } catch (e) {}
+            }
+
+            playCoin() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, this.ctx.currentTime); // B5
+                    osc.frequency.setValueAtTime(1318.51, this.ctx.currentTime + 0.08); // E6
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.25);
+                } catch (e) {}
+            }
+
+            playExplode() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                } catch (e) {}
+            }
+
+            playRainbowBomb() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(800, this.ctx.currentTime + 0.2);
+                    osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.5);
+                } catch (e) {}
+            }
+        }
+
+        const soundManager = new ChiptuneAudio();
+
+        class PixelParticle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.size = Math.random() * 4 + 3;
+                this.color = color;
+                this.life = 1.0;
+                this.markedForDeletion = false;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.04;
+                if (this.life <= 0) this.markedForDeletion = true;
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.floor(this.x * scaleX), Math.floor(this.y * scaleY), Math.floor(this.size * scaleX), Math.floor(this.size * scaleY));
+                ctx.restore();
+            }
+        }
+
+        function drawPixelMatrix(ctx, matrix, colorPalette, startX, startY, pixelSize, scaleX, scaleY) {
+            ctx.save();
+            const pW = pixelSize * scaleX;
+            const pH = pixelSize * scaleY;
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    const colorIndex = matrix[r][c];
+                    if (colorIndex !== 0 && colorPalette[colorIndex]) {
+                        ctx.fillStyle = colorPalette[colorIndex];
+                        ctx.fillRect(
+                            Math.floor(startX * scaleX + c * pW),
+                            Math.floor(startY * scaleY + r * pH),
+                            Math.ceil(pW),
+                            Math.ceil(pH)
+                        );
+                    }
+                }
+            }
+            ctx.restore();
+        }
+
+        class Coin {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 20;
+                this.height = 20;
+                this.markedForDeletion = false;
+                this.animTimer = Math.random() * 10;
+
+                this.matrix = [
+                    [0,1,1,1,0],
+                    [1,2,3,2,1],
+                    [1,3,3,2,1],
+                    [1,2,2,2,1],
+                    [0,1,1,1,0]
+                ];
+                this.colors = {
+                    1: '#d97706',
+                    2: '#f59e0b',
+                    3: '#fef08a'
+                };
+            }
+
+            update(speed) {
+                this.x -= speed;
+                this.animTimer += 0.1;
+                if (this.x < -30) this.markedForDeletion = true;
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                const bounceY = Math.sin(this.animTimer) * 3;
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x, this.y + bounceY, 4, scaleX, scaleY);
+            }
+
+            getBounds() {
+                return { x: this.x, y: this.y, width: this.width, height: this.height };
+            }
+        }
+
+        class PoopProjectile {
+            constructor(x, y, colorPaletteKey = 'default') {
+                this.x = x;
+                this.y = y;
+                this.vx = 9;
+                this.width = 24;
+                this.height = 24;
+                this.markedForDeletion = false;
+                this.colorPaletteKey = colorPaletteKey;
+                this.hueTick = 0;
+
+                this.matrix = [
+                    [0,0,0,1,1,0,0,0],
+                    [0,0,1,1,1,1,0,0],
+                    [0,0,0,1,1,0,0,0],
+                    [0,1,1,1,1,1,1,0],
+                    [1,1,2,1,1,2,1,1],
+                    [1,1,1,1,1,1,1,1],
+                    [1,1,1,3,3,1,1,1],
+                    [0,1,1,1,1,1,1,0]
+                ];
+
+                this.colors = this.getColorsForKey(colorPaletteKey);
+            }
+
+            getColorsForKey(key) {
+                switch(key) {
+                    case 'yellow':
+                        return { 1: '#eab308', 2: '#ffffff', 3: '#fef08a' };
+                    case 'orange':
+                        return { 1: '#f97316', 2: '#ffffff', 3: '#ffedd5' };
+                    case 'green':
+                        return { 1: '#22c55e', 2: '#ffffff', 3: '#dcfce7' };
+                    case 'blue':
+                        return { 1: '#06b6d4', 2: '#ffffff', 3: '#cff4fc' };
+                    case 'red':
+                        return { 1: '#ef4444', 2: '#ffffff', 3: '#fee2e2' };
+                    case 'rainbow':
+                        return { 1: '#ec4899', 2: '#ffffff', 3: '#38bdf8' };
+                    default: // brown
+                        return { 1: '#854d0e', 2: '#ffffff', 3: '#f59e0b' };
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+                if (this.colorPaletteKey === 'rainbow') {
+                    this.hueTick = (this.hueTick + 15) % 360;
+                    this.colors[1] = `hsl(${this.hueTick}, 100%, 50%)`;
+                    this.colors[3] = `hsl(${(this.hueTick + 60) % 360}, 100%, 75%)`;
+                }
+                if (this.x > BASE_WIDTH + 50) this.markedForDeletion = true;
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x - 12, this.y - 12, 3, scaleX, scaleY);
+            }
+
+            getBounds() {
+                return { x: this.x - 12, y: this.y - 12, width: this.width, height: this.height };
+            }
+        }
+
+        class PlungerProjectile {
+            constructor(x, y, rank = 0) {
+                this.x = x;
+                this.y = y;
+                this.vx = 11;
+                this.width = 30;
+                this.height = 18;
+                this.markedForDeletion = false;
+                this.rank = rank;
+                this.hueTick = 0;
+
+                this.matrix = [
+                    [0,0,0,0,0,0,0,2,2,0],
+                    [1,1,1,1,1,1,2,2,2,2],
+                    [1,1,1,1,1,1,2,2,2,2],
+                    [0,0,0,0,0,0,0,2,2,0]
+                ];
+
+                this.colors = this.getColorsForRank(rank);
+            }
+
+            getColorsForRank(rank) {
+                switch(rank) {
+                    case 0: return { 1: '#f8fafc', 2: '#e2e8f0' }; // 흰색
+                    case 1: return { 1: '#fef3c7', 2: '#b45309' }; // 연갈색
+                    case 2: return { 1: '#78350f', 2: '#451a03' }; // 진갈색
+                    case 3: return { 1: '#7dd3fc', 2: '#1d4ed8' }; // 파란색
+                    case 4: return { 1: '#86efac', 2: '#15803d' }; // 녹색
+                    case 5: return { 1: '#fbcfe8', 2: '#db2777' }; // 핑크색
+                    case 6: return { 1: '#e9d5ff', 2: '#7e22ce' }; // 보라색
+                    case 7: return { 1: '#f43f5e', 2: '#8b5cf6' }; // 무지개색
+                    default: return { 1: '#ffffff', 2: '#dc2626' };
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+                if (this.rank === 7) {
+                    this.hueTick = (this.hueTick + 15) % 360;
+                    this.colors[1] = `hsl(${this.hueTick}, 100%, 70%)`;
+                    this.colors[2] = `hsl(${(this.hueTick + 90) % 360}, 100%, 50%)`;
+                }
+                if (this.x > BASE_WIDTH + 50) this.markedForDeletion = true;
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x - 15, this.y - 9, 3, scaleX, scaleY);
+            }
+
+            getBounds() {
+                return { x: this.x - 15, y: this.y - 9, width: this.width, height: this.height };
+            }
+        }
+
+        class FartCloud {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = 4;
+                this.radius = 16;
+                this.maxRadius = 42;
+                this.alpha = 1.0;
+                this.markedForDeletion = false;
+
+                this.matrix = [
+                    [0,1,1,1,0],
+                    [1,2,2,2,1],
+                    [1,2,2,2,1],
+                    [0,1,1,1,0]
+                ];
+                this.colors = {
+                    1: '#78350f', // Dark Brown Outline
+                    2: '#a16207'  // Brown Gas Fill
+                };
+            }
+
+            update() {
+                this.x += this.vx;
+                this.radius += 1.2;
+                this.alpha -= 0.03;
+                if (this.radius >= this.maxRadius || this.alpha <= 0) {
+                    this.markedForDeletion = true;
+                }
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                const pSize = (this.radius / 3);
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x - this.radius, this.y - this.radius, pSize, scaleX, scaleY);
+                ctx.restore();
+            }
+
+            getBounds() {
+                return {
+                    x: this.x - this.radius,
+                    y: this.y - this.radius,
+                    width: this.radius * 2,
+                    height: this.radius * 2
+                };
+            }
+        }
+
+        class Obstacle {
+            constructor(type, speed) {
+                this.type = type;
+                this.x = BASE_WIDTH + 30;
+                this.speed = speed;
+                this.markedForDeletion = false;
+
+                if (type === 'cactus_small') {
+                    this.width = 24;
+                    this.height = 44;
+                    this.y = GROUND_Y - this.height;
+                    this.matrix = [
+                        [0,0,1,1,0,0],
+                        [0,0,1,1,0,0],
+                        [1,0,1,1,0,1],
+                        [1,0,1,1,0,1],
+                        [1,1,1,1,1,1],
+                        [0,1,1,1,1,0],
+                        [0,0,1,1,0,0],
+                        [0,0,1,1,0,0],
+                        [0,0,1,1,0,0],
+                        [0,0,1,1,0,0],
+                        [0,0,1,1,0,0]
+                    ];
+                    this.colors = { 1: '#22c55e' };
+                } else if (type === 'cactus_large') {
+                    this.width = 36;
+                    this.height = 60;
+                    this.y = GROUND_Y - this.height;
+                    this.matrix = [
+                        [0,0,0,1,1,0,0,0,0],
+                        [0,0,0,1,1,0,0,0,0],
+                        [1,1,0,1,1,0,0,1,1],
+                        [1,1,0,1,1,0,0,1,1],
+                        [1,1,1,1,1,1,1,1,1],
+                        [0,1,1,1,1,1,1,1,0],
+                        [0,0,0,1,1,0,0,0,0],
+                        [0,0,0,1,1,0,0,0,0],
+                        [0,0,0,1,1,0,0,0,0],
+                        [0,0,0,1,1,0,0,0,0]
+                    ];
+                    this.colors = { 1: '#16a34a' };
+                } else { // Bird
+                    this.width = 36;
+                    this.height = 28;
+                    this.y = GROUND_Y - 70 - Math.random() * 50;
+                    this.matrix = [
+                        [0,0,0,1,1,1,0,0,0],
+                        [0,0,1,1,1,1,1,0,0],
+                        [1,1,1,1,1,1,1,1,1],
+                        [0,0,0,1,1,1,0,0,0],
+                        [0,0,1,1,0,1,1,0,0],
+                        [0,1,1,0,0,0,1,1,0]
+                    ];
+                    this.colors = { 1: '#ff007f' };
+                }
+            }
+
+            update() {
+                this.x -= this.speed;
+                if (this.x < -60) this.markedForDeletion = true;
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                const pixelSize = this.width / (this.matrix[0].length);
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x, this.y, pixelSize, scaleX, scaleY);
+            }
+
+            getBounds() {
+                return { x: this.x, y: this.y, width: this.width, height: this.height };
+            }
+        }
+
+        class Boss {
+            constructor() {
+                this.x = BASE_WIDTH - 130;
+                this.y = GROUND_Y - 120;
+                this.width = 96;
+                this.height = 112;
+                this.maxHp = 25;
+                this.hp = this.maxHp;
+                this.active = true;
+                this.shootTimer = 0;
+
+                this.matrix = [
+                    [0,0,0,1,1,1,1,1,1,0,0,0],
+                    [0,0,1,2,2,2,2,2,2,1,0,0],
+                    [0,1,2,3,3,2,2,3,3,2,1,0],
+                    [0,1,2,3,3,2,2,3,3,2,1,0],
+                    [0,1,2,2,2,2,2,2,2,2,1,0],
+                    [1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,2,1,2,2,2,2,1,2,2,1],
+                    [1,2,2,1,1,1,1,1,1,2,2,1],
+                    [0,1,1,2,2,2,2,2,2,1,1,0],
+                    [0,0,1,1,1,1,1,1,1,1,0,0],
+                    [0,0,1,1,0,0,0,0,1,1,0,0],
+                    [0,1,1,1,0,0,0,0,1,1,1,0]
+                ];
+                this.colors = {
+                    1: '#00f3ff',
+                    2: '#1e293b',
+                    3: '#ef4444'
+                };
+            }
+
+            update(game) {
+                this.shootTimer++;
+                if (this.shootTimer % 100 === 0) {
+                    game.obstacles.push(new Obstacle('bird', game.gameSpeed * 1.2));
+                }
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                drawPixelMatrix(ctx, this.matrix, this.colors, this.x, this.y, 8, scaleX, scaleY);
+
+                const barW = 220 * scaleX;
+                const barH = 14 * scaleY;
+                const barX = (BASE_WIDTH / 2) * scaleX - barW / 2;
+                const barY = 25 * scaleY;
+
+                ctx.save();
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(barX, barY, barW, barH);
+
+                const hpRatio = Math.max(0, this.hp / this.maxHp);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(barX, barY, barW, barH);
+
+                ctx.fillStyle = '#00f3ff';
+                ctx.font = Math.floor(10 * scaleX) + 'px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText('BOSS MECHA', (BASE_WIDTH / 2) * scaleX, barY - 6 * scaleY);
+                ctx.restore();
+            }
+
+            getBounds() {
+                return { x: this.x, y: this.y, width: this.width, height: this.height };
+            }
+        }
+
+        class PixelPlayer {
+            constructor() {
+                this.width = 48;
+                this.height = 54;
+                this.x = 90;
+                this.y = GROUND_Y - this.height;
+                this.vy = 0;
+                this.gravity = 0.75;
+                this.jumpPower = -14.5;
+                this.isGrounded = true;
+                this.isDucking = false;
+
+                this.currentSkin = 'classic';
+                this.skinPalettes = {
+                    classic: { 1: '#22c55e', 2: '#15803d', 3: '#ffffff', 4: '#000000', 5: '#86efac' },
+                    cyber:   { 1: '#00f3ff', 2: '#0284c7', 3: '#ffffff', 4: '#000000', 5: '#7dd3fc' },
+                    dragon:  { 1: '#ef4444', 2: '#991b1b', 3: '#fef08a', 4: '#000000', 5: '#fca5a5' },
+                    blossom: { 1: '#ec4899', 2: '#be185d', 3: '#ffffff', 4: '#000000', 5: '#fbcfe8' }
+                };
+
+                this.standingMatrix = [
+                    [0,0,0,0,1,1,1,1,0,0,0,0],
+                    [0,0,0,1,1,3,4,1,1,0,0,0],
+                    [0,0,0,1,1,1,1,1,1,0,0,0],
+                    [0,0,0,0,1,1,1,1,0,0,0,0],
+                    [0,0,0,1,1,5,5,1,1,0,0,0],
+                    [0,0,1,1,1,5,5,1,1,1,0,0],
+                    [0,0,1,1,1,1,1,1,1,1,1,1],
+                    [0,0,1,1,1,1,1,1,1,1,1,1],
+                    [0,0,0,1,1,1,1,1,1,1,1,0],
+                    [0,0,0,1,1,0,0,1,1,0,0,0],
+                    [0,0,0,1,1,0,0,1,1,0,0,0],
+                    [0,0,1,1,1,0,1,1,1,0,0,0]
+                ];
+
+                this.duckingMatrix = [
+                    [0,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,1,1,3,4,1,1,0,0,0],
+                    [0,0,1,1,1,1,1,1,1,0,0,0],
+                    [0,1,1,1,1,5,5,1,1,1,1,1],
+                    [0,1,1,1,1,1,1,1,1,1,1,1],
+                    [0,0,1,1,1,1,1,1,1,1,1,0],
+                    [0,0,1,1,0,0,0,1,1,0,0,0],
+                    [0,0,1,1,0,0,0,1,1,0,0,0],
+                    [0,1,1,1,0,0,1,1,1,0,0,0]
+                ];
+
+                // Ammo & Cooldown stats
+                this.maxPoop = 10;
+                this.poopAmmo = 10;
+                this.isPoopReloading = false;
+                this.poopReloadTimer = 0;
+
+                this.maxPlunger = 10;
+                this.plungerAmmo = 10;
+                this.isPlungerReloading = false;
+                this.plungerReloadTimer = 0;
+            }
+
+            selectSkin(skinKey) {
+                if (this.skinPalettes[skinKey]) {
+                    this.currentSkin = skinKey;
+                }
+            }
+
+            jump() {
+                if (this.isGrounded) {
+                    this.vy = this.jumpPower;
+                    this.isGrounded = false;
+                    soundManager.playJump();
+                }
+            }
+
+            duck(enable) {
+                if (enable) {
+                    if (!this.isDucking) {
+                        this.isDucking = true;
+                        this.height = 32;
+                        if (this.isGrounded) this.y = GROUND_Y - this.height;
+                    }
+                } else {
+                    if (this.isDucking) {
+                        this.isDucking = false;
+                        this.height = 54;
+                        if (this.isGrounded) this.y = GROUND_Y - this.height;
+                    }
+                }
+            }
+
+            shootPoop(game) {
+                if (this.isPoopReloading || this.poopAmmo <= 0) return;
+
+                this.poopAmmo--;
+                soundManager.playPoop();
+
+                const poopX = this.x + this.width + 5;
+                const poopY = this.y + this.height / 2;
+                game.projectiles.push(new PoopProjectile(poopX, poopY, game.equippedPoopColor));
+
+                if (this.poopAmmo === 0) {
+                    this.isPoopReloading = true;
+                    this.poopReloadTimer = 5.0;
+                }
+            }
+
+            shootPlunger(game) {
+                if (game.equippedPlungerRank < 0) return; // Not unlocked/equipped
+                if (this.isPlungerReloading || this.plungerAmmo <= 0) return;
+
+                this.plungerAmmo--;
+                soundManager.playPlunger();
+
+                const posX = this.x + this.width + 5;
+                const posY = this.y + this.height / 2;
+                game.projectiles.push(new PlungerProjectile(posX, posY, game.equippedPlungerRank));
+
+                if (this.plungerAmmo === 0) {
+                    this.isPlungerReloading = true;
+                    this.plungerReloadTimer = 5.0;
+                }
+            }
+
+            fart(game) {
+                soundManager.playFart();
+                const fartX = this.x + this.width + 5;
+                const fartY = this.y + this.height / 2;
+                game.farts.push(new FartCloud(fartX, fartY));
+            }
+
+            shootRainbowBomb(game) {
+                if (game.equippedPlungerRank !== 7) return false;
+                if (this.isPoopReloading || this.isPlungerReloading) return false;
+
+                soundManager.playRainbowBomb();
+                game.screenShake = 22;
+                game.rainbowFlashTimer = 18;
+
+                // Massive Rainbow Particles
+                for (let i = 0; i < 70; i++) {
+                    const px = Math.random() * BASE_WIDTH;
+                    const py = Math.random() * BASE_HEIGHT;
+                    const hue = Math.floor(Math.random() * 360);
+                    game.particles.push(new PixelParticle(px, py, `hsl(${hue}, 100%, 65%)`));
+                }
+
+                // Clear all obstacles with score bonus
+                const clearedCount = game.obstacles.length;
+                game.obstacles.forEach(obs => {
+                    game.spawnParticles(obs.x + obs.width / 2, obs.y + obs.height / 2, '#ff007f', 12);
+                });
+                game.obstacles = [];
+                game.score += clearedCount * 40;
+
+                // Heavy damage to Boss
+                if (game.boss) {
+                    game.boss.hp -= 15;
+                    game.spawnParticles(game.boss.x + 48, game.boss.y + 48, '#00f3ff', 30);
+                    if (game.boss.hp <= 0) {
+                        game.boss = null;
+                        game.score += 500;
+                        game.coins += 30;
+                        game.saveData();
+                    }
+                }
+
+                // Trigger cooldowns on both ammo slots
+                this.poopAmmo = 0;
+                this.isPoopReloading = true;
+                this.poopReloadTimer = 5.0;
+
+                this.plungerAmmo = 0;
+                this.isPlungerReloading = true;
+                this.plungerReloadTimer = 5.0;
+
+                return true;
+            }
+
+            update(deltaTime) {
+                this.vy += this.gravity;
+                this.y += this.vy;
+
+                if (this.y >= GROUND_Y - this.height) {
+                    this.y = GROUND_Y - this.height;
+                    this.vy = 0;
+                    this.isGrounded = true;
+                }
+
+                if (this.isPoopReloading) {
+                    this.poopReloadTimer -= deltaTime;
+                    if (this.poopReloadTimer <= 0) {
+                        this.poopReloadTimer = 0;
+                        this.poopAmmo = this.maxPoop;
+                        this.isPoopReloading = false;
+                    }
+                }
+
+                if (this.isPlungerReloading) {
+                    this.plungerReloadTimer -= deltaTime;
+                    if (this.plungerReloadTimer <= 0) {
+                        this.plungerReloadTimer = 0;
+                        this.plungerAmmo = this.maxPlunger;
+                        this.isPlungerReloading = false;
+                    }
+                }
+            }
+
+            draw(ctx, scaleX, scaleY) {
+                const matrix = this.isDucking ? this.duckingMatrix : this.standingMatrix;
+                const colors = this.skinPalettes[this.currentSkin];
+                const pixelSize = 4;
+                drawPixelMatrix(ctx, matrix, colors, this.x, this.y, pixelSize, scaleX, scaleY);
+            }
+
+            getBounds() {
+                return { x: this.x, y: this.y, width: this.width, height: this.height };
+            }
+        }
+
+        class PixelGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.scaleX = 1;
+                this.scaleY = 1;
+                this.resizeCanvas();
+
+                // Load persistent Shop Data
+                this.coins = parseInt(localStorage.getItem('pixel_dino_coins') || '0');
+                this.unlockedPlungers = JSON.parse(localStorage.getItem('pixel_dino_unlocked_plungers') || '[]');
+                this.equippedPlungerRank = parseInt(localStorage.getItem('pixel_dino_equipped_plunger') || '-1');
+
+                this.unlockedPoopColors = JSON.parse(localStorage.getItem('pixel_dino_unlocked_poop') || '["brown"]');
+                this.equippedPoopColor = localStorage.getItem('pixel_dino_equipped_poop') || 'brown';
+
+                // Shop Catalogs
+                this.plungerCatalog = [
+                    { rank: 0, name: '흰색 뚫어뻥', price: 10, color: '⚪' },
+                    { rank: 1, name: '연갈색 뚫어뻥', price: 15, color: '🟤' },
+                    { rank: 2, name: '진갈색 뚫어뻥', price: 20, color: '🤎' },
+                    { rank: 3, name: '파란색 뚫어뻥', price: 25, color: '💙' },
+                    { rank: 4, name: '녹색 뚫어뻥', price: 30, color: '🟢' },
+                    { rank: 5, name: '핑크색 뚫어뻥', price: 35, color: '🩷' },
+                    { rank: 6, name: '보라색 뚫어뻥', price: 40, color: '💜' },
+                    { rank: 7, name: '무지개색 뚫어뻥', price: 50, color: '🌈' }
+                ];
+
+                this.poopColorCatalog = [
+                    { id: 'brown', name: '기본 갈색 똥', price: 0, badge: '💩' },
+                    { id: 'yellow', name: '노란색 똥', price: 15, badge: '💛' },
+                    { id: 'orange', name: '주황색 똥', price: 25, badge: '🟧' },
+                    { id: 'green', name: '초록색 똥', price: 35, badge: '💚' },
+                    { id: 'blue', name: '파란색 똥', price: 45, badge: '💙' },
+                    { id: 'red', name: '빨간색 똥', price: 60, badge: '❤️' },
+                    { id: 'rainbow', name: '무지개 빛 똥', price: 100, badge: '🌈' }
+                ];
+
+                this.player = new PixelPlayer();
+                this.obstacles = [];
+                this.coinsList = [];
+                this.projectiles = [];
+                this.farts = [];
+                this.particles = [];
+                this.boss = null;
+
+                this.score = 0;
+                this.highScore = parseInt(localStorage.getItem('pixel_dino_hi') || '0');
+                this.gameSpeed = 6;
+                this.obstacleTimer = 0;
+                this.nextObstacleDelay = 90;
+                this.coinTimer = 0;
+
+                this.screenShake = 0;
+                this.rainbowFlashTimer = 0;
+                this.keysDown = {};
+
+                this.isRunning = false;
+                this.lastTime = 0;
+
+                this.initControls();
+                this.renderShop();
+                this.updateHud();
+            }
+
+            resizeCanvas() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.width / 2;
+                this.scaleX = this.canvas.width / BASE_WIDTH;
+                this.scaleY = this.canvas.height / BASE_HEIGHT;
+            }
+
+            saveData() {
+                localStorage.setItem('pixel_dino_coins', this.coins.toString());
+                localStorage.setItem('pixel_dino_unlocked_plungers', JSON.stringify(this.unlockedPlungers));
+                localStorage.setItem('pixel_dino_equipped_plunger', this.equippedPlungerRank.toString());
+                localStorage.setItem('pixel_dino_unlocked_poop', JSON.stringify(this.unlockedPoopColors));
+                localStorage.setItem('pixel_dino_equipped_poop', this.equippedPoopColor);
+            }
+
+            initControls() {
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                window.addEventListener('keydown', (e) => {
+                    if (!this.isRunning) return;
+
+                    this.keysDown[e.code] = true;
+                    if (e.code === 'Digit0' || e.code === 'Numpad0' || e.key === '0') {
+                        this.keysDown['ZeroKey'] = true;
+                    }
+
+                    // Check Rainbow Bomb Combo
+                    const isZero = this.keysDown['ZeroKey'] || this.keysDown['Digit0'] || this.keysDown['Numpad0'];
+                    const isEnter = this.keysDown['Enter'];
+
+                    if (this.equippedPlungerRank === 7 && isZero && isEnter) {
+                        if (!this.player.isPoopReloading && !this.player.isPlungerReloading) {
+                            e.preventDefault();
+                            this.player.shootRainbowBomb(this);
+                            return;
+                        }
+                    }
+
+                    if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                        e.preventDefault();
+                        this.player.jump();
+                    }
+                    else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        e.preventDefault();
+                        this.player.duck(true);
+                    }
+                    else if (e.code === 'Digit0' || e.code === 'Numpad0' || e.key === '0') {
+                        e.preventDefault();
+                        this.player.shootPoop(this);
+                    }
+                    else if (e.code === 'Enter') {
+                        e.preventDefault();
+                        this.player.shootPlunger(this);
+                    }
+                    else if ((e.code.startsWith('Digit') || e.code.startsWith('Numpad')) && e.key !== '0') {
+                        e.preventDefault();
+                        this.player.fart(this);
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    delete this.keysDown[e.code];
+                    if (e.code === 'Digit0' || e.code === 'Numpad0' || e.key === '0') {
+                        delete this.keysDown['ZeroKey'];
+                    }
+                    if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        this.player.duck(false);
+                    }
+                });
+
+                const btnJump = document.getElementById('btnJump');
+                const btnDuck = document.getElementById('btnDuck');
+                const btnPoop = document.getElementById('btnPoop');
+                const btnPlunger = document.getElementById('btnPlunger');
+                const btnFart = document.getElementById('btnFart');
+                const btnRainbowBomb = document.getElementById('btnRainbowBomb');
+
+                if (btnJump) btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.jump(); });
+                if (btnDuck) {
+                    btnDuck.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.duck(true); });
+                    btnDuck.addEventListener('touchend', (e) => { e.preventDefault(); this.player.duck(false); });
+                }
+                if (btnPoop) btnPoop.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.shootPoop(this); });
+                if (btnPlunger) btnPlunger.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.shootPlunger(this); });
+                if (btnFart) btnFart.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.fart(this); });
+                if (btnRainbowBomb) btnRainbowBomb.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.shootRainbowBomb(this); });
+            }
+
+            renderShop() {
+                document.getElementById('shopCoinDisplay').innerText = this.coins;
+
+                // Render Plunger List
+                const plungerContainer = document.getElementById('plungerShopList');
+                plungerContainer.innerHTML = '';
+
+                this.plungerCatalog.forEach(item => {
+                    const isUnlocked = this.unlockedPlungers.includes(item.rank);
+                    const isEquipped = this.equippedPlungerRank === item.rank;
+
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between bg-slate-800 p-2 border border-slate-700 rounded';
+
+                    let btnText = isEquipped ? 'EQUIPPED' : (isUnlocked ? 'EQUIP' : `🪙 ${item.price}`);
+                    let btnClass = isEquipped ? 'bg-green-600 text-white cursor-default' : (isUnlocked ? 'bg-cyan-600 hover:bg-cyan-500 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white');
+
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">${item.color}</span>
+                            <div>
+                                <div class="font-bold text-white">${item.name}</div>
+                                <div class="text-[9px] text-slate-400">데미지 +${item.rank + 1}</div>
+                            </div>
+                        </div>
+                        <button class="px-2.5 py-1 text-[10px] font-bold rounded ${btnClass}">${btnText}</button>
+                    `;
+
+                    const btn = row.querySelector('button');
+                    if (!isEquipped) {
+                        btn.addEventListener('click', () => {
+                            if (isUnlocked) {
+                                this.equippedPlungerRank = item.rank;
+                            } else if (this.coins >= item.price) {
+                                this.coins -= item.price;
+                                this.unlockedPlungers.push(item.rank);
+                                this.equippedPlungerRank = item.rank;
+                            }
+                            this.saveData();
+                            this.renderShop();
+                            this.updateHud();
+                        });
+                    }
+
+                    plungerContainer.appendChild(row);
+                });
+
+                // Render Poop Color List
+                const poopContainer = document.getElementById('poopColorShopList');
+                poopContainer.innerHTML = '';
+
+                this.poopColorCatalog.forEach(item => {
+                    const isUnlocked = this.unlockedPoopColors.includes(item.id);
+                    const isEquipped = this.equippedPoopColor === item.id;
+
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between bg-slate-800 p-2 border border-slate-700 rounded';
+
+                    let btnText = isEquipped ? 'EQUIPPED' : (isUnlocked ? 'EQUIP' : (item.price === 0 ? 'FREE' : `🪙 ${item.price}`));
+                    let btnClass = isEquipped ? 'bg-green-600 text-white cursor-default' : (isUnlocked ? 'bg-cyan-600 hover:bg-cyan-500 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white');
+
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">${item.badge}</span>
+                            <div class="font-bold text-white">${item.name}</div>
+                        </div>
+                        <button class="px-2.5 py-1 text-[10px] font-bold rounded ${btnClass}">${btnText}</button>
+                    `;
+
+                    const btn = row.querySelector('button');
+                    if (!isEquipped) {
+                        btn.addEventListener('click', () => {
+                            if (isUnlocked) {
+                                this.equippedPoopColor = item.id;
+                            } else if (this.coins >= item.price) {
+                                this.coins -= item.price;
+                                this.unlockedPoopColors.push(item.id);
+                                this.equippedPoopColor = item.id;
+                            }
+                            this.saveData();
+                            this.renderShop();
+                            this.updateHud();
+                        });
+                    }
+
+                    poopContainer.appendChild(row);
+                });
+            }
+
+            start() {
+                soundManager.init();
+                this.reset();
+                this.isRunning = true;
+                this.lastTime = performance.now();
+                document.getElementById('startOverlay').classList.add('hidden');
+                document.getElementById('gameOverOverlay').classList.add('hidden');
+                document.getElementById('shopOverlay').classList.add('hidden');
+                requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+            }
+
+            reset() {
+                this.score = 0;
+                this.gameSpeed = 6;
+                this.obstacles = [];
+                this.coinsList = [];
+                this.projectiles = [];
+                this.farts = [];
+                this.particles = [];
+                this.boss = null;
+                this.player = new PixelPlayer();
+            }
+
+            spawnObstaclesAndCoins() {
+                if (this.boss) return;
+
+                this.obstacleTimer++;
+                if (this.obstacleTimer >= this.nextObstacleDelay) {
+                    this.obstacleTimer = 0;
+                    this.nextObstacleDelay = Math.floor(60 + Math.random() * 70);
+
+                    const types = ['cactus_small', 'cactus_large', 'bird'];
+                    const chosenType = types[Math.floor(Math.random() * types.length)];
+                    this.obstacles.push(new Obstacle(chosenType, this.gameSpeed));
+                }
+
+                // Spawn Coins periodically
+                this.coinTimer++;
+                if (this.coinTimer >= 140) {
+                    this.coinTimer = 0;
+                    const coinY = GROUND_Y - 40 - Math.random() * 80;
+                    this.coinsList.push(new Coin(BASE_WIDTH + 20, coinY));
+                }
+
+                if (this.score > 0 && this.score % 500 === 0 && !this.boss) {
+                    this.boss = new Boss();
+                }
+            }
+
+            spawnParticles(x, y, color, count = 10) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new PixelParticle(x, y, color));
+                }
+            }
+
+            checkCollisions() {
+                const playerBox = this.player.getBounds();
+
+                // Player <-> Obstacle
+                for (let obs of this.obstacles) {
+                    if (this.isOverlapping(playerBox, obs.getBounds())) {
+                        this.gameOver();
+                        return;
+                    }
+                }
+
+                // Player <-> Coins
+                for (let coin of this.coinsList) {
+                    if (!coin.markedForDeletion && this.isOverlapping(playerBox, coin.getBounds())) {
+                        coin.markedForDeletion = true;
+                        this.coins++;
+                        soundManager.playCoin();
+                        this.spawnParticles(coin.x, coin.y, '#f59e0b', 8);
+                        this.saveData();
+                    }
+                }
+
+                // Projectiles (Poop & Plungers) <-> Obstacles/Boss
+                for (let proj of this.projectiles) {
+                    const projBox = proj.getBounds();
+
+                    for (let obs of this.obstacles) {
+                        if (!obs.markedForDeletion && this.isOverlapping(projBox, obs.getBounds())) {
+                            obs.markedForDeletion = true;
+                            proj.markedForDeletion = true;
+                            const isPlunger = proj instanceof PlungerProjectile;
+                            const color = isPlunger ? '#cbd5e1' : '#854d0e';
+                            this.spawnParticles(obs.x + obs.width / 2, obs.y + obs.height / 2, color, 14);
+                            soundManager.playExplode();
+                            this.score += isPlunger ? 30 : 20;
+                        }
+                    }
+
+                    if (this.boss && this.isOverlapping(projBox, this.boss.getBounds())) {
+                        proj.markedForDeletion = true;
+                        const damage = (proj instanceof PlungerProjectile) ? (proj.rank + 2) : 1;
+                        this.boss.hp -= damage;
+                        this.spawnParticles(proj.x, proj.y, '#00f3ff', 8);
+                        soundManager.playExplode();
+                        if (this.boss.hp <= 0) {
+                            this.spawnParticles(this.boss.x + 48, this.boss.y + 48, '#00f3ff', 35);
+                            this.boss = null;
+                            this.score += 300;
+                            this.coins += 20; // Boss defeat coin bonus
+                            this.saveData();
+                        }
+                    }
+                }
+
+                // Farts <-> Obstacles
+                for (let fart of this.farts) {
+                    const fartBox = fart.getBounds();
+
+                    for (let obs of this.obstacles) {
+                        if (!obs.markedForDeletion && this.isOverlapping(fartBox, obs.getBounds())) {
+                            obs.markedForDeletion = true;
+                            this.spawnParticles(obs.x + obs.width / 2, obs.y + obs.height / 2, '#78350f', 14);
+                            this.score += 15;
+                        }
+                    }
+
+                    if (this.boss && this.isOverlapping(fartBox, this.boss.getBounds())) {
+                        fart.markedForDeletion = true;
+                        this.boss.hp -= 2;
+                        this.spawnParticles(this.boss.x + 48, this.boss.y + 48, '#78350f', 18);
+                        if (this.boss.hp <= 0) {
+                            this.boss = null;
+                            this.score += 300;
+                            this.coins += 20;
+                            this.saveData();
+                        }
+                    }
+                }
+            }
+
+            isOverlapping(r1, r2) {
+                return !(r2.x > r1.x + r1.width ||
+                         r2.x + r2.width < r1.x ||
+                         r2.y > r1.y + r1.height ||
+                         r2.y + r2.height < r1.y);
+            }
+
+            gameOver() {
+                this.isRunning = false;
+                soundManager.playExplode();
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('pixel_dino_hi', this.highScore.toString());
+                }
+                this.saveData();
+                document.getElementById('finalScore').innerText = `SCORE: ${this.score}`;
+                document.getElementById('gameOverOverlay').classList.remove('hidden');
+            }
+
+            update(deltaTime) {
+                this.score++;
+                this.gameSpeed = 6 + Math.floor(this.score / 250) * 0.5;
+
+                this.player.update(deltaTime);
+                this.spawnObstaclesAndCoins();
+
+                if (this.boss) {
+                    this.boss.update(this);
+                }
+
+                this.projectiles.forEach(p => p.update());
+                this.coinsList.forEach(c => c.update(this.gameSpeed));
+                this.farts.forEach(f => f.update());
+                this.obstacles.forEach(o => o.update());
+                this.particles.forEach(pt => pt.update());
+
+                this.projectiles = this.projectiles.filter(p => !p.markedForDeletion);
+                this.coinsList = this.coinsList.filter(c => !c.markedForDeletion);
+                this.farts = this.farts.filter(f => !f.markedForDeletion);
+                this.obstacles = this.obstacles.filter(o => !o.markedForDeletion);
+                this.particles = this.particles.filter(pt => !pt.markedForDeletion);
+
+                this.checkCollisions();
+                this.updateHud();
+            }
+
+            updateHud() {
+                document.getElementById('scoreDisplay').innerText = String(this.score).padStart(5, '0');
+                document.getElementById('highScoreDisplay').innerText = String(this.highScore).padStart(5, '0');
+                document.getElementById('coinHud').innerText = String(this.coins);
+
+                // Poop HUD
+                const poopHud = document.getElementById('poopHud');
+                if (this.player.isPoopReloading) {
+                    poopHud.innerText = `⏳ RELOAD (${this.player.poopReloadTimer.toFixed(1)}s)`;
+                    poopHud.className = 'font-bold text-red-400 animate-pulse';
+                } else {
+                    poopHud.innerText = `💩 ${this.player.poopAmmo}/${this.player.maxPoop}`;
+                    poopHud.className = 'font-bold text-amber-400';
+                }
+
+                // Plunger HUD
+                const plungerHudContainer = document.getElementById('plungerHudContainer');
+                const plungerHud = document.getElementById('plungerHud');
+                const btnRainbowBomb = document.getElementById('btnRainbowBomb');
+
+                if (this.equippedPlungerRank >= 0) {
+                    plungerHudContainer.classList.remove('hidden');
+                    if (this.player.isPlungerReloading) {
+                        plungerHud.innerText = `⏳ RELOAD (${this.player.plungerReloadTimer.toFixed(1)}s)`;
+                        plungerHud.className = 'font-bold text-red-400 animate-pulse';
+                    } else {
+                        plungerHud.innerText = `🪠 ${this.player.plungerAmmo}/${this.player.maxPlunger}`;
+                        plungerHud.className = 'font-bold text-slate-200';
+                    }
+                } else {
+                    plungerHudContainer.classList.add('hidden');
+                }
+
+                if (btnRainbowBomb) {
+                    if (this.equippedPlungerRank === 7) {
+                        btnRainbowBomb.classList.remove('hidden');
+                    } else {
+                        btnRainbowBomb.classList.add('hidden');
+                    }
+                }
+            }
+
+            draw() {
+                this.ctx.save();
+
+                // Screen Shake effect
+                if (this.screenShake > 0) {
+                    const dx = (Math.random() - 0.5) * 14 * this.scaleX;
+                    const dy = (Math.random() - 0.5) * 14 * this.scaleY;
+                    this.ctx.translate(dx, dy);
+                    this.screenShake--;
+                }
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Pixel Ground Grid
+                this.ctx.save();
+                this.ctx.strokeStyle = '#00f3ff';
+                this.ctx.lineWidth = 3 * this.scaleY;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, GROUND_Y * this.scaleY);
+                this.ctx.lineTo(this.canvas.width, GROUND_Y * this.scaleY);
+                this.ctx.stroke();
+
+                // Ground Pixel Dots
+                this.ctx.fillStyle = '#00f3ff';
+                for (let i = 0; i < 20; i++) {
+                    const gx = ((i * 40 - (this.score * 4) % 40) + BASE_WIDTH) % BASE_WIDTH;
+                    this.ctx.fillRect(gx * this.scaleX, (GROUND_Y + 12) * this.scaleY, 6 * this.scaleX, 6 * this.scaleY);
+                }
+                this.ctx.restore();
+
+                this.player.draw(this.ctx, this.scaleX, this.scaleY);
+                this.coinsList.forEach(c => c.draw(this.ctx, this.scaleX, this.scaleY));
+                this.obstacles.forEach(o => o.draw(this.ctx, this.scaleX, this.scaleY));
+                this.projectiles.forEach(p => p.draw(this.ctx, this.scaleX, this.scaleY));
+                this.farts.forEach(f => f.draw(this.ctx, this.scaleX, this.scaleY));
+                this.particles.forEach(pt => pt.draw(this.ctx, this.scaleX, this.scaleY));
+
+                if (this.boss) {
+                    this.boss.draw(this.ctx, this.scaleX, this.scaleY);
+                }
+
+                // Rainbow Flash overlay
+                if (this.rainbowFlashTimer > 0) {
+                    this.rainbowFlashTimer--;
+                    const hue = (this.rainbowFlashTimer * 35) % 360;
+                    this.ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+
+                this.ctx.restore();
+            }
+
+            gameLoop(timestamp) {
+                if (!this.isRunning) return;
+
+                const deltaTime = (timestamp - this.lastTime) / 1000;
+                this.lastTime = timestamp;
+
+                this.update(deltaTime);
+                this.draw();
+
+                requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+        }
+
+        let gameInstance = null;
+
+        function selectSkin(skinKey) {
+            if (gameInstance) {
+                gameInstance.player.selectSkin(skinKey);
+            }
+            document.querySelectorAll('.skin-btn').forEach(btn => {
+                if (btn.dataset.skin === skinKey) {
+                    btn.classList.add('border-cyan-400');
+                    btn.classList.remove('border-slate-600');
+                } else {
+                    btn.classList.remove('border-cyan-400');
+                    btn.classList.add('border-slate-600');
+                }
+            });
+        }
+
+        window.onload = function() {
+            gameInstance = new PixelGame();
+
+            document.getElementById('startBtn').addEventListener('click', () => {
+                gameInstance.start();
+            });
+
+            document.getElementById('restartBtn').addEventListener('click', () => {
+                gameInstance.start();
+            });
+
+            const openShop = () => {
+                gameInstance.renderShop();
+                document.getElementById('shopOverlay').classList.remove('hidden');
+            };
+
+            document.getElementById('shopBtn').addEventListener('click', openShop);
+
+            const gameOverShopBtn = document.getElementById('gameOverShopBtn');
+            if (gameOverShopBtn) {
+                gameOverShopBtn.addEventListener('click', openShop);
+            }
+
+            const hudCoinShopBtn = document.getElementById('hudCoinShopBtn');
+            if (hudCoinShopBtn) {
+                hudCoinShopBtn.addEventListener('click', () => {
+                    if (!gameInstance.isRunning) openShop();
+                });
+            }
+
+            document.getElementById('closeShopBtn').addEventListener('click', () => {
+                document.getElementById('shopOverlay').classList.add('hidden');
+            });
+
+            const skins = ['Classic', 'Cyber', 'Dragon', 'Blossom'];
+            skins.forEach(s => {
+                const btn = document.getElementById('skin' + s);
+                if (btn) {
+                    btn.addEventListener('click', () => selectSkin(s.toLowerCase()));
+                }
+            });
+        };
+    </script>
+</body>
+</html>

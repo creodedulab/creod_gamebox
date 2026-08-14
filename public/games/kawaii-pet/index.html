@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>귀여운 알 키우기 - 6종 펫 육성 게임</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Jua) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Jua', 'Nunito', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #f0fdf4;
+        }
+
+        /* Custom Keyframe Animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        @keyframes eggShake {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-8deg); }
+            40% { transform: rotate(8deg); }
+            60% { transform: rotate(-5deg); }
+            80% { transform: rotate(5deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.08); }
+        }
+        @keyframes bubbleFloat {
+            0% { transform: translateY(0) scale(0.8); opacity: 0.8; }
+            100% { transform: translateY(-80px) scale(1.3); opacity: 0; }
+        }
+
+        .animate-float { animation: floatSlow 3.5s ease-in-out infinite; }
+        .animate-egg-shake { animation: eggShake 1.2s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
+
+        .bubble-particle {
+            position: absolute;
+            pointer-events: none;
+            animation: bubbleFloat 1.2s ease-out forwards;
+        }
+
+        /* Custom Scrollbar for collection grid */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-2 sm:p-4 bg-slate-900 text-slate-800">
+
+    <!-- Main Game Frame -->
+    <div id="game-container" class="relative w-full max-w-md h-[92vh] max-h-[850px] bg-amber-50 rounded-3xl shadow-2xl border-4 border-amber-200 overflow-hidden flex flex-col justify-between">
+        
+        <!-- Header Bar -->
+        <header class="bg-amber-200/80 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-amber-300 shadow-sm z-30">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🥚</span>
+                <div>
+                    <h1 class="text-lg font-bold text-amber-950 leading-tight">귀여운 알 키우기</h1>
+                    <p class="text-[10px] text-amber-800/80">나만의 펫을 10살까지 키워봐요!</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1.5">
+                <!-- Admin Button -->
+                <button id="btn-admin" onclick="openAdminModal()" title="관리자 인증 (비밀번호: 1108)" class="bg-amber-100 hover:bg-white text-amber-900 w-9 h-9 rounded-2xl font-jua text-xs flex items-center justify-center shadow transition active:scale-95 relative border border-amber-300">
+                    <i id="admin-key-icon" class="fa-solid fa-key text-amber-700"></i>
+                    <span id="admin-badge" class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white hidden"></span>
+                </button>
+                <!-- Collection Button -->
+                <button id="btn-collection" onclick="openCollectionModal()" class="bg-amber-100 hover:bg-white text-amber-900 px-3 py-2 rounded-2xl font-jua text-xs flex items-center shadow transition active:scale-95 border border-amber-300">
+                    <i class="fa-solid fa-trophy text-amber-500 mr-1.5"></i> 도감 (<span id="grad-count">0</span>/6)
+                </button>
+                <!-- Sound Toggle -->
+                <button id="btn-sound" onclick="toggleSound()" class="bg-amber-100 hover:bg-white text-amber-900 w-9 h-9 rounded-2xl font-jua text-xs flex items-center justify-center shadow transition active:scale-95 border border-amber-300">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-amber-700"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Interactive Zone -->
+        <main id="main-play-zone" class="flex-1 flex flex-col justify-between p-4 relative overflow-hidden bg-gradient-to-b from-sky-100 via-amber-50 to-orange-50 transition-all duration-500">
+            
+            <!-- Toast Notification -->
+            <div id="toast" class="absolute top-3 left-1/2 -translate-x-1/2 bg-slate-800/90 text-white font-jua text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg opacity-0 -translate-y-2 transition-all duration-300 pointer-events-none z-40 flex items-center space-x-2">
+                <span id="toast-icon">✨</span>
+                <span id="toast-msg">메시지</span>
+            </div>
+
+            <!-- Pet Status Header -->
+            <div class="flex justify-between items-center bg-white/85 backdrop-blur-sm p-3.5 rounded-2xl shadow-md border border-amber-200 z-20">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span id="pet-name-display" class="font-jua text-xl text-slate-800">선택 대기</span>
+                        <span id="pet-gender-badge" class="text-xs bg-pink-100 text-pink-700 font-bold px-2.5 py-0.5 rounded-full hidden">♀️ 여아</span>
+                        <span id="pet-type-badge" class="text-xs bg-amber-200 text-amber-900 font-bold px-2.5 py-0.5 rounded-full">미정</span>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <p id="pet-stage-desc" class="text-xs text-slate-600 font-medium">알을 선택하여 입양하세요!</p>
+                        <span id="admin-mode-tag" class="text-[10px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-full shadow-sm hidden animate-pulse">⚡ 1초 자동성장 ON</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span id="stage-badge" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-jua px-3 py-1.5 rounded-xl text-xs sm:text-sm shadow inline-block">
+                        🥚 알 단계
+                    </span>
+                </div>
+            </div>
+
+            <!-- EXP Bar -->
+            <div class="mt-2 bg-white/80 p-2.5 rounded-2xl border border-amber-200 shadow-sm z-20">
+                <div class="flex justify-between text-xs font-bold text-amber-900 mb-1">
+                    <span>성장 경험치 (EXP)</span>
+                    <span id="exp-text">0 / 100</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden border border-amber-300">
+                    <div id="exp-bar" class="bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-400 h-full w-0% transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Pet Canvas / Character Stage -->
+            <div id="pet-stage" class="relative flex-1 flex flex-col items-center justify-center my-2 py-4">
+                
+                <!-- Ambient Glow Effect behind Egg/Pet -->
+                <div id="ambient-glow" class="absolute w-48 h-48 rounded-full blur-2xl opacity-40 bg-amber-300 animate-pulse-glow pointer-events-none"></div>
+
+                <!-- Pet Avatar Container -->
+                <div id="pet-avatar-wrapper" onclick="interactPet()" class="relative cursor-pointer transition-transform duration-200 active:scale-95 z-10 flex items-center justify-center">
+                    <div id="pet-avatar" class="text-8xl sm:text-9xl filter drop-shadow-xl animate-float transition-all">
+                        ❓
+                    </div>
+                    <!-- Sleeping ZZZ animation overlay -->
+                    <div id="sleep-overlay" class="absolute -top-4 -right-4 text-3xl font-bold text-indigo-500 opacity-0 transition-opacity pointer-events-none animate-bounce">
+                        💤
+                    </div>
+                </div>
+
+                <!-- Touch Interaction Hint -->
+                <p id="touch-hint" class="text-xs text-amber-800/70 font-bold bg-white/60 px-3 py-1 rounded-full border border-amber-200 shadow-sm mt-3 animate-pulse">
+                    👇 펫을 쓰다듬으면 행복해져요!
+                </p>
+            </div>
+
+            <!-- Stat Meters Grid -->
+            <div class="grid grid-cols-2 gap-2 bg-white/80 p-3 rounded-2xl border border-amber-200 shadow-sm z-20">
+                <!-- Hunger -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-base">🍗</span>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-700">
+                            <span>포만감</span>
+                            <span id="stat-hunger-val">80%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="stat-hunger-bar" class="bg-orange-400 h-full w-[80%] transition-all"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Happiness -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-base">💖</span>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-700">
+                            <span>행복도</span>
+                            <span id="stat-happy-val">80%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="stat-happy-bar" class="bg-pink-400 h-full w-[80%] transition-all"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Cleanliness -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-base">🧼</span>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-700">
+                            <span>청결도</span>
+                            <span id="stat-clean-val">80%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="stat-clean-bar" class="bg-sky-400 h-full w-[80%] transition-all"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Energy -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-base">⚡</span>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-700">
+                            <span>체력</span>
+                            <span id="stat-energy-val">80%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="stat-energy-bar" class="bg-emerald-400 h-full w-[80%] transition-all"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Care Action Buttons Navigation Bar -->
+        <footer class="bg-amber-100 p-3 border-t border-amber-200 grid grid-cols-4 gap-2 z-30">
+            <button onclick="openFeedModal()" class="bg-gradient-to-b from-orange-300 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-orange-950 rounded-2xl py-2.5 px-1 shadow-md font-jua flex flex-col items-center justify-center space-y-0.5 transition active:scale-95 border border-orange-200">
+                <span class="text-xl">🍚</span>
+                <span class="text-xs">밥주기</span>
+            </button>
+
+            <button onclick="openPlayModal()" class="bg-gradient-to-b from-pink-300 to-pink-400 hover:from-pink-400 hover:to-pink-500 text-pink-950 rounded-2xl py-2.5 px-1 shadow-md font-jua flex flex-col items-center justify-center space-y-0.5 transition active:scale-95 border border-pink-200">
+                <span class="text-xl">🎾</span>
+                <span class="text-xs">놀아주기</span>
+            </button>
+
+            <button onclick="openWashModal()" class="bg-gradient-to-b from-sky-300 to-sky-400 hover:from-sky-400 hover:to-sky-500 text-sky-950 rounded-2xl py-2.5 px-1 shadow-md font-jua flex flex-col items-center justify-center space-y-0.5 transition active:scale-95 border border-sky-200">
+                <span class="text-xl">🚿</span>
+                <span class="text-xs">씻겨주기</span>
+            </button>
+
+            <button onclick="openSleepModal()" class="bg-gradient-to-b from-indigo-300 to-indigo-400 hover:from-indigo-400 hover:to-indigo-500 text-indigo-950 rounded-2xl py-2.5 px-1 shadow-md font-jua flex flex-col items-center justify-center space-y-0.5 transition active:scale-95 border border-indigo-200">
+                <span class="text-xl">🌙</span>
+                <span class="text-xs">재우기</span>
+            </button>
+        </footer>
+
+    </div>
+
+    
+    <!-- MODAL 1: Pet Selection & Name/Gender Setup -->
+    <div id="modal-select-pet" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-amber-50 border-4 border-amber-300 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <!-- STEP 1: Select Egg Type -->
+            <div id="adopt-step-select" class="flex flex-col h-full">
+                <div class="text-center mb-3">
+                    <span class="text-4xl">🐣</span>
+                    <h2 class="font-jua text-2xl text-amber-950 mt-1">어떤 알을 키워볼까요?</h2>
+                    <p class="text-xs text-amber-800/80 mt-1">알 중앙에 펫 얼굴이 숨어있어요!</p>
+                </div>
+                
+                <div id="pet-options-grid" class="grid grid-cols-2 gap-3 overflow-y-auto p-1 flex-1">
+                    <!-- Dynamic Rendering via JavaScript -->
+                </div>
+            </div>
+
+            <!-- STEP 2: Set Pet Name & Gender -->
+            <div id="adopt-step-naming" class="hidden flex-col h-full justify-between">
+                <div class="text-center mb-2">
+                    <div id="naming-pet-avatar" class="text-6xl mb-1">🩵🥚</div>
+                    <h2 id="naming-pet-title" class="font-jua text-xl text-amber-950">고양이 알 입양 준비</h2>
+                    <p class="text-xs text-amber-800/80">새 식구가 될 펫의 이름과 성별을 정해주세요!</p>
+                </div>
+
+                <div class="space-y-4 my-2 bg-white/80 p-4 rounded-2xl border border-amber-200">
+                    <!-- Name Input -->
+                    <div>
+                        <label class="block font-jua text-xs text-slate-700 mb-1 text-left">🏷️ 펫 이름 설정</label>
+                        <input type="text" id="input-pet-name" maxlength="8" placeholder="이름 입력 (예: 나비)" class="w-full bg-slate-50 border-2 border-amber-300 focus:border-amber-500 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 outline-none transition">
+                    </div>
+
+                    <!-- Gender Selection Buttons -->
+                    <div>
+                        <label class="block font-jua text-xs text-slate-700 mb-1 text-left">✨ 성별 선택</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="btn-gender-boy" onclick="selectGender('boy')" class="flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-sky-400 bg-sky-100 text-sky-800 active:scale-95 transition">
+                                <span>♂️</span> <span>남아</span>
+                            </button>
+                            <button type="button" id="btn-gender-girl" onclick="selectGender('girl')" class="flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-slate-200 bg-slate-100 text-slate-500 active:scale-95 transition">
+                                <span>♀️</span> <span>여아</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="backToEggSelect()" class="w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-jua py-2.5 rounded-2xl text-sm transition">
+                        이전
+                    </button>
+                    <button onclick="confirmAdoption()" class="w-2/3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-jua py-2.5 rounded-2xl shadow-md text-sm transition active:scale-95">
+                        💕 입양 시작하기
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL 2: Admin Password Modal -->
+    <div id="modal-admin" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-4 border-emerald-400 text-white w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">🔑</span>
+                    <h2 class="font-jua text-xl text-emerald-400">관리자 인증</h2>
+                </div>
+                <button onclick="toggleModal('modal-admin')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300 mb-3">4자리 관리자 비밀번호를 인증하면<br><strong class="text-emerald-400">1초마다 자동으로 EXP가 계속 상승</strong>합니다!</p>
+
+            <!-- Password Input -->
+            <div class="mb-4">
+                <input type="password" id="input-admin-pass" maxlength="4" placeholder="비밀번호 4자리" class="w-full text-center tracking-[0.5em] text-2xl font-mono bg-slate-800 border-2 border-emerald-500/50 focus:border-emerald-400 rounded-2xl px-4 py-3 text-emerald-300 outline-none transition">
+            </div>
+
+            <button id="btn-toggle-admin" onclick="verifyAdminPassword()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-jua py-3 rounded-2xl shadow-lg text-sm transition active:scale-95">
+                ⚡ 인증 및 1초 자동성장 시작
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Food Menu Modal -->
+    <div id="modal-feed" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-orange-300 w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center">
+            <div class="flex justify-between items-center border-b border-orange-200 pb-2 mb-3">
+                <h2 class="font-jua text-xl text-orange-950">🍚 맛있는 음식 주기</h2>
+                <button onclick="toggleModal('modal-feed')" class="text-slate-400 hover:text-slate-700 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-amber-800 mb-3">펫의 선호 음식을 먹이면 경험치 보너스!</p>
+
+            <div id="food-list-grid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1">
+                <!-- Dynamically rendered foods -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Mini Game (Play) Modal -->
+    <div id="modal-play" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-pink-300 w-full max-w-sm rounded-3xl p-4 shadow-2xl text-center flex flex-col items-center">
+            <div class="w-full flex justify-between items-center border-b border-pink-200 pb-2 mb-2">
+                <h2 class="font-jua text-lg text-pink-950">🎾 하트 & 간식 캐치 게임</h2>
+                <button onclick="closeMiniGame()" class="text-slate-400 hover:text-slate-700 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex justify-between w-full text-xs font-bold text-slate-700 px-2 my-1">
+                <span>시간: <span id="game-time" class="text-pink-600 font-black">15</span>초</span>
+                <span>점수: <span id="game-score" class="text-pink-600 font-black">0</span>점</span>
+            </div>
+
+            <!-- Mini Game Canvas -->
+            <div class="relative w-full h-64 bg-gradient-to-b from-sky-200 to-pink-100 rounded-2xl overflow-hidden border-2 border-pink-200 shadow-inner my-2">
+                <canvas id="minigame-canvas" class="w-full h-full"></canvas>
+            </div>
+
+            <button id="btn-start-game" onclick="startMiniGame()" class="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-jua py-2.5 rounded-2xl shadow-md text-sm hover:brightness-105 active:scale-95 transition">
+                🚀 게임 시작하기
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 5: 4-Step Wash Bath Modal -->
+    <div id="modal-wash" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-sky-50 border-4 border-sky-300 w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center">
+            <div class="flex justify-between items-center border-b border-sky-200 pb-2 mb-3">
+                <h2 class="font-jua text-xl text-sky-950">🚿 뽀득뽀득 목욕시키기</h2>
+                <button onclick="toggleModal('modal-wash')" class="text-slate-400 hover:text-slate-700 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p id="wash-step-desc" class="text-xs font-bold text-sky-800 mb-3">1단계: 물을 먼저 묻혀주세요!</p>
+
+            <div class="relative w-full h-44 bg-sky-100 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-200 overflow-hidden my-2">
+                <div id="wash-pet-icon" class="text-7xl transition-all">🐱</div>
+                <div id="wash-effect-layer" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-1.5 mt-3">
+                <button id="btn-wash-1" onclick="performWashStep(1)" class="bg-sky-400 text-white font-jua text-xs py-2 rounded-xl shadow">1. 물 적시기</button>
+                <button id="btn-wash-2" onclick="performWashStep(2)" class="bg-slate-300 text-slate-500 font-jua text-xs py-2 rounded-xl shadow cursor-not-allowed" disabled>2. 거품 내기</button>
+                <button id="btn-wash-3" onclick="performWashStep(3)" class="bg-slate-300 text-slate-500 font-jua text-xs py-2 rounded-xl shadow cursor-not-allowed" disabled>3. 물 헹구기</button>
+                <button id="btn-wash-4" onclick="performWashStep(4)" class="bg-slate-300 text-slate-500 font-jua text-xs py-2 rounded-xl shadow cursor-not-allowed" disabled>4. 수건 닦기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: 2-Step Sleep Modal -->
+    <div id="modal-sleep" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-indigo-950 border-4 border-indigo-400 text-indigo-100 w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center">
+            <div class="flex justify-between items-center border-b border-indigo-800 pb-2 mb-3">
+                <h2 class="font-jua text-xl text-indigo-300">🌙 아늑한 침실</h2>
+                <button onclick="toggleModal('modal-sleep')" class="text-indigo-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p id="sleep-step-desc" class="text-xs text-indigo-200 mb-3">1단계: 폭신한 베개를 제공하세요.</p>
+
+            <div class="relative w-full h-44 bg-indigo-900/80 rounded-2xl flex flex-col items-center justify-center border border-indigo-700 my-2 overflow-hidden">
+                <div id="sleep-bed-area" class="relative flex items-center justify-center">
+                    <span id="sleep-pillow" class="absolute -left-6 top-0 text-3xl opacity-0 transition-opacity">🛏️</span>
+                    <span id="sleep-pet-icon" class="text-7xl">🐱</span>
+                    <span id="sleep-blanket" class="absolute -bottom-2 text-6xl opacity-0 transition-opacity">🛌</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-3">
+                <button id="btn-sleep-1" onclick="performSleepStep(1)" class="bg-indigo-500 hover:bg-indigo-600 text-white font-jua py-2.5 rounded-xl text-xs transition">1. 베개 주기 🛏️</button>
+                <button id="btn-sleep-2" onclick="performSleepStep(2)" class="bg-slate-700 text-slate-500 font-jua py-2.5 rounded-xl text-xs cursor-not-allowed transition" disabled>2. 이불 덮어주기 🛌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: Collection / Trophy Modal -->
+    <div id="modal-collection" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-amber-300 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center border-b border-amber-200 pb-2 mb-3">
+                <h2 class="font-jua text-xl text-amber-950">🏆 완육 펫 도감</h2>
+                <button onclick="toggleModal('modal-collection')" class="text-slate-400 hover:text-slate-700 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-amber-800 mb-2">10살까지 성공적으로 완육한 펫들입니다!</p>
+
+            <div id="collection-grid" class="grid grid-cols-2 gap-2.5 overflow-y-auto p-1 flex-1">
+                <!-- Dynamically rendered collection cards -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 8: Graduation Ceremony Modal -->
+    <div id="modal-graduation" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-amber-100 to-orange-100 border-4 border-amber-400 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <span class="text-6xl animate-bounce inline-block mb-2">🎓👑</span>
+            <h2 class="font-jua text-2xl text-amber-950">10살 완육 축하합니다!</h2>
+            <p id="grad-pet-desc" class="text-xs text-amber-900 mt-2 font-medium">고양이 '나비'이(가) 당당한 어른으로 자랐습니다!</p>
+
+            <div class="my-4 bg-white/80 p-4 rounded-2xl border border-amber-300 shadow-inner">
+                <span id="grad-pet-avatar" class="text-7xl filter drop-shadow">🐱</span>
+            </div>
+
+            <button onclick="startNewPetGraduation()" class="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-jua py-3 rounded-2xl shadow-lg text-sm transition active:scale-95">
+                ✨ 새로운 알 선택하러 가기
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Game Config & Constants ---
+        const PET_CONFIGS = {
+            cat: {
+                name: "고양이",
+                colorName: "하늘",
+                eggIcon: "🩵🥚",
+                eggCenterEmoji: "🐱",
+                glowColor: "#38bdf8",
+                badgeBg: "bg-sky-200 text-sky-900",
+                stages: [
+                    { icon: "🩵🥚", title: "하늘 고양이 알", desc: "따뜻하게 보살펴주면 곧 깨어납니다." },
+                    { icon: "🐣🐱", title: "부화 중인 고양이", desc: "알 깨지는 소리가 나며 눈을 떴어요!" },
+                    { icon: "🐱", title: "1살 아기 고양이", desc: "호기심 많고 귀여운 아기 냥이" },
+                    { icon: "😺", title: "5살 장난꾸러기 고양이", desc: "우다다를 좋아하는 기운 넘치는 고양이" },
+                    { icon: "👑🐱", title: "10살 멋진 어른 고양이", desc: "완육 완수! 대장의 품격을 지닌 당당한 어른 냥이" }
+                ],
+                favFood: ["🐟 생선 구이", "🍗 닭가슴살"]
+            },
+            dog: {
+                name: "강아지",
+                colorName: "빨강",
+                eggIcon: "❤️🥚",
+                eggCenterEmoji: "🐶",
+                glowColor: "#f43f5e",
+                badgeBg: "bg-rose-200 text-rose-900",
+                stages: [
+                    { icon: "❤️🥚", title: "빨간 강아지 알", desc: "꼬리를 치듯 통통 튀는 알입니다." },
+                    { icon: "🐣🐶", title: "부화 중인 강아지", desc: "알을 깨고 멍멍 소리를 내고 있어요!" },
+                    { icon: "🐶", title: "1살 아기 강아지", desc: "꼬리를 살랑이는 사랑스러운 멍뭉이" },
+                    { icon: "🐕", title: "5살 활발한 강아지", desc: "원반 던지기와 공놀이를 아주 좋아해요!" },
+                    { icon: "👑🐶", title: "10살 용맹한 어른 강아지", desc: "완육 성공! 충성스럽고 늠름한 댕댕이" }
+                ],
+                favFood: ["🍖 고기 뼈다귀", "🌭 소세지"]
+            },
+            hamster: {
+                name: "햄스터",
+                colorName: "연핑크",
+                eggIcon: "🩷🥚",
+                eggCenterEmoji: "🐹",
+                glowColor: "#f472b6",
+                badgeBg: "bg-pink-200 text-pink-900",
+                stages: [
+                    { icon: "🩷🥚", title: "연핑크 햄스터 알", desc: "작고 둥글둥글한 분홍빛 알입니다." },
+                    { icon: "🐣🐹", title: "부화 중인 햄스터", desc: "볼주머니를 빵빵하게 부풀리며 나왔어요!" },
+                    { icon: "🐹", title: "1살 아기 햄스터", desc: "해바라기씨를 오물거리는 귀요미" },
+                    { icon: "🐹✨", title: "5살 볼빵빵 햄스터", desc: "챗바퀴 달리기 선수!" },
+                    { icon: "👑🐹", title: "10살 대장 햄스터", desc: "완육 성공! 해바라기씨 왕국의 영웅" }
+                ],
+                favFood: ["🌻 해바라기씨", "🧀 치즈 조각"]
+            },
+            panda: {
+                name: "판다",
+                colorName: "연두",
+                eggIcon: "💚🥚",
+                eggCenterEmoji: "🐼",
+                glowColor: "#a3e635",
+                badgeBg: "bg-lime-200 text-lime-900",
+                stages: [
+                    { icon: "💚🥚", title: "연두 판다 알", desc: "대나무 향이 그윽하게 나는 푸른 알입니다." },
+                    { icon: "🐣🐼", title: "부화 중인 판다", desc: "데굴데굴 구르며 세상 밖으로 나왔어요!" },
+                    { icon: "🐼", title: "1살 아기 판다", desc: "대나무 잎을 좋아하는 느긋한 판다" },
+                    { icon: "🐼🎋", title: "5살 장난꾸러기 판다", desc: "나무 타기를 좋아하는 장난꾸러기" },
+                    { icon: "👑🐼", title: "10살 평화로운 어른 판다", desc: "완육 성공! 느긋함의 미학을 아는 대장 판다" }
+                ],
+                favFood: ["🎋 대나무 싹", "🍎 사과"]
+            },
+            fox: {
+                name: "여우",
+                colorName: "보라",
+                eggIcon: "💜🥚",
+                eggCenterEmoji: "🦊",
+                glowColor: "#c084fc",
+                badgeBg: "bg-purple-200 text-purple-900",
+                stages: [
+                    { icon: "💜🥚", title: "보라 여우 알", desc: "신비로운 보랏빛을 띠는 매력적인 알입니다." },
+                    { icon: "🐣🦊", title: "부화 중인 여우", desc: "풍성한 꼬리를 흔들며 쏙 나타났어요!" },
+                    { icon: "🦊", title: "1살 아기 여우", desc: "영리하고 호기심 많은 아기 여우" },
+                    { icon: "🦊✨", title: "5살 매력만점 여우", desc: "눈치 빠르고 사교성이 좋은 여우" },
+                    { icon: "👑🦊", title: "10살 신비한 꼬리 여우", desc: "완육 성공! 신비로운 지혜의 어른 여우" }
+                ],
+                favFood: ["🍗 닭가슴살", "🍇 포도 송이"]
+            },
+            penguin: {
+                name: "펭귄",
+                colorName: "주황",
+                eggIcon: "🧡🥚",
+                eggCenterEmoji: "🐧",
+                glowColor: "#fb923c",
+                badgeBg: "bg-orange-200 text-orange-900",
+                stages: [
+                    { icon: "🧡🥚", title: "주황 펭귄 알", desc: "차가운 얼음 위에서도 따뜻한 주황 알!" },
+                    { icon: "🐣🐧", title: "부화 중인 펭귄", desc: "날개를 파닥거리며 미끄러져 나왔어요!" },
+                    { icon: "🐧", title: "1살 아기 펭귄", desc: "아장아장 걸음마를 배우는 귀여운 펭귄" },
+                    { icon: "🐧🧊", title: "5살 수영선수 펭귄", desc: "시원하게 얼음 슬라이딩을 즐기는 펭귄" },
+                    { icon: "👑🐧", title: "10살 남극의 황제 펭귄", desc: "완육 성공! 멋진 황제 펭귄" }
+                ],
+                favFood: ["🐟 생선 구이", "🦑 오징어"]
+            }
+        };
+
+        const FOOD_ITEMS = [
+            { name: "🐟 생선 구이", exp: 20, fill: 30 },
+            { name: "🍗 닭가슴살", exp: 20, fill: 30 },
+            { name: "🍖 고기 뼈다귀", exp: 20, fill: 30 },
+            { name: "🌭 소세지", exp: 15, fill: 25 },
+            { name: "🌻 해바라기씨", exp: 20, fill: 30 },
+            { name: "🧀 치즈 조각", exp: 15, fill: 25 },
+            { name: "🎋 대나무 싹", exp: 20, fill: 30 },
+            { name: "🍎 사과", exp: 15, fill: 20 },
+            { name: "🍇 포도 송이", exp: 15, fill: 20 },
+            { name: "🦑 오징어", exp: 20, fill: 30 }
+        ];
+
+        // --- State Variables ---
+        let gameState = {
+            petType: null,
+            petName: '나비',
+            petGender: 'boy', // 'boy' or 'girl'
+            stage: 0, // 0: Egg, 1: Hatch, 2: Age 1, 3: Age 5, 4: Age 10
+            exp: 0,
+            maxExp: 100,
+            hunger: 80,
+            happy: 80,
+            clean: 80,
+            energy: 80,
+            soundEnabled: true
+        };
+
+        let tempSelectedType = null;
+        let selectedGender = 'boy';
+
+        // Admin State
+        let isAdminAuthenticated = false;
+        let adminInterval = null;
+        const ADMIN_PASSWORD = "1108";
+
+        // Wash & Sleep Step tracking
+        let currentWashStep = 1;
+        let currentSleepStep = 1;
+
+        // --- Web Audio SFX Synth ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            if (!gameState.soundEnabled || !audioCtx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'tap') {
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'happy') {
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'level') {
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch(e) {}
+        }
+
+        function renderPetSelectionOptions() {
+            const grid = document.getElementById('pet-options-grid');
+            grid.innerHTML = '';
+            Object.keys(PET_CONFIGS).forEach(type => {
+                const config = PET_CONFIGS[type];
+                const card = document.createElement('div');
+                card.className = "bg-white border-2 border-amber-200 hover:border-amber-400 rounded-2xl p-3 flex flex-col items-center justify-between shadow-sm cursor-pointer hover:scale-105 active:scale-95 transition text-center";
+                card.onclick = () => selectEggType(type);
+                card.innerHTML = `
+                    <div class="relative flex items-center justify-center my-1">
+                        <span class="text-5xl filter drop-shadow">${config.eggIcon}</span>
+                        <span class="absolute text-xl font-bold top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">${config.eggCenterEmoji}</span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="font-jua text-sm text-slate-800 block">${config.name} (${config.colorName})</span>
+                        <span class="text-[10px] ${config.badgeBg} font-bold px-2 py-0.5 rounded-full inline-block mt-0.5">알 단계</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectEggType(type) {
+            playSfx('tap');
+            tempSelectedType = type;
+            const config = PET_CONFIGS[type];
+            
+            document.getElementById('adopt-step-select').classList.add('hidden');
+            document.getElementById('adopt-step-naming').classList.remove('hidden');
+            document.getElementById('adopt-step-naming').classList.add('flex');
+
+            document.getElementById('naming-pet-avatar').innerHTML = `
+                <div class="relative inline-block">
+                    <span>${config.eggIcon}</span>
+                    <span class="absolute text-3xl font-bold top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">${config.eggCenterEmoji}</span>
+                </div>
+            `;
+            document.getElementById('naming-pet-title').innerText = `${config.name} 알 입양 준비`;
+            document.getElementById('input-pet-name').value = `${config.name}이`;
+            
+            selectGender('boy');
+        }
+
+        function selectGender(gender) {
+            playSfx('tap');
+            selectedGender = gender;
+            const btnBoy = document.getElementById('btn-gender-boy');
+            const btnGirl = document.getElementById('btn-gender-girl');
+
+            if (gender === 'boy') {
+                btnBoy.className = "flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-sky-400 bg-sky-100 text-sky-800 active:scale-95 transition";
+                btnGirl.className = "flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-slate-200 bg-slate-100 text-slate-500 active:scale-95 transition";
+            } else {
+                btnGirl.className = "flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-pink-400 bg-pink-100 text-pink-800 active:scale-95 transition";
+                btnBoy.className = "flex items-center justify-center space-x-1 py-2 rounded-xl font-jua text-sm border-2 border-slate-200 bg-slate-100 text-slate-500 active:scale-95 transition";
+            }
+        }
+
+        function backToEggSelect() {
+            playSfx('tap');
+            document.getElementById('adopt-step-naming').classList.add('hidden');
+            document.getElementById('adopt-step-naming').classList.remove('flex');
+            document.getElementById('adopt-step-select').classList.remove('hidden');
+        }
+
+        function confirmAdoption() {
+            if (!tempSelectedType) return;
+            playSfx('happy');
+
+            const nameInput = document.getElementById('input-pet-name').value.trim();
+            const petName = nameInput.length > 0 ? nameInput : PET_CONFIGS[tempSelectedType].name;
+
+            gameState.petType = tempSelectedType;
+            gameState.petName = petName;
+            gameState.petGender = selectedGender;
+            gameState.stage = 0;
+            gameState.exp = 0;
+            gameState.hunger = 80;
+            gameState.happy = 80;
+            gameState.clean = 80;
+            gameState.energy = 80;
+
+            document.getElementById('modal-select-pet').classList.add('hidden');
+            showToast(`🎉 ${petName} (${selectedGender === 'boy' ? '남아 ♂️' : '여아 ♀️'}) 입양 완료!`, "🐣");
+            updateUI();
+        }
+
+        function openAdminModal() {
+            playSfx('tap');
+            document.getElementById('input-admin-pass').value = '';
+            toggleModal('modal-admin');
+        }
+
+        function verifyAdminPassword() {
+            const pass = document.getElementById('input-admin-pass').value.trim();
+            if (pass === ADMIN_PASSWORD) {
+                playSfx('level');
+                isAdminAuthenticated = !isAdminAuthenticated;
+
+                const badge = document.getElementById('admin-badge');
+                const modeTag = document.getElementById('admin-mode-tag');
+
+                if (isAdminAuthenticated) {
+                    badge.classList.remove('hidden');
+                    modeTag.classList.remove('hidden');
+                    
+                    // Start 1-second auto growth timer (+15 EXP/sec)
+                    if (adminInterval) clearInterval(adminInterval);
+                    adminInterval = setInterval(() => {
+                        if (gameState.stage < 4) {
+                            gainExp(15, "⚡ 관리자 1초 자동성장!");
+                        }
+                    }, 1000);
+
+                    showToast("⚡ 관리자 인증 성공! 1초 자동 성장이 켜졌습니다.", "🔑");
+                } else {
+                    badge.classList.add('hidden');
+                    modeTag.classList.add('hidden');
+                    if (adminInterval) clearInterval(adminInterval);
+                    showToast("🔒 관리자 자동 성장이 꺼졌습니다.", "🔐");
+                }
+                toggleModal('modal-admin');
+            } else {
+                showToast("❌ 비밀번호가 올바르지 않습니다! (비밀번호: 1108)", "⚠️");
+            }
+        }
+
+        function updateUI() {
+            if (!gameState.petType) return;
+
+            const config = PET_CONFIGS[gameState.petType];
+            const currentStageInfo = config.stages[gameState.stage];
+
+            // Pet Name & Gender Display
+            document.getElementById('pet-name-display').innerText = gameState.petName;
+            const genderBadge = document.getElementById('pet-gender-badge');
+            genderBadge.classList.remove('hidden');
+            if (gameState.petGender === 'boy') {
+                genderBadge.className = "text-xs bg-sky-100 text-sky-700 font-bold px-2.5 py-0.5 rounded-full";
+                genderBadge.innerText = "♂️ 남아";
+            } else {
+                genderBadge.className = "text-xs bg-pink-100 text-pink-700 font-bold px-2.5 py-0.5 rounded-full";
+                genderBadge.innerText = "♀️ 여아";
+            }
+
+            document.getElementById('pet-type-badge').innerText = config.name;
+            document.getElementById('pet-stage-desc').innerText = currentStageInfo.desc;
+
+            // Stage badge text
+            const stageNames = ["🥚 알", "🐣 부화", "🐱 1살", "😺 5살", "👑 10살"];
+            document.getElementById('stage-badge').innerText = stageNames[gameState.stage];
+
+            // Render Avatar with center face for egg stage
+            const avatarContainer = document.getElementById('pet-avatar');
+            if (gameState.stage === 0) {
+                avatarContainer.innerHTML = `
+                    <div class="relative inline-block animate-egg-shake">
+                        <span>${config.eggIcon}</span>
+                        <span class="absolute text-4xl font-bold top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">${config.eggCenterEmoji}</span>
+                    </div>
+                `;
+            } else {
+                avatarContainer.innerHTML = currentStageInfo.icon;
+            }
+
+            // EXP Bar update
+            document.getElementById('exp-text').innerText = `${gameState.exp} / ${gameState.maxExp}`;
+            const expPct = Math.min(100, Math.floor((gameState.exp / gameState.maxExp) * 100));
+            document.getElementById('exp-bar').style.width = `${expPct}%`;
+
+            // Stat Meters
+            updateStatMeter('hunger', gameState.hunger);
+            updateStatMeter('happy', gameState.happy);
+            updateStatMeter('clean', gameState.clean);
+            updateStatMeter('energy', gameState.energy);
+
+            // Ambient glow
+            document.getElementById('ambient-glow').style.backgroundColor = config.glowColor;
+        }
+
+        function updateStatMeter(statName, val) {
+            document.getElementById(`stat-${statName}-val`).innerText = `${val}%`;
+            document.getElementById(`stat-${statName}-bar`).style.width = `${val}%`;
+        }
+
+        function gainExp(amount, sourceMsg = "") {
+            if (gameState.stage >= 4) return;
+
+            gameState.exp += amount;
+            if (sourceMsg) {
+                showToast(`${sourceMsg} +${amount} EXP`, "✨");
+            }
+
+            if (gameState.exp >= gameState.maxExp) {
+                gameState.exp = 0;
+                gameState.stage++;
+                playSfx('level');
+
+                if (gameState.stage >= 4) {
+                    triggerGraduation();
+                } else {
+                    showToast(`🎉 축하합니다! ${gameState.petName}이(가) 성장했습니다!`, "🌟");
+                    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                }
+            }
+            updateUI();
+        }
+
+        function interactPet() {
+            playSfx('happy');
+            gameState.happy = Math.min(100, gameState.happy + 5);
+            gainExp(5, "💖 쓰다듬기!");
+            
+            // Heart particle animation
+            const wrapper = document.getElementById('pet-avatar-wrapper');
+            const heart = document.createElement('span');
+            heart.innerText = '💖';
+            heart.className = 'absolute text-2xl animate-bounce pointer-events-none -top-6';
+            wrapper.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+        }
+
+        function openFeedModal() {
+            playSfx('tap');
+            const grid = document.getElementById('food-list-grid');
+            grid.innerHTML = '';
+            const config = PET_CONFIGS[gameState.petType];
+
+            FOOD_ITEMS.forEach(food => {
+                const isFav = config.favFood.includes(food.name);
+                const btn = document.createElement('button');
+                btn.className = `p-2.5 rounded-2xl border flex flex-col items-center justify-between text-center transition active:scale-95 ${
+                    isFav ? 'bg-orange-100 border-orange-400 font-bold' : 'bg-white border-amber-200'
+                }`;
+                btn.onclick = () => feedPet(food, isFav);
+                btn.innerHTML = `
+                    <span class="text-2xl">${food.name.split(' ')[0]}</span>
+                    <span class="text-xs text-slate-800 mt-1">${food.name.split(' ').slice(1).join(' ')}</span>
+                    ${isFav ? '<span class="text-[9px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full mt-1">✨ 좋아함</span>' : ''}
+                `;
+                grid.appendChild(btn);
+            });
+
+            toggleModal('modal-feed');
+        }
+
+        function feedPet(food, isFav) {
+            playSfx('happy');
+            const bonusExp = isFav ? food.exp + 10 : food.exp;
+            gameState.hunger = Math.min(100, gameState.hunger + food.fill);
+            gainExp(bonusExp, `${food.name} 먹기!`);
+            toggleModal('modal-feed');
+        }
+
+        function openWashModal() {
+            playSfx('tap');
+            currentWashStep = 1;
+            updateWashUI();
+            document.getElementById('wash-pet-icon').innerText = PET_CONFIGS[gameState.petType].stages[gameState.stage].icon;
+            toggleModal('modal-wash');
+        }
+
+        function updateWashUI() {
+            const descs = [
+                "1단계: 따뜻한 물을 적셔주세요 🚿",
+                "2단계: 거품 솝을 칠해주세요 🧼",
+                "3단계: 시원하게 물로 헹궈주세요 🚿",
+                "4단계: 포근한 수건으로 닦아주세요 🧺"
+            ];
+            document.getElementById('wash-step-desc').innerText = descs[currentWashStep - 1];
+
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`btn-wash-${i}`);
+                if (i === currentWashStep) {
+                    btn.className = "bg-sky-500 text-white font-jua text-xs py-2 rounded-xl shadow animate-pulse";
+                    btn.disabled = false;
+                } else if (i < currentWashStep) {
+                    btn.className = "bg-emerald-500 text-white font-jua text-xs py-2 rounded-xl shadow opacity-75";
+                    btn.disabled = true;
+                } else {
+                    btn.className = "bg-slate-300 text-slate-500 font-jua text-xs py-2 rounded-xl shadow cursor-not-allowed";
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        function performWashStep(step) {
+            if (step !== currentWashStep) return;
+            playSfx('tap');
+
+            const effectLayer = document.getElementById('wash-effect-layer');
+            if (step === 1) {
+                effectLayer.innerHTML = '<span class="text-4xl animate-bounce">🚿💦</span>';
+            } else if (step === 2) {
+                effectLayer.innerHTML = '<span class="text-4xl animate-bounce">🧼🫧</span>';
+            } else if (step === 3) {
+                effectLayer.innerHTML = '<span class="text-4xl animate-bounce">💧✨</span>';
+            } else if (step === 4) {
+                effectLayer.innerHTML = '<span class="text-4xl animate-bounce">🧺✨</span>';
+            }
+
+            setTimeout(() => {
+                effectLayer.innerHTML = '';
+            }, 800);
+
+            if (currentWashStep < 4) {
+                currentWashStep++;
+                updateWashUI();
+            } else {
+                playSfx('happy');
+                gameState.clean = 100;
+                gainExp(25, "🧼 뽀득뽀득 목욕 완료!");
+                setTimeout(() => toggleModal('modal-wash'), 600);
+            }
+        }
+
+        function openSleepModal() {
+            playSfx('tap');
+            currentSleepStep = 1;
+            document.getElementById('sleep-pillow').style.opacity = '0';
+            document.getElementById('sleep-blanket').style.opacity = '0';
+            document.getElementById('sleep-pet-icon').innerText = PET_CONFIGS[gameState.petType].stages[gameState.stage].icon;
+            updateSleepUI();
+            toggleModal('modal-sleep');
+        }
+
+        function updateSleepUI() {
+            const descs = [
+                "1단계: 폭신한 베개를 제공하세요 🛏️",
+                "2단계: 포근한 이불을 덮어주세요 🛌"
+            ];
+            document.getElementById('sleep-step-desc').innerText = descs[currentSleepStep - 1];
+
+            const btn1 = document.getElementById('btn-sleep-1');
+            const btn2 = document.getElementById('btn-sleep-2');
+
+            if (currentSleepStep === 1) {
+                btn1.className = "bg-indigo-500 hover:bg-indigo-600 text-white font-jua py-2.5 rounded-xl text-xs transition animate-pulse";
+                btn1.disabled = false;
+                btn2.className = "bg-slate-700 text-slate-500 font-jua py-2.5 rounded-xl text-xs cursor-not-allowed transition";
+                btn2.disabled = true;
+            } else {
+                btn1.className = "bg-emerald-600 text-white font-jua py-2.5 rounded-xl text-xs opacity-75";
+                btn1.disabled = true;
+                btn2.className = "bg-indigo-500 hover:bg-indigo-600 text-white font-jua py-2.5 rounded-xl text-xs transition animate-pulse";
+                btn2.disabled = false;
+            }
+        }
+
+        function performSleepStep(step) {
+            playSfx('tap');
+            if (step === 1) {
+                document.getElementById('sleep-pillow').style.opacity = '1';
+                currentSleepStep = 2;
+                updateSleepUI();
+            } else if (step === 2) {
+                document.getElementById('sleep-blanket').style.opacity = '1';
+                playSfx('happy');
+                gameState.energy = 100;
+                gainExp(25, "🌙 꿀잠으로 체력 충전!");
+                setTimeout(() => toggleModal('modal-sleep'), 800);
+            }
+        }
+
+        let gameTimer = null;
+        let gameTimeLeft = 15;
+        let gameScore = 0;
+        let canvas, ctx;
+        let items = [];
+
+        function openPlayModal() {
+            playSfx('tap');
+            toggleModal('modal-play');
+            canvas = document.getElementById('minigame-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            // Draw initial static state
+            ctx.fillStyle = '#bae6fd';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0284c7';
+            ctx.font = '16px Jua';
+            ctx.textAlign = 'center';
+            ctx.fillText('시작 버튼을 누르면 떨어지는 하트를 터치하세요!', canvas.width / 2, canvas.height / 2);
+        }
+
+        function startMiniGame() {
+            playSfx('tap');
+            document.getElementById('btn-start-game').disabled = true;
+            document.getElementById('btn-start-game').classList.add('opacity-50');
+
+            gameTimeLeft = 15;
+            gameScore = 0;
+            document.getElementById('game-time').innerText = gameTimeLeft;
+            document.getElementById('game-score').innerText = gameScore;
+
+            items = [];
+            canvas.onclick = handleCanvasClick;
+
+            if (gameTimer) clearInterval(gameTimer);
+            gameTimer = setInterval(() => {
+                gameTimeLeft--;
+                document.getElementById('game-time').innerText = gameTimeLeft;
+
+                if (gameTimeLeft <= 0) {
+                    endMiniGame();
+                }
+            }, 1000);
+
+            requestAnimationFrame(miniGameLoop);
+        }
+
+        function miniGameLoop() {
+            if (gameTimeLeft <= 0) return;
+
+            // Spawn falling hearts
+            if (Math.random() < 0.12) {
+                items.push({
+                    x: Math.random() * (canvas.width - 30) + 15,
+                    y: -20,
+                    speed: Math.random() * 2 + 2,
+                    emoji: Math.random() > 0.3 ? '💖' : '⭐'
+                });
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Render items
+            items.forEach((item, idx) => {
+                item.y += item.speed;
+                ctx.font = '24px serif';
+                ctx.fillText(item.emoji, item.x, item.y);
+            });
+
+            // Remove out of bound items
+            items = items.filter(item => item.y < canvas.height + 30);
+
+            requestAnimationFrame(miniGameLoop);
+        }
+
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            items.forEach((item, idx) => {
+                const dist = Math.hypot(item.x - clickX, item.y - clickY);
+                if (dist < 30) {
+                    playSfx('happy');
+                    gameScore += item.emoji === '💖' ? 10 : 20;
+                    document.getElementById('game-score').innerText = gameScore;
+                    items.splice(idx, 1);
+                }
+            });
+        }
+
+        function endMiniGame() {
+            clearInterval(gameTimer);
+            canvas.onclick = null;
+            document.getElementById('btn-start-game').disabled = false;
+            document.getElementById('btn-start-game').classList.remove('opacity-50');
+
+            const earnedExp = Math.min(50, Math.floor(gameScore / 2));
+            gainExp(earnedExp, `🎾 미니게임 점수 ${gameScore}점!`);
+            showToast(`🎉 게임 종료! +${earnedExp} EXP 획득!`, "🎾");
+        }
+
+        function closeMiniGame() {
+            if (gameTimer) clearInterval(gameTimer);
+            toggleModal('modal-play');
+        }
+
+        function triggerGraduation() {
+            const config = PET_CONFIGS[gameState.petType];
+            document.getElementById('grad-pet-desc').innerText = `[${config.name}] ${gameState.petName}(${gameState.petGender === 'boy' ? '남아 ♂️' : '여아 ♀️'})이(가) 멋진 10살 어른으로 자라났습니다!`;
+            document.getElementById('grad-pet-avatar').innerText = config.stages[4].icon;
+
+            saveToCollection(gameState.petType, gameState.petName, gameState.petGender);
+
+            toggleModal('modal-graduation');
+            confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+        }
+
+        function saveToCollection(type, name, gender) {
+            let collection = JSON.parse(localStorage.getItem('pet_collection_v2') || '[]');
+            collection.push({
+                type: type,
+                name: name,
+                gender: gender,
+                date: new Date().toLocaleDateString()
+            });
+            localStorage.setItem('pet_collection_v2', JSON.stringify(collection));
+            updateCollectionCount();
+        }
+
+        function updateCollectionCount() {
+            let collection = JSON.parse(localStorage.getItem('pet_collection_v2') || '[]');
+            document.getElementById('grad-count').innerText = collection.length;
+        }
+
+        function openCollectionModal() {
+            playSfx('tap');
+            const grid = document.getElementById('collection-grid');
+            grid.innerHTML = '';
+            let collection = JSON.parse(localStorage.getItem('pet_collection_v2') || '[]');
+
+            if (collection.length === 0) {
+                grid.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-500 py-8">아직 완육한 펫이 없습니다.<br>첫 펫을 10살까지 키워보세요!</div>';
+            } else {
+                collection.forEach(item => {
+                    const config = PET_CONFIGS[item.type];
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-3 rounded-2xl border border-amber-200 shadow-sm text-center flex flex-col items-center justify-center";
+                    card.innerHTML = `
+                        <span class="text-4xl my-1">${config.stages[4].icon}</span>
+                        <span class="font-jua text-sm text-amber-950">${item.name} (${item.gender === 'boy' ? '♂️' : '♀️'})</span>
+                        <span class="text-[10px] text-slate-500">${config.name} • ${item.date}</span>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            toggleModal('modal-collection');
+        }
+
+        function startNewPetGraduation() {
+            toggleModal('modal-graduation');
+            document.getElementById('modal-select-pet').classList.remove('hidden');
+            backToEggSelect();
+            renderPetSelectionOptions();
+        }
+
+        // --- Helper Utilities ---
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            icon.className = gameState.soundEnabled ? "fa-solid fa-volume-high text-amber-700" : "fa-solid fa-volume-xmark text-slate-400";
+            showToast(gameState.soundEnabled ? "🔊 효과음 켜짐" : "🔇 효과음 꺼짐", "🎵");
+        }
+
+        function showToast(msg, icon = "✨") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerText = icon;
+
+            toast.classList.remove('opacity-0', '-translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-2');
+            }, 2200);
+        }
+
+        // On Game Load Initialization
+        window.onload = function() {
+            renderPetSelectionOptions();
+            updateCollectionCount();
+        };
+    </script>
+</body>
+</html>

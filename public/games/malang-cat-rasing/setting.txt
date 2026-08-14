@@ -1,0 +1,4 @@
+1.kor_name=[말랑캣 키우기]
+2.eng_name=[Malang Cat House]
+3.maker=[김제 다은]
+3.genre=[*]

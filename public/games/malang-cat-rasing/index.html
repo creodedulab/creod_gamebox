@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>귀여운 고양이 키우기 (My Cute Cat)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            font-family: 'Gowun Dodum', sans-serif;
+            background-color: #fdf6ec;
+            color: #4a3e3d;
+            overflow-x: hidden;
+        }
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f3a683;
+            border-radius: 10px;
+        }
+
+        @keyframes heartPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .pulse-heart {
+            animation: heartPulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+        }
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            font-family: 'Jua', sans-serif;
+            animation: floatUp 1s forwards ease-out;
+            z-index: 50;
+        }
+
+        .btn-action {
+            transition: all 0.15s ease-out;
+            box-shadow: 0 4px 0 #d38b5d;
+        }
+        .btn-action:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #d38b5d;
+        }
+
+        .btn-sleep {
+            box-shadow: 0 4px 0 #4a69bd;
+        }
+        .btn-sleep:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #4a69bd;
+        }
+
+        .room-bg-day {
+            background: linear-gradient(180deg, #fff3e0 0%, #fce4ec 100%);
+        }
+        .room-bg-night {
+            background: linear-gradient(180deg, #2c3e50 0%, #000000 100%);
+        }
+
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-start min-h-screen p-2 sm:p-4">
+
+    <!-- Main Game Wrapper -->
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-amber-200 flex flex-col my-auto relative">
+        
+        <!-- Header Bar -->
+        <div class="bg-amber-100 px-3 py-2.5 flex items-center justify-between border-b border-amber-200 gap-1">
+            <div class="flex items-center gap-1.5">
+                <button onclick="openCatSwitchModal()" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-amber-700 hover:bg-amber-50" title="고양이 교체 및 입양">
+                    <i class="fa-solid fa-cat text-xs"></i>
+                </button>
+                <button onclick="openDesignModal()" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-amber-700 hover:bg-amber-50" title="고양이 디자인 변경">
+                    <i class="fa-solid fa-palette text-xs"></i>
+                </button>
+                <button onclick="toggleSound()" id="sound-btn" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-amber-700 hover:bg-amber-50" title="소리 켜기/끄기">
+                    <i class="fa-solid fa-volume-high text-xs"></i>
+                </button>
+                <button onclick="openAlbumModal()" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-amber-700 hover:bg-amber-50" title="성장 앨범">
+                    <i class="fa-solid fa-book-open text-xs"></i>
+                </button>
+                <button onclick="confirmReset()" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-rose-500 hover:bg-rose-50" title="리셋">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Stage Badge & Editable Cat Name Input -->
+            <div class="flex items-center gap-1.5 bg-white/90 px-2.5 py-1 rounded-full shadow-inner border border-amber-200 max-w-[190px] overflow-hidden">
+                <input type="text" id="cat-name-input" onchange="saveCatName()" class="w-14 text-xs font-bold font-jua text-amber-900 bg-transparent border-b border-amber-300 focus:outline-none text-center" value="나비" title="고양이 이름 클릭하여 변경">
+                <span id="cat-stage-badge" class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full truncate">1단계</span>
+            </div>
+        </div>
+
+        <!-- Gauges & Stats Panel -->
+        <div class="bg-amber-50/70 p-3 grid grid-cols-2 gap-2 border-b border-amber-100 text-xs sm:text-sm font-bold">
+            <!-- Affection (Growth) Gauge -->
+            <div class="col-span-2 bg-white p-2 rounded-xl shadow-sm border border-pink-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-pink-600 flex items-center gap-1 font-jua text-sm">
+                        <i class="fa-solid fa-heart pulse-heart"></i> 애정도 (성장)
+                    </span>
+                    <span id="affection-text" class="text-pink-600 font-mono">0 / 100</span>
+                </div>
+                <div class="w-full bg-pink-100 h-3.5 rounded-full overflow-hidden p-0.5 border border-pink-200">
+                    <div id="affection-bar" class="bg-gradient-to-r from-pink-400 to-rose-500 h-full rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Hunger Gauge -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-amber-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-amber-700 flex items-center gap-1">
+                        <i class="fa-solid fa-utensils"></i> 배고픔
+                    </span>
+                    <span id="hunger-text" class="text-amber-800 font-mono">80%</span>
+                </div>
+                <div class="w-full bg-amber-100 h-2.5 rounded-full overflow-hidden border border-amber-200">
+                    <div id="hunger-bar" class="bg-amber-500 h-full rounded-full transition-all duration-300 w-[80%]"></div>
+                </div>
+            </div>
+
+            <!-- Energy Gauge -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-emerald-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-emerald-700 flex items-center gap-1">
+                        <i class="fa-solid fa-bolt"></i> 체력
+                    </span>
+                    <span id="energy-text" class="text-emerald-800 font-mono">90%</span>
+                </div>
+                <div class="w-full bg-emerald-100 h-2.5 rounded-full overflow-hidden border border-emerald-200">
+                    <div id="energy-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300 w-[90%]"></div>
+                </div>
+            </div>
+
+            <!-- Room Cleanliness Gauge -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-sky-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sky-700 flex items-center gap-1">
+                        <i class="fa-solid fa-broom"></i> 방 청결도
+                    </span>
+                    <span id="room-clean-text" class="text-sky-800 font-mono">100%</span>
+                </div>
+                <div class="w-full bg-sky-100 h-2 rounded-full overflow-hidden border border-sky-200">
+                    <div id="room-clean-bar" class="bg-sky-400 h-full rounded-full transition-all duration-300 w-[100%]"></div>
+                </div>
+            </div>
+
+            <!-- Litter Box Cleanliness Gauge -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-purple-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-purple-700 flex items-center gap-1">
+                        <i class="fa-solid fa-box-open"></i> 화장실 청결
+                    </span>
+                    <span id="litter-clean-text" class="text-purple-800 font-mono">100%</span>
+                </div>
+                <div class="w-full bg-purple-100 h-2 rounded-full overflow-hidden border border-purple-200">
+                    <div id="litter-clean-bar" class="bg-purple-400 h-full rounded-full transition-all duration-300 w-[100%]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Room Stage -->
+        <div id="room-stage" class="relative w-full h-72 room-bg-day overflow-hidden flex flex-col justify-between p-3 select-none transition-colors duration-500">
+            
+            <div class="flex justify-between items-start z-10">
+                <div class="bg-white/80 backdrop-blur-xs px-2.5 py-1 rounded-full text-xs font-bold text-amber-900 border border-amber-200/50 shadow-sm flex items-center gap-1.5">
+                    <span id="status-emoji">🐱</span>
+                    <span id="status-text">기분이 좋아요!</span>
+                </div>
+
+                <div id="night-badge" class="hidden bg-indigo-900/80 text-yellow-300 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow">
+                    <i class="fa-solid fa-moon"></i> 수면 중
+                </div>
+            </div>
+
+            <!-- Cat Canvas Container -->
+            <div class="relative w-full h-full flex items-center justify-center cursor-pointer" id="canvas-container">
+                <canvas id="catCanvas" class="w-full h-full"></canvas>
+            </div>
+
+            <div id="dirt-overlay" class="absolute inset-0 pointer-events-none z-10"></div>
+
+            <div class="absolute bottom-2 left-0 right-0 text-center pointer-events-none z-10">
+                <span class="bg-black/30 text-white text-[11px] px-3 py-1 rounded-full backdrop-blur-xs shadow-sm">
+                    💡 마우스를 움직여 시선을 끌고, 클릭해 말랑하게 눌러보세요!
+                </span>
+            </div>
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div class="p-4 bg-amber-50/50 grid grid-cols-3 gap-2.5">
+            <button onclick="actionFeed()" class="btn-action bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-amber-500">
+                <span class="text-2xl">🐟</span>
+                <span class="text-xs font-jua">먹이주기</span>
+            </button>
+
+            <button onclick="actionWater()" class="btn-action bg-sky-300 hover:bg-sky-200 text-sky-950 font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-sky-400">
+                <span class="text-2xl">💧</span>
+                <span class="text-xs font-jua">물주기</span>
+            </button>
+
+            <button onclick="actionPet()" class="btn-action bg-pink-300 hover:bg-pink-200 text-pink-950 font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-pink-400">
+                <span class="text-2xl">✋</span>
+                <span class="text-xs font-jua">쓰다듬기</span>
+            </button>
+
+            <button onclick="actionCleanRoom()" class="btn-action bg-emerald-300 hover:bg-emerald-200 text-emerald-950 font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-emerald-400">
+                <span class="text-2xl">🧹</span>
+                <span class="text-xs font-jua">방 청소</span>
+            </button>
+
+            <button onclick="actionCleanLitter()" class="btn-action bg-purple-300 hover:bg-purple-200 text-purple-950 font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-purple-400">
+                <span class="text-2xl">🚽</span>
+                <span class="text-xs font-jua">화장실 청소</span>
+            </button>
+
+            <button id="sleep-btn" onclick="toggleSleep()" class="btn-sleep bg-indigo-400 hover:bg-indigo-300 text-white font-bold py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 border-indigo-500">
+                <span id="sleep-btn-icon" class="text-2xl">🌙</span>
+                <span id="sleep-btn-text" class="text-xs font-jua">재우기</span>
+            </button>
+        </div>
+
+        <div class="bg-amber-100/60 px-4 py-2 border-t border-amber-200/60 flex justify-between items-center text-xs text-amber-800 font-bold">
+            <span id="days-count">함께한 지 <span class="text-amber-900 font-mono font-extrabold text-sm">1</span>일째</span>
+            <span class="text-amber-600">애정도가 100%가 되면 성장해요!</span>
+        </div>
+    </div>
+
+    <!-- Growth Evolution Celebration Modal -->
+    <div id="growth-modal" class="fixed inset-0 modal-backdrop hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center border-4 border-amber-300 shadow-2xl transform transition-all scale-95 opacity-0 duration-300" id="growth-modal-content">
+            <div class="text-5xl mb-2 animate-bounce">🎉</div>
+            <h2 class="text-2xl font-jua text-amber-900 mb-1">고양이가 성장했어요!</h2>
+            <p class="text-xs text-amber-700 mb-4" id="growth-desc">나비가 건강하게 자라서 다음 단계가 되었습니다!</p>
+
+            <div class="w-36 h-36 mx-auto my-3 bg-amber-50 rounded-2xl flex items-center justify-center border-2 border-amber-200 shadow-inner relative overflow-hidden">
+                <canvas id="growthCanvas" width="140" height="140"></canvas>
+            </div>
+
+            <div class="bg-amber-100 rounded-xl p-2.5 mb-4 text-xs font-bold text-amber-900">
+                새로운 명칭: <span id="growth-new-title" class="text-amber-600 font-jua text-sm">어른 고양이</span>
+            </div>
+
+            <button onclick="closeGrowthModal()" class="w-full bg-amber-400 hover:bg-amber-500 text-amber-950 font-jua py-3 rounded-2xl text-lg shadow-md border-b-4 border-amber-600 active:translate-y-1">
+                기쁨 나누기 🐾
+            </button>
+        </div>
+    </div>
+
+    <!-- Growth Photo Album Modal -->
+    <div id="album-modal" class="fixed inset-0 modal-backdrop hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-5 max-w-sm w-full border-4 border-amber-300 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-3 border-b border-amber-100 pb-2">
+                <h3 class="text-xl font-jua text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-images text-amber-500"></i> 고양이 성장 앨범
+                </h3>
+                <button onclick="closeAlbumModal()" class="text-amber-400 hover:text-amber-600 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div id="album-list" class="overflow-y-auto space-y-3 pr-1 my-2 flex-1"></div>
+
+            <button onclick="closeAlbumModal()" class="w-full bg-amber-200 hover:bg-amber-300 text-amber-900 font-jua py-2.5 rounded-xl text-md mt-2">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Cat Design Selector Modal -->
+    <div id="design-modal" class="fixed inset-0 modal-backdrop hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-5 max-w-sm w-full border-4 border-amber-300 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-3 border-b border-amber-100 pb-2">
+                <h3 class="text-xl font-jua text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-palette text-amber-500"></i> 고양이 색상 변경
+                </h3>
+                <button onclick="closeDesignModal()" class="text-amber-400 hover:text-amber-600 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div id="design-list" class="grid grid-cols-1 gap-2.5 my-2 max-h-[60vh] overflow-y-auto pr-1"></div>
+
+            <button onclick="closeDesignModal()" class="w-full bg-amber-400 hover:bg-amber-500 text-amber-950 font-jua py-2.5 rounded-xl text-md mt-2 shadow-sm">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- Cat Switch & Adopt Modal -->
+    <div id="cat-switch-modal" class="fixed inset-0 modal-backdrop hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-5 max-w-sm w-full border-4 border-amber-300 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-3 border-b border-amber-100 pb-2">
+                <h3 class="text-xl font-jua text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-cat text-amber-500"></i> 내 고양이 목록 & 입양
+                </h3>
+                <button onclick="closeCatSwitchModal()" class="text-amber-400 hover:text-amber-600 text-2xl font-bold">&times;</button>
+            </div>
+
+            <!-- Adopt New Cat Form Section -->
+            <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 mb-3">
+                <div class="text-xs font-jua text-amber-900 mb-2 flex items-center gap-1">
+                    <span>✨ 새 고양이 입양하기</span>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="new-cat-name" placeholder="고양이 이름" class="flex-1 text-xs px-2.5 py-1.5 rounded-xl border border-amber-300 focus:outline-none font-bold">
+                    <select id="new-cat-breed" class="text-xs px-2 py-1.5 rounded-xl border border-amber-300 bg-white font-bold text-amber-900">
+                        <option value="cheese">🧀 치즈 태비</option>
+                        <option value="mackerel">🐟 고등어 태비</option>
+                        <option value="calico">🌸 삼색이</option>
+                        <option value="tuxedo">🐧 턱시도</option>
+                        <option value="siamese">☕ 샴</option>
+                        <option value="black">🖤 까망이</option>
+                        <option value="butter">🧈 버터 모찌</option>
+                    </select>
+                </div>
+                <button onclick="adoptNewCat()" class="w-full bg-amber-400 hover:bg-amber-500 text-amber-950 font-jua py-1.5 rounded-xl text-xs shadow-sm">
+                    새 가족으로 입양받기 🐾
+                </button>
+            </div>
+
+            <div class="text-xs font-jua text-amber-800 mb-1">내 고양이 수첩</div>
+            <div id="cat-list" class="overflow-y-auto space-y-2 pr-1 my-1 flex-1"></div>
+
+            <button onclick="closeCatSwitchModal()" class="w-full bg-amber-200 hover:bg-amber-300 text-amber-900 font-jua py-2.5 rounded-xl text-md mt-2">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-amber-900/90 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 flex items-center gap-2">
+        <span id="toast-icon">✨</span>
+        <span id="toast-msg">메시지</span>
+    </div>
+
+    <script>
+        // Exact SVG Paths from User Snippet
+        const SVG_PATHS = {
+            tail: new Path2D("M 330 90 C 350 70, 375 75, 370 95 C 365 110, 340 115, 325 125"),
+            leftEarOuter: new Path2D("M 55 85 C 40 10, 110 10, 115 65"),
+            leftEarInner: new Path2D("M 58 70 C 50 35, 95 30, 102 60"),
+            rightEarOuter: new Path2D("M 235 55 C 245 0, 310 15, 290 85"),
+            rightEarInner: new Path2D("M 248 55 C 255 25, 290 35, 280 70"),
+            body: new Path2D("M 60 75 C 120 40, 230 40, 295 70 C 370 110, 375 220, 330 250 C 270 285, 90 285, 30 245 C -10 200, 0 110, 60 75 Z"),
+            leftEyeClosed: new Path2D("M 70 190 Q 85 205 100 190"),
+            rightEyeClosed: new Path2D("M 150 200 Q 165 215 180 200"),
+            mouth: new Path2D("M 113 203 Q 120 213 126 203 Q 132 213 139 203")
+        };
+
+        const CAT_DESIGNS = [
+            {
+                id: 'butter',
+                name: '💛 버터 빵냥이',
+                pattern: 'butter',
+                desc: '말랑말랑 고소한 버터 크림색 모찌 냥이',
+                bodyColor: '#FFFEE4',
+                strokeColor: '#000000',
+                innerEarColor: '#FFD1DC',
+                innerEarStroke: '#FFB6C1',
+                blushColor: '#FFB6C1',
+                eyeColor: '#000000'
+            },
+            {
+                id: 'cheese',
+                name: '🧀 치즈 태비',
+                pattern: 'cheese',
+                desc: '노릇노릇 따스한 노란 줄무늬 치즈 냥이',
+                bodyColor: '#FFE0A3',
+                stripeColor: '#E67E22',
+                strokeColor: '#000000',
+                innerEarColor: '#FFD1DC',
+                innerEarStroke: '#FFB6C1',
+                blushColor: '#FFB6C1',
+                eyeColor: '#000000'
+            },
+            {
+                id: 'mackerel',
+                name: '🐟 고등어 태비',
+                pattern: 'mackerel',
+                desc: '시크하고 매력 넘치는 회색 줄무늬 냥이',
+                bodyColor: '#D1D8E0',
+                stripeColor: '#4B6584',
+                strokeColor: '#000000',
+                innerEarColor: '#FFD1DC',
+                innerEarStroke: '#FFB6C1',
+                blushColor: '#FFB6C1',
+                eyeColor: '#000000'
+            },
+            {
+                id: 'calico',
+                name: '🌸 삼색이',
+                pattern: 'calico',
+                desc: '행운을 불러오는 매력만점 삼색 얼룩 냥이',
+                bodyColor: '#FFFFFF',
+                patchColor1: '#E67E22',
+                patchColor2: '#2C3E50',
+                strokeColor: '#000000',
+                innerEarColor: '#FFD1DC',
+                innerEarStroke: '#FFB6C1',
+                blushColor: '#FFB6C1',
+                eyeColor: '#000000'
+            },
+            {
+                id: 'tuxedo',
+                name: '🐧 턱시도',
+                pattern: 'tuxedo',
+                desc: '하얀 셔츠를 입은 젠틀한 턱시도 냥이',
+                bodyColor: '#2D3436',
+                chestColor: '#FFFFFF',
+                strokeColor: '#000000',
+                innerEarColor: '#FFD1DC',
+                innerEarStroke: '#FFB6C1',
+                blushColor: '#FFB6C1',
+                eyeColor: '#000000'
+            },
+            {
+                id: 'siamese',
+                name: '☕ 샴 고양이',
+                pattern: 'siamese',
+                desc: '신비로운 에메랄드 블루 눈과 초코 포인트 냥이',
+                bodyColor: '#F5E6CA',
+                maskColor: '#4A3525',
+                strokeColor: '#000000',
+                innerEarColor: '#D7CCC8',
+                innerEarStroke: '#A1887F',
+                blushColor: '#FFB6C1',
+                eyeColor: '#0984E3'
+            },
+            {
+                id: 'black',
+                name: '🖤 까망이 (올블랙)',
+                pattern: 'black',
+                desc: '밤하늘처럼 매력적인 깜깜한 신비 냥이',
+                bodyColor: '#353B48',
+                strokeColor: '#000000',
+                innerEarColor: '#718093',
+                innerEarStroke: '#2F3640',
+                blushColor: '#FF85A1',
+                eyeColor: '#F1C40F'
+            }
+        ];
+
+        const STAGES = [
+            {
+                id: 0,
+                title: "1단계: 아기 꼬마 고양이",
+                desc: "갓 태어난 손바닥만 한 아기 고양이입니다. 따뜻한 보살핌이 필요해요!",
+                maxAffection: 100,
+                bodyScale: 0.55
+            },
+            {
+                id: 1,
+                title: "2단계: 호기심 아기 고양이",
+                desc: "걸음마를 떼고 장난감을 좋아하기 시작한 귀여운 아기 고양이입니다!",
+                maxAffection: 200,
+                bodyScale: 0.70
+            },
+            {
+                id: 2,
+                title: "3단계: 장난꾸러기 꼬마 고양이",
+                desc: "호기심이 왕성하고 온 방안을 뛰어다니는 활발한 고양이입니다!",
+                maxAffection: 350,
+                bodyScale: 0.85
+            },
+            {
+                id: 3,
+                title: "4단계: 의젓한 어른 고양이",
+                desc: "우아하고 품위 있는 멋진 어른 고양이로 성장했습니다!",
+                maxAffection: 500,
+                bodyScale: 1.00
+            },
+            {
+                id: 4,
+                title: "5단계: 왕관 쓴 황제 고양이",
+                desc: "당신의 완벽한 사랑으로 최고의 행복을 누리는 전설의 황제 고양이!",
+                maxAffection: 999,
+                bodyScale: 1.15
+            }
+        ];
+
+        let catsList = [
+            {
+                id: 'cat_default',
+                name: "나비",
+                stage: 0,
+                design: 0,
+                affection: 0,
+                hunger: 80,
+                energy: 90,
+                roomClean: 100,
+                litterClean: 100,
+                isSleeping: false,
+                days: 1,
+                unlockedStages: [0]
+            }
+        ];
+        let currentCatIndex = 0;
+
+        let gameState = catsList[0];
+
+        let particles = [];
+        let squishFactor = 0;
+        let petReactionTimer = 0;
+        let eyeOffsetX = 0;
+        let eyeOffsetY = 0;
+
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            initAudio();
+            isMuted = !isMuted;
+            const btn = document.getElementById('sound-btn');
+            if (btn) {
+                btn.innerHTML = isMuted ? '<i class="fa-solid fa-volume-xmark text-gray-400 text-xs"></i>' : '<i class="fa-solid fa-volume-high text-xs"></i>';
+            }
+            showToast(isMuted ? '🔇' : '🔊', isMuted ? '음소거되었습니다.' : '소리가 켜졌습니다.');
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'meow') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(750, now + 0.15);
+                    osc.frequency.exponentialRampToValueAtTime(350, now + 0.35);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'purr') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(80, now);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'feed' || type === 'water') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.setValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'clean') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'growth') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
+        let canvas = null;
+        let ctx = null;
+        let catAnimTime = 0;
+        let animFrameId = null;
+
+        function resizeCanvas() {
+            canvas = document.getElementById('catCanvas');
+            if (canvas) {
+                const container = document.getElementById('canvas-container');
+                if (container) {
+                    canvas.width = container.clientWidth;
+                    canvas.height = container.clientHeight;
+                }
+                ctx = canvas.getContext('2d');
+            }
+        }
+
+        function drawCat(targetCtx, stageIdx, width, height, time, sleeping) {
+            targetCtx.clearRect(0, 0, width, height);
+
+            const stageInfo = STAGES[stageIdx] || STAGES[0];
+            const designInfo = CAT_DESIGNS[gameState.design || 0] || CAT_DESIGNS[0];
+
+            // Scale factor relative to 380x280 SVG viewBox (reduced to 1/2 size)
+            const baseScale = (Math.min(width, height) / 290) * 0.5;
+            const scale = stageInfo.bodyScale * baseScale;
+
+            const cx = width / 2;
+            const cy = height / 2 + (sleeping ? 10 : 8);
+
+            const breathe = sleeping ? Math.sin(time * 0.03) * 1.5 : Math.sin(time * 0.06) * 2.2;
+            
+            const squishX = 1 + squishFactor * 0.25;
+            const squishY = 1 - squishFactor * 0.20;
+
+            targetCtx.save();
+            targetCtx.translate(cx, cy + breathe);
+
+            // Floor Shadow
+            targetCtx.beginPath();
+            targetCtx.ellipse(0, 100 * scale, 140 * scale, 18 * scale, 0, 0, Math.PI * 2);
+            targetCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            targetCtx.fill();
+
+            // Apply Squish Scale Physics
+            targetCtx.scale(squishX * scale, squishY * scale);
+
+            // Center SVG coordinates (190, 140) at (0,0)
+            targetCtx.translate(-190, -140);
+
+            // 1. Tail Path
+            targetCtx.fillStyle = designInfo.bodyColor;
+            targetCtx.strokeStyle = designInfo.strokeColor || '#000000';
+            targetCtx.lineWidth = 7;
+            targetCtx.lineCap = 'round';
+            targetCtx.fill(SVG_PATHS.tail);
+            targetCtx.stroke(SVG_PATHS.tail);
+
+            // 2. Ears Outer
+            targetCtx.lineJoin = 'round';
+            targetCtx.fillStyle = (designInfo.pattern === 'siamese') ? designInfo.maskColor : designInfo.bodyColor;
+            targetCtx.fill(SVG_PATHS.leftEarOuter);
+            targetCtx.stroke(SVG_PATHS.leftEarOuter);
+            targetCtx.fill(SVG_PATHS.rightEarOuter);
+            targetCtx.stroke(SVG_PATHS.rightEarOuter);
+
+            // 3. Ears Inner
+            targetCtx.fillStyle = designInfo.innerEarColor || '#FFD1DC';
+            targetCtx.strokeStyle = designInfo.innerEarStroke || '#FFB6C1';
+            targetCtx.lineWidth = 4;
+            targetCtx.lineCap = 'round';
+            targetCtx.fill(SVG_PATHS.leftEarInner);
+            targetCtx.stroke(SVG_PATHS.leftEarInner);
+            targetCtx.fill(SVG_PATHS.rightEarInner);
+            targetCtx.stroke(SVG_PATHS.rightEarInner);
+
+            // 4. Main Body Path
+            targetCtx.fillStyle = designInfo.bodyColor;
+            targetCtx.strokeStyle = designInfo.strokeColor || '#000000';
+            targetCtx.lineWidth = 8;
+            targetCtx.lineJoin = 'round';
+            targetCtx.fill(SVG_PATHS.body);
+            targetCtx.stroke(SVG_PATHS.body);
+
+            // 4.5 Patterns Overlay (Tabby stripes, Tuxedo chest, Siamese mask, Calico patches)
+            targetCtx.save();
+            targetCtx.clip(SVG_PATHS.body);
+
+            if (designInfo.pattern === 'cheese' || designInfo.pattern === 'mackerel') {
+                targetCtx.fillStyle = designInfo.stripeColor;
+                // Forehead stripes
+                targetCtx.beginPath();
+                targetCtx.rect(115, 120, 8, 25);
+                targetCtx.rect(130, 115, 8, 30);
+                targetCtx.rect(145, 120, 8, 25);
+                targetCtx.fill();
+                // Side body stripes
+                targetCtx.beginPath();
+                targetCtx.ellipse(40, 160, 25, 8, -0.3, 0, Math.PI * 2);
+                targetCtx.ellipse(35, 195, 25, 8, -0.2, 0, Math.PI * 2);
+                targetCtx.ellipse(240, 160, 25, 8, 0.3, 0, Math.PI * 2);
+                targetCtx.ellipse(245, 195, 25, 8, 0.2, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (designInfo.pattern === 'calico') {
+                targetCtx.fillStyle = designInfo.patchColor1;
+                targetCtx.beginPath();
+                targetCtx.arc(70, 130, 35, 0, Math.PI * 2);
+                targetCtx.arc(230, 210, 45, 0, Math.PI * 2);
+                targetCtx.fill();
+
+                targetCtx.fillStyle = designInfo.patchColor2;
+                targetCtx.beginPath();
+                targetCtx.arc(220, 125, 30, 0, Math.PI * 2);
+                targetCtx.arc(60, 220, 40, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (designInfo.pattern === 'tuxedo') {
+                targetCtx.fillStyle = designInfo.chestColor;
+                targetCtx.beginPath();
+                targetCtx.moveTo(105, 170);
+                targetCtx.lineTo(170, 170);
+                targetCtx.lineTo(185, 270);
+                targetCtx.lineTo(90, 270);
+                targetCtx.closePath();
+                targetCtx.fill();
+            } else if (designInfo.pattern === 'siamese') {
+                targetCtx.fillStyle = designInfo.maskColor;
+                targetCtx.beginPath();
+                targetCtx.ellipse(125, 195, 45, 30, 0, 0, Math.PI * 2);
+                targetCtx.fill();
+            }
+
+            targetCtx.restore();
+
+            // Re-stroke body for sharp border
+            targetCtx.stroke(SVG_PATHS.body);
+
+            // 5. Blush Cheeks
+            targetCtx.fillStyle = designInfo.blushColor || '#FFB6C1';
+            targetCtx.globalAlpha = 0.6;
+            targetCtx.beginPath();
+            targetCtx.ellipse(45, 195, 15, 10, 0, 0, Math.PI * 2);
+            targetCtx.ellipse(205, 208, 15, 10, 0, 0, Math.PI * 2);
+            targetCtx.fill();
+            targetCtx.globalAlpha = 1.0;
+
+            // 6. Whiskers
+            targetCtx.strokeStyle = (designInfo.pattern === 'black' || designInfo.pattern === 'tuxedo') ? '#FFFFFF' : (designInfo.strokeColor || '#000000');
+            targetCtx.lineWidth = 5;
+            targetCtx.lineCap = 'round';
+            targetCtx.beginPath();
+            targetCtx.moveTo(25, 190); targetCtx.lineTo(35, 198);
+            targetCtx.moveTo(28, 205); targetCtx.lineTo(38, 208);
+            targetCtx.moveTo(215, 205); targetCtx.lineTo(225, 200);
+            targetCtx.moveTo(212, 218); targetCtx.lineTo(222, 212);
+            targetCtx.stroke();
+
+            // 7. Eyes (Open with Gaze Tracking vs Closed Wink/Sleep)
+            if (sleeping || petReactionTimer > 0) {
+                targetCtx.strokeStyle = designInfo.strokeColor || '#000000';
+                targetCtx.lineWidth = 6;
+                targetCtx.lineCap = 'round';
+                targetCtx.stroke(SVG_PATHS.leftEyeClosed);
+                targetCtx.stroke(SVG_PATHS.rightEyeClosed);
+            } else {
+                // Eye center positions
+                const lx = 85 + eyeOffsetX;
+                const ly = 190 + eyeOffsetY;
+                const rx = 165 + eyeOffsetX;
+                const ry = 200 + eyeOffsetY;
+
+                // Base pupils
+                targetCtx.fillStyle = designInfo.eyeColor || '#000000';
+                targetCtx.beginPath();
+                targetCtx.arc(lx, ly, 16, 0, Math.PI * 2);
+                targetCtx.arc(rx, ry, 16, 0, Math.PI * 2);
+                targetCtx.fill();
+
+                // Sparkle Highlights (초롱초롱 반짝임 하이라이트)
+                targetCtx.fillStyle = '#FFFFFF';
+                
+                // Big main sparkles
+                targetCtx.beginPath();
+                targetCtx.arc(lx - 5, ly - 5, 6, 0, Math.PI * 2);
+                targetCtx.arc(rx - 5, ry - 5, 6, 0, Math.PI * 2);
+                targetCtx.fill();
+
+                // Small sub sparkles
+                targetCtx.beginPath();
+                targetCtx.arc(lx + 5, ly + 4, 3, 0, Math.PI * 2);
+                targetCtx.arc(rx + 5, ry + 4, 3, 0, Math.PI * 2);
+                targetCtx.fill();
+            }
+
+            // 8. Mouth
+            targetCtx.strokeStyle = (designInfo.pattern === 'siamese' || designInfo.pattern === 'black' || designInfo.pattern === 'tuxedo') ? '#FFFFFF' : '#000000';
+            targetCtx.lineWidth = 5;
+            targetCtx.lineCap = 'round';
+            targetCtx.stroke(SVG_PATHS.mouth);
+
+            // 9. Stage Growth Accessories
+            if (stageIdx === 0) {
+                // Stage 0: Pink Ribbon
+                targetCtx.fillStyle = '#FF85A1';
+                targetCtx.beginPath();
+                targetCtx.arc(80, 50, 8, 0, Math.PI * 2);
+                targetCtx.arc(96, 50, 8, 0, Math.PI * 2);
+                targetCtx.fill();
+                targetCtx.fillStyle = '#FFFFFF';
+                targetCtx.beginPath();
+                targetCtx.arc(88, 50, 4, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (stageIdx === 1) {
+                // Stage 1: Golden Bell
+                targetCtx.fillStyle = '#FF5252';
+                targetCtx.beginPath();
+                targetCtx.ellipse(125, 220, 22, 5, 0, 0, Math.PI * 2);
+                targetCtx.fill();
+
+                targetCtx.fillStyle = '#FFD700';
+                targetCtx.beginPath();
+                targetCtx.arc(125, 224, 7, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (stageIdx === 2) {
+                // Stage 2: Sakura Clip
+                targetCtx.fillStyle = '#FFB8C6';
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 2.5) {
+                    const fx = 80 + Math.cos(a) * 7;
+                    const fy = 55 + Math.sin(a) * 7;
+                    targetCtx.beginPath();
+                    targetCtx.arc(fx, fy, 4, 0, Math.PI * 2);
+                    targetCtx.fill();
+                }
+                targetCtx.fillStyle = '#FFEAA7';
+                targetCtx.beginPath();
+                targetCtx.arc(80, 55, 4, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (stageIdx === 3) {
+                // Stage 3: Bowtie
+                targetCtx.fillStyle = '#EE5253';
+                targetCtx.beginPath();
+                targetCtx.moveTo(105, 222); targetCtx.lineTo(125, 216); targetCtx.lineTo(105, 210); targetCtx.closePath(); targetCtx.fill();
+                targetCtx.beginPath();
+                targetCtx.moveTo(145, 222); targetCtx.lineTo(125, 216); targetCtx.lineTo(145, 210); targetCtx.closePath(); targetCtx.fill();
+                targetCtx.fillStyle = '#FFFFFF';
+                targetCtx.beginPath();
+                targetCtx.arc(125, 216, 4, 0, Math.PI * 2);
+                targetCtx.fill();
+            } else if (stageIdx === 4) {
+                // Stage 4: Crown
+                targetCtx.fillStyle = '#FFD700';
+                targetCtx.strokeStyle = '#000000';
+                targetCtx.lineWidth = 3;
+                targetCtx.beginPath();
+                targetCtx.moveTo(160, 45);
+                targetCtx.lineTo(150, 20);
+                targetCtx.lineTo(170, 30);
+                targetCtx.lineTo(180, 10);
+                targetCtx.lineTo(190, 30);
+                targetCtx.lineTo(210, 20);
+                targetCtx.lineTo(200, 45);
+                targetCtx.closePath();
+                targetCtx.fill();
+                targetCtx.stroke();
+            }
+
+            targetCtx.restore();
+        }
+
+        function openDesignModal() {
+            const list = document.getElementById('design-list');
+            list.innerHTML = '';
+
+            CAT_DESIGNS.forEach((dsg, idx) => {
+                const isSelected = (gameState.design || 0) === idx;
+                const card = document.createElement('div');
+                card.onclick = () => selectDesign(idx);
+                card.className = `p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3 ${
+                    isSelected ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300' : 'bg-amber-50/50 border-amber-200 hover:bg-amber-100/60'
+                }`;
+
+                card.innerHTML = `
+                    <div class="w-14 h-14 rounded-xl bg-white flex items-center justify-center border border-amber-200 shadow-inner overflow-hidden">
+                        <canvas id="design-canvas-${idx}" width="56" height="56"></canvas>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-jua text-sm text-amber-950 flex items-center justify-between">
+                            <span>${dsg.name}</span>
+                            ${isSelected ? '<span class="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold">선택됨</span>' : ''}
+                        </div>
+                        <div class="text-[11px] text-amber-800 leading-tight mt-0.5">${dsg.desc}</div>
+                    </div>
+                `;
+                list.appendChild(card);
+
+                setTimeout(() => {
+                    const c = document.getElementById(`design-canvas-${idx}`);
+                    if (c) {
+                        const cCtx = c.getContext('2d');
+                        const origDesign = gameState.design;
+                        gameState.design = idx;
+                        drawCat(cCtx, gameState.stage, 56, 56, 15, false);
+                        gameState.design = origDesign;
+                    }
+                }, 50);
+            });
+
+            document.getElementById('design-modal').classList.remove('hidden');
+        }
+
+        function selectDesign(idx) {
+            gameState.design = idx;
+            const selected = CAT_DESIGNS[idx];
+            showToast('🎨', `'${selected.name}' 스타일로 변경되었습니다!`);
+            saveGame();
+            openDesignModal();
+        }
+
+        function closeDesignModal() {
+            document.getElementById('design-modal').classList.add('hidden');
+        }
+
+        // Cat Switch & Adoption System Logic
+        function openCatSwitchModal() {
+            renderCatList();
+            document.getElementById('cat-switch-modal').classList.remove('hidden');
+        }
+
+        function closeCatSwitchModal() {
+            document.getElementById('cat-switch-modal').classList.add('hidden');
+        }
+
+        function renderCatList() {
+            const list = document.getElementById('cat-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            catsList.forEach((cat, idx) => {
+                const isActive = currentCatIndex === idx;
+                const dsg = CAT_DESIGNS[cat.design || 0] || CAT_DESIGNS[0];
+                const stageObj = STAGES[cat.stage] || STAGES[0];
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border flex items-center justify-between gap-2 ${
+                    isActive ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300' : 'bg-amber-50/50 border-amber-200 hover:bg-amber-100/60'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="switchActiveCat(${idx})">
+                        <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center border border-amber-200 shadow-inner overflow-hidden">
+                            <canvas id="cat-list-canvas-${idx}" width="48" height="48"></canvas>
+                        </div>
+                        <div>
+                            <div class="font-jua text-sm text-amber-950 flex items-center gap-1">
+                                <span>${cat.name}</span>
+                                ${isActive ? '<span class="text-[10px] bg-amber-500 text-white px-1.5 py-0.2 rounded-full">현재 고양이</span>' : ''}
+                            </div>
+                            <div class="text-[11px] text-amber-700">${dsg.name} · ${stageObj.title.split(':')[0]}</div>
+                        </div>
+                    </div>
+                    ${catsList.length > 1 ? `
+                        <button onclick="deleteCat(${idx})" class="text-rose-400 hover:text-rose-600 p-1.5 text-xs" title="입양 보내기(삭제)">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    ` : ''}
+                `;
+                list.appendChild(card);
+
+                setTimeout(() => {
+                    const c = document.getElementById(`cat-list-canvas-${idx}`);
+                    if (c) {
+                        const cCtx = c.getContext('2d');
+                        const tempState = gameState;
+                        gameState = cat;
+                        drawCat(cCtx, cat.stage, 48, 48, 15, false);
+                        gameState = tempState;
+                    }
+                }, 40);
+            });
+        }
+
+        function switchActiveCat(index) {
+            if (index < 0 || index >= catsList.length) return;
+            // Save current state
+            catsList[currentCatIndex] = { ...gameState };
+
+            currentCatIndex = index;
+            gameState = catsList[currentCatIndex];
+
+            showToast('🐱', `'${gameState.name}'(으)로 고양이를 변경했습니다!`);
+            updateUI();
+            saveGame();
+            renderCatList();
+        }
+
+        function adoptNewCat() {
+            const nameInput = document.getElementById('new-cat-name');
+            const breedSelect = document.getElementById('new-cat-breed');
+
+            const newName = nameInput ? nameInput.value.trim() : '';
+            if (!newName) {
+                showToast('⚠️', '고양이 이름을 입력해 주세요!');
+                return;
+            }
+
+            const breedKey = breedSelect ? breedSelect.value : 'cheese';
+            const designIndex = CAT_DESIGNS.findIndex(d => d.id === breedKey);
+
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                name: newName,
+                stage: 0,
+                design: designIndex >= 0 ? designIndex : 0,
+                affection: 0,
+                hunger: 80,
+                energy: 90,
+                roomClean: 100,
+                litterClean: 100,
+                isSleeping: false,
+                days: 1,
+                unlockedStages: [0]
+            };
+
+            catsList.push(newCat);
+            if (nameInput) nameInput.value = '';
+
+            switchActiveCat(catsList.length - 1);
+            showToast('🎉', `새 식구 '${newName}'이가 가족이 되었습니다!`);
+        }
+
+        function deleteCat(index) {
+            if (catsList.length <= 1) {
+                showToast('⚠️', '최소 한 마리의 고양이는 있어야 합니다!');
+                return;
+            }
+
+            const catToDelete = catsList[index];
+            if (confirm(`정말로 '${catToDelete.name}'이를 다른 곳으로 입양 보내시겠습니까?`)) {
+                catsList.splice(index, 1);
+                if (currentCatIndex >= catsList.length) {
+                    currentCatIndex = catsList.length - 1;
+                }
+                gameState = catsList[currentCatIndex];
+                updateUI();
+                saveGame();
+                renderCatList();
+                showToast('👋', `'${catToDelete.name}'이가 새로운 가족을 찾아 떠났습니다.`);
+            }
+        }
+
+        function spawnParticle(x, y, symbol) {
+            particles.push({
+                x: x || canvas.width / 2 + (Math.random() * 60 - 30),
+                y: y || canvas.height / 2 + (Math.random() * 40 - 20),
+                vx: (Math.random() - 0.5) * 2,
+                vy: -2 - Math.random() * 2,
+                symbol: symbol || '❤️',
+                alpha: 1.0,
+                size: 18 + Math.random() * 10
+            });
+        }
+
+        function updateAndDrawParticles(targetCtx) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                targetCtx.save();
+                targetCtx.globalAlpha = p.alpha;
+                targetCtx.font = `${p.size}px 'Jua', sans-serif`;
+                targetCtx.fillText(p.symbol, p.x, p.y);
+                targetCtx.restore();
+            }
+        }
+
+        function animateLoop() {
+            catAnimTime++;
+            
+            if (squishFactor > 0.001) {
+                squishFactor *= 0.85;
+            } else {
+                squishFactor = 0;
+            }
+
+            if (petReactionTimer > 0) {
+                petReactionTimer--;
+            }
+
+            drawCat(ctx, gameState.stage, canvas.width, canvas.height, catAnimTime, gameState.isSleeping);
+            updateAndDrawParticles(ctx);
+
+            if (gameState.isSleeping && catAnimTime % 40 === 0) {
+                spawnParticle(canvas.width / 2 + 25, canvas.height / 2 - 35, '💤');
+            }
+
+            animFrameId = requestAnimationFrame(animateLoop);
+        }
+
+        function triggerFloatText(text, colorClass = 'text-rose-500') {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            const el = document.createElement('div');
+            el.className = `floating-text ${colorClass} text-lg sm:text-xl`;
+            el.innerText = text;
+            el.style.left = `${50 + (Math.random() * 20 - 10)}%`;
+            el.style.top = `${40 + (Math.random() * 20 - 10)}%`;
+            container.appendChild(el);
+
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, 1000);
+        }
+
+        function triggerCatSquish() {
+            squishFactor = 1.0;
+            petReactionTimer = 45;
+        }
+
+        function addAffection(amount) {
+            if (gameState.isSleeping) {
+                showToast('💤', '고양이가 자고 있어요! 깨운 뒤 시도하세요.');
+                return false;
+            }
+
+            triggerCatSquish();
+            gameState.affection += amount;
+            triggerFloatText(`+${amount} ❤️`, 'text-pink-500');
+
+            const currentStageObj = STAGES[gameState.stage];
+            if (gameState.affection >= currentStageObj.maxAffection && gameState.stage < STAGES.length - 1) {
+                triggerGrowth();
+            }
+
+            updateUI();
+            saveGame();
+            return true;
+        }
+
+        function actionFeed() {
+            if (gameState.isSleeping) return showToast('💤', '고양이가 잠자는 중입니다.');
+            if (gameState.hunger >= 100) return showToast('🥣', '배가 이미 가득 찼어요!');
+
+            gameState.hunger = Math.min(100, gameState.hunger + 30);
+            playSound('feed');
+            spawnParticle(null, null, '🐟');
+            addAffection(10);
+            showToast('🐟', `${gameState.name}에게 맛있는 생선을 주었습니다!`);
+        }
+
+        function actionWater() {
+            if (gameState.isSleeping) return showToast('💤', '고양이가 잠자는 중입니다.');
+            if (gameState.energy >= 100 && gameState.hunger >= 90) return showToast('💧', '목이 마르지 않은 것 같아요.');
+
+            gameState.energy = Math.min(100, gameState.energy + 10);
+            playSound('water');
+            spawnParticle(null, null, '💧');
+            addAffection(5);
+            showToast('💧', `${gameState.name}에게 신선한 물을 주었습니다!`);
+        }
+
+        function actionPet() {
+            if (gameState.isSleeping) return showToast('💤', '고양이가 잠자는 중입니다.');
+
+            playSound('purr');
+            playSound('meow');
+            for (let i = 0; i < 3; i++) spawnParticle(null, null, '💖');
+            addAffection(15);
+            showToast('✋', `${gameState.name}을 쓰다듬어 주었습니다!`);
+        }
+
+        function actionCleanRoom() {
+            if (gameState.roomClean >= 100) return showToast('✨', '방이 이미 아주 깨끗합니다!');
+
+            gameState.roomClean = 100;
+            playSound('clean');
+            spawnParticle(null, null, '✨');
+            addAffection(10);
+            showToast('🧹', '방을 구석구석 깨끗하게 청소했습니다!');
+        }
+
+        function actionCleanLitter() {
+            if (gameState.litterClean >= 100) return showToast('✨', '화장실이 이미 깨끗합니다!');
+
+            gameState.litterClean = 100;
+            playSound('clean');
+            spawnParticle(null, null, '🧹');
+            addAffection(12);
+            showToast('🚽', '고양이 화장실을 깨끗하게 정리했습니다!');
+        }
+
+        function toggleSleep() {
+            gameState.isSleeping = !gameState.isSleeping;
+
+            const roomStage = document.getElementById('room-stage');
+            const sleepBtnText = document.getElementById('sleep-btn-text');
+            const sleepBtnIcon = document.getElementById('sleep-btn-icon');
+            const nightBadge = document.getElementById('night-badge');
+
+            if (gameState.isSleeping) {
+                if (roomStage) {
+                    roomStage.classList.remove('room-bg-day');
+                    roomStage.classList.add('room-bg-night');
+                }
+                if (sleepBtnText) sleepBtnText.innerText = '깨우기';
+                if (sleepBtnIcon) sleepBtnIcon.innerText = '☀️';
+                if (nightBadge) nightBadge.classList.remove('hidden');
+                showToast('🌙', `${gameState.name}이가 단잠에 빠집니다. 체력이 회복됩니다.`);
+            } else {
+                if (roomStage) {
+                    roomStage.classList.remove('room-bg-night');
+                    roomStage.classList.add('room-bg-day');
+                }
+                if (sleepBtnText) sleepBtnText.innerText = '재우기';
+                if (sleepBtnIcon) sleepBtnIcon.innerText = '🌙';
+                if (nightBadge) nightBadge.classList.add('hidden');
+                playSound('meow');
+                showToast('☀️', `${gameState.name}이가 기상했습니다!`);
+            }
+            updateUI();
+            saveGame();
+        }
+
+        function triggerGrowth() {
+            gameState.stage++;
+            if (gameState.stage >= STAGES.length) {
+                gameState.stage = STAGES.length - 1;
+            }
+            if (!gameState.unlockedStages.includes(gameState.stage)) {
+                gameState.unlockedStages.push(gameState.stage);
+            }
+
+            const newStageObj = STAGES[gameState.stage] || STAGES[STAGES.length - 1];
+            playSound('growth');
+
+            const modal = document.getElementById('growth-modal');
+            const modalContent = document.getElementById('growth-modal-content');
+            const growthNewTitle = document.getElementById('growth-new-title');
+            const growthDesc = document.getElementById('growth-desc');
+
+            if (growthNewTitle) growthNewTitle.innerText = newStageObj.title;
+            if (growthDesc) growthDesc.innerText = newStageObj.desc;
+
+            if (modal) modal.classList.remove('hidden');
+            if (modalContent) {
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            const gCanvas = document.getElementById('growthCanvas');
+            if (gCanvas) {
+                const gCtx = gCanvas.getContext('2d');
+                drawCat(gCtx, gameState.stage, gCanvas.width, gCanvas.height, 10, false);
+            }
+        }
+
+        function closeGrowthModal() {
+            const modal = document.getElementById('growth-modal');
+            const modalContent = document.getElementById('growth-modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+            }
+            setTimeout(() => {
+                if (modal) modal.classList.add('hidden');
+            }, 300);
+            updateUI();
+            saveGame();
+        }
+
+        function openAlbumModal() {
+            const list = document.getElementById('album-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            STAGES.forEach((stg, idx) => {
+                const isUnlocked = gameState.unlockedStages.includes(idx);
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border flex items-center gap-3 ${
+                    isUnlocked ? 'bg-amber-50 border-amber-200' : 'bg-gray-100 border-gray-200 opacity-60'
+                }`;
+
+                card.innerHTML = `
+                    <div class="w-16 h-16 rounded-xl bg-white flex items-center justify-center border border-amber-100 shadow-inner overflow-hidden">
+                        ${isUnlocked ? `<canvas id="album-canvas-${idx}" width="64" height="64"></canvas>` : `<span class="text-2xl text-gray-400">🔒</span>`}
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-jua text-sm ${isUnlocked ? 'text-amber-900' : 'text-gray-500'}">${stg.title}</div>
+                        <div class="text-[11px] text-gray-600 leading-tight mt-0.5">${isUnlocked ? stg.desc : '애정도를 높여 해금해보세요!'}</div>
+                    </div>
+                `;
+                list.appendChild(card);
+
+                if (isUnlocked) {
+                    setTimeout(() => {
+                        const c = document.getElementById(`album-canvas-${idx}`);
+                        if (c) {
+                            const cCtx = c.getContext('2d');
+                            drawCat(cCtx, idx, 64, 64, 15, false);
+                        }
+                    }, 50);
+                }
+            });
+
+            const albumModal = document.getElementById('album-modal');
+            if (albumModal) albumModal.classList.remove('hidden');
+        }
+
+        function closeAlbumModal() {
+            const albumModal = document.getElementById('album-modal');
+            if (albumModal) albumModal.classList.add('hidden');
+        }
+
+        function gameTick() {
+            if (gameState.isSleeping) {
+                gameState.energy = Math.min(100, gameState.energy + 3);
+                gameState.hunger = Math.max(0, gameState.hunger - 0.5);
+            } else {
+                gameState.hunger = Math.max(0, gameState.hunger - 1);
+                gameState.energy = Math.max(0, gameState.energy - 0.8);
+                gameState.roomClean = Math.max(0, gameState.roomClean - 0.5);
+                gameState.litterClean = Math.max(0, gameState.litterClean - 0.4);
+            }
+
+            const now = Date.now();
+            const elapsed = now - gameState.lastSavedTime;
+            if (elapsed > 60000) {
+                gameState.days += Math.floor(elapsed / 60000);
+                gameState.lastSavedTime = now;
+            }
+
+            updateUI();
+            saveGame();
+        }
+
+        function updateUI() {
+            const currentStageObj = STAGES[gameState.stage] || STAGES[0];
+
+            const stageBadgeEl = document.getElementById('cat-stage-badge');
+            if (stageBadgeEl) stageBadgeEl.innerText = currentStageObj.title;
+
+            const nameInputEl = document.getElementById('cat-name-input');
+            if (nameInputEl && nameInputEl !== document.activeElement) {
+                nameInputEl.value = gameState.name;
+            }
+
+            const affPercent = Math.min(100, Math.floor((gameState.affection / currentStageObj.maxAffection) * 100));
+            const affBar = document.getElementById('affection-bar');
+            if (affBar) affBar.style.width = `${affPercent}%`;
+
+            const affText = document.getElementById('affection-text');
+            if (affText) affText.innerText = `${gameState.affection} / ${currentStageObj.maxAffection}`;
+
+            const hungerBar = document.getElementById('hunger-bar');
+            if (hungerBar) hungerBar.style.width = `${gameState.hunger}%`;
+
+            const hungerText = document.getElementById('hunger-text');
+            if (hungerText) hungerText.innerText = `${Math.round(gameState.hunger)}%`;
+
+            const energyBar = document.getElementById('energy-bar');
+            if (energyBar) energyBar.style.width = `${gameState.energy}%`;
+
+            const energyText = document.getElementById('energy-text');
+            if (energyText) energyText.innerText = `${Math.round(gameState.energy)}%`;
+
+            const roomCleanBar = document.getElementById('room-clean-bar');
+            if (roomCleanBar) roomCleanBar.style.width = `${gameState.roomClean}%`;
+
+            const roomCleanText = document.getElementById('room-clean-text');
+            if (roomCleanText) roomCleanText.innerText = `${Math.round(gameState.roomClean)}%`;
+
+            const litterCleanBar = document.getElementById('litter-clean-bar');
+            if (litterCleanBar) litterCleanBar.style.width = `${gameState.litterClean}%`;
+
+            const litterCleanText = document.getElementById('litter-clean-text');
+            if (litterCleanText) litterCleanText.innerText = `${Math.round(gameState.litterClean)}%`;
+
+            const daysCount = document.getElementById('days-count');
+            if (daysCount) daysCount.innerHTML = `함께한 지 <span class="text-amber-900 font-mono font-extrabold text-sm">${gameState.days}</span>일째`;
+
+            const statusEmoji = document.getElementById('status-emoji');
+            const statusText = document.getElementById('status-text');
+
+            if (statusEmoji && statusText) {
+                if (gameState.isSleeping) {
+                    statusEmoji.innerText = '💤';
+                    statusText.innerText = '쿨쿨 꿈나라 여행 중...';
+                } else if (gameState.hunger < 30) {
+                    statusEmoji.innerText = '😿';
+                    statusText.innerText = '배가 고파서 힘이 없어요!';
+                } else if (gameState.energy < 30) {
+                    statusEmoji.innerText = '🥱';
+                    statusText.innerText = '졸리고 피곤해요...';
+                } else if (gameState.roomClean < 40 || gameState.litterClean < 40) {
+                    statusEmoji.innerText = '😾';
+                    statusText.innerText = '방이나 화장실이 지저분해요!';
+                } else {
+                    statusEmoji.innerText = '😸';
+                    statusText.innerText = '기분이 아주 최고예요!';
+                }
+            }
+
+            const dirtOverlay = document.getElementById('dirt-overlay');
+            if (dirtOverlay) {
+                if (gameState.roomClean < 50 || gameState.litterClean < 50) {
+                    dirtOverlay.innerHTML = `<div class="absolute bottom-2 left-4 text-2xl opacity-60">💩</div>
+                                             <div class="absolute top-8 right-6 text-xl opacity-50">🐾</div>`;
+                } else {
+                    dirtOverlay.innerHTML = '';
+                }
+            }
+        }
+
+        let toastTimeout = null;
+        function showToast(icon, msg) {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMsg = document.getElementById('toast-msg');
+
+            if (toastIcon) toastIcon.innerText = icon;
+            if (toastMsg) toastMsg.innerText = msg;
+
+            if (toast) {
+                toast.classList.remove('opacity-0');
+                toast.classList.add('opacity-100');
+
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0');
+                }, 2200);
+            }
+        }
+
+        function saveCatName() {
+            const input = document.getElementById('cat-name-input');
+            if (input && input.value.trim() !== '') {
+                gameState.name = input.value.trim();
+                showToast('✏️', `이름이 '${gameState.name}'(으)로 변경되었습니다.`);
+                saveGame();
+            }
+        }
+
+        function bindCanvasEvents() {
+            if (!canvas) return;
+
+            // Mouse gaze tracking from snippet
+            document.addEventListener('mousemove', (e) => {
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                const catCenterX = rect.left + rect.width / 2;
+                const catCenterY = rect.top + rect.height / 2;
+
+                const angle = Math.atan2(e.clientY - catCenterY, e.clientX - catCenterX);
+                const distance = Math.min(
+                    Math.hypot(e.clientX - catCenterX, e.clientY - catCenterY) / 15,
+                    8
+                );
+
+                eyeOffsetX = Math.cos(angle) * distance;
+                eyeOffsetY = Math.sin(angle) * distance;
+            });
+
+            canvas.addEventListener('click', (e) => {
+                initAudio();
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+
+                triggerCatSquish();
+                spawnParticle(clickX, clickY, '💖');
+                playSound('meow');
+                addAffection(3);
+            });
+        }
+
+        function saveGame() {
+            try {
+                catsList[currentCatIndex] = { ...gameState };
+                const saveData = {
+                    catsList: catsList,
+                    currentCatIndex: currentCatIndex
+                };
+                localStorage.setItem('myCatGameData', JSON.stringify(saveData));
+            } catch (e) {
+                console.warn('Storage save error:', e);
+            }
+        }
+
+        function loadGame() {
+            try {
+                const data = localStorage.getItem('myCatGameData');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.catsList && Array.isArray(parsed.catsList)) {
+                        catsList = parsed.catsList;
+                        currentCatIndex = parsed.currentCatIndex || 0;
+                        if (currentCatIndex >= catsList.length) currentCatIndex = 0;
+                        gameState = catsList[currentCatIndex];
+                    } else {
+                        // Legacy data migration
+                        gameState = { ...gameState, ...parsed };
+                        catsList = [gameState];
+                        currentCatIndex = 0;
+                    }
+
+                    const nameInputEl = document.getElementById('cat-name-input');
+                    if (nameInputEl) nameInputEl.value = gameState.name;
+                }
+            } catch (e) {
+                console.warn('Storage load error:', e);
+            }
+        }
+
+        function confirmReset() {
+            if (confirm('정말로 처음부터 다시 키우시겠습니까? 모든 성장 기록이 초기화됩니다.')) {
+                localStorage.removeItem('myCatGameData');
+                location.reload();
+            }
+        }
+
+        window.onload = function() {
+            loadGame();
+            resizeCanvas();
+            bindCanvasEvents();
+            updateUI();
+
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                updateUI();
+            });
+
+            animateLoop();
+            setInterval(gameTick, 3000);
+        };
+    </script>
+</body>
+</html>

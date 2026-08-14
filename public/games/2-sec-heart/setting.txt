@@ -1,0 +1,4 @@
+1.kor_name=[2초의 온기]
+2.eng_name=[The Heart of 2sec]
+3.maker=[김제 주희]
+3.genre=[*]

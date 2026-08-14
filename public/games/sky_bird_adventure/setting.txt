@@ -1,0 +1,4 @@
+1.kor_name=[스카이 버드 어드벤처]
+2.eng_name=[Sky Bird Adventure]
+3.maker=[김제 서율]
+3.genre=[*]

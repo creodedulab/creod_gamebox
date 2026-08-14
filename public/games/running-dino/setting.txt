@@ -1,0 +1,4 @@
+1.kor_name=[러닝 디노]
+2.eng_name=[Running Dino]
+3.maker=[김제 서율]
+3.genre=[*]

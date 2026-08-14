@@ -1,0 +1,4 @@
+1.kor_name=[흙을 좋아하는 새]
+2.eng_name=[The Bird that Loves Soil]
+3.maker=[김제 서율]
+3.genre=[*]

@@ -1,0 +1,4 @@
+1.kor_name=[10초 맞추기]
+2.eng_name=[Catch 10 Second]
+3.maker=[김제 민준]
+3.genre=[*]

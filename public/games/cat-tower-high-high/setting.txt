@@ -1,0 +1,4 @@
+1.kor_name=[캣타워 하이하이]
+2.eng_name=[Cat Tower High High]
+3.maker=[김제 다은]
+3.genre=[*]

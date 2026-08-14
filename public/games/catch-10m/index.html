@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10초를 맞춰라! - 10-Second Timer Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .timer-font {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+        .pulse-glow {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between items-center p-4">
+
+    <header class="w-full max-w-md text-center pt-6 pb-2">
+        <h1 class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+            ⏱️ 10초를 맞춰라!
+        </h1>
+        <p class="text-slate-400 text-sm mt-1 font-medium">
+            정확히 <span class="text-amber-400 font-bold">10.00초</span>에 버튼을 눌러 스톱해보세요!
+        </p>
+    </header>
+
+    <!-- Main Game Box -->
+    <main class="w-full max-w-md bg-slate-800/80 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-2xl my-auto">
+        
+        <!-- Mode Switcher -->
+        <div class="flex bg-slate-950/60 p-1.5 rounded-xl border border-slate-800 mb-6 text-xs font-semibold">
+            <button id="modeVisible" onclick="setMode('visible')" class="flex-1 py-2 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-md">
+                👀 타이머 계속 보임
+            </button>
+            <button id="modeBlind" onclick="setMode('blind')" class="flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200">
+                🙈 3초 후 숨김 (하드)
+            </button>
+        </div>
+
+        <!-- Timer Display Screen -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 mb-6 text-center shadow-inner relative overflow-hidden">
+            <div id="glowBg" class="absolute inset-0 bg-indigo-500/5 transition-opacity duration-300 opacity-0"></div>
+            
+            <span class="text-xs uppercase tracking-widest text-slate-500 font-bold block mb-1">Elapsed Time</span>
+            <div id="timerDisplay" class="timer-font text-6xl sm:text-7xl font-black tracking-wider text-indigo-400 my-2 drop-shadow-md">
+                0.00
+            </div>
+            <div id="diffDisplay" class="text-xs font-semibold text-slate-500 h-5 transition-all">
+                스페이스바 또는 버튼을 눌러 시작하세요
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="actionBtn" onclick="handleGameAction()" 
+                class="w-full py-5 rounded-2xl font-black text-xl tracking-wide uppercase transition-all transform active:scale-95 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg pulse-glow cursor-pointer">
+            시 작
+        </button>
+
+        <!-- Sound Toggle Button -->
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-700/50 text-xs text-slate-400">
+            <span>💡 팁: <kbd class="px-2 py-0.5 bg-slate-700 rounded text-slate-200">Spacebar</kbd> 키로도 조작 가능!</span>
+            <button id="soundBtn" onclick="toggleSound()" class="hover:text-amber-400 transition-colors flex items-center gap-1">
+                🔊 효과음 <span id="soundStatus">ON</span>
+            </button>
+        </div>
+
+        <!-- Result Card -->
+        <div id="resultCard" class="hidden mt-6 p-4 rounded-xl border text-center transition-all animate-bounce-short">
+            <div id="resultBadge" class="inline-block px-3 py-1 rounded-full text-xs font-extrabold mb-2"></div>
+            <div id="resultText" class="text-sm font-semibold"></div>
+        </div>
+    </main>
+
+    <!-- Record & Leaderboard Footer -->
+    <footer class="w-full max-w-md pb-6 mt-4">
+        <div class="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/40">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">🏆 최고 기록</span>
+                <button onclick="clearBestRecord()" class="text-[10px] text-slate-500 hover:text-rose-400 transition-colors">기록 초기화</button>
+            </div>
+            <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-sm text-slate-300 font-medium">최소 오차 기록:</span>
+                <span id="bestRecordText" class="text-base font-black text-amber-400 font-mono">기록 없음</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let startTime = 0;
+        let timerInterval = null;
+        let isRunning = false;
+        let currentMode = 'visible'; // 'visible' or 'blind'
+        let soundEnabled = true;
+
+        let bestDiff = localStorage.getItem('timer_game_best_diff') ? parseFloat(localStorage.getItem('timer_game_best_diff')) : null;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const diffDisplay = document.getElementById('diffDisplay');
+        const actionBtn = document.getElementById('actionBtn');
+        const resultCard = document.getElementById('resultCard');
+        const resultBadge = document.getElementById('resultBadge');
+        const resultText = document.getElementById('resultText');
+        const glowBg = document.getElementById('glowBg');
+        const bestRecordText = document.getElementById('bestRecordText');
+        const soundStatus = document.getElementById('soundStatus');
+
+        // Audio Effects using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'start') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'stop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'perfect') {
+                    // Perfect Chime
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const subOsc = audioCtx.createOscillator();
+                        const subGain = audioCtx.createGain();
+                        subOsc.connect(subGain);
+                        subGain.connect(audioCtx.destination);
+                        subOsc.type = 'sine';
+                        subOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        subGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                        subGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.25);
+                        subOsc.start(now + idx * 0.08);
+                        subOsc.stop(now + idx * 0.08 + 0.25);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateBestDisplay() {
+            if (bestDiff !== null) {
+                bestRecordText.innerText = `±${bestDiff.toFixed(2)}초`;
+            } else {
+                bestRecordText.innerText = '기록 없음';
+            }
+        }
+
+        function setMode(mode) {
+            if (isRunning) return;
+            currentMode = mode;
+            const btnVisible = document.getElementById('modeVisible');
+            const btnBlind = document.getElementById('modeBlind');
+
+            if (mode === 'visible') {
+                btnVisible.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-md font-bold";
+                btnBlind.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200";
+            } else {
+                btnBlind.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-md font-bold";
+                btnVisible.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200";
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            soundStatus.innerText = soundEnabled ? 'ON' : 'OFF';
+        }
+
+        function handleGameAction() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (!isRunning) {
+                startTimer();
+            } else {
+                stopTimer();
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startTime = Date.now();
+            playSound('start');
+
+            // UI Adjustments
+            actionBtn.innerText = '스 톱 !';
+            actionBtn.className = "w-full py-5 rounded-2xl font-black text-xl tracking-wide uppercase transition-all transform active:scale-95 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white shadow-lg pulse-glow cursor-pointer";
+            
+            resultCard.classList.add('hidden');
+            glowBg.classList.remove('opacity-0');
+            glowBg.classList.add('opacity-100');
+            diffDisplay.innerText = '타이머 측정 중...';
+            diffDisplay.className = "text-xs font-semibold text-indigo-400 h-5 transition-all animate-pulse";
+
+            timerInterval = setInterval(() => {
+                const elapsedTime = (Date.now() - startTime) / 1000;
+
+                if (currentMode === 'blind' && elapsedTime >= 3.0) {
+                    timerDisplay.innerText = '?.??';
+                } else {
+                    timerDisplay.innerText = elapsedTime.toFixed(2);
+                }
+            }, 10);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            playSound('stop');
+
+            const finalTime = (Date.now() - startTime) / 1000;
+            const diff = Math.abs(10 - finalTime);
+
+            // UI Adjustments
+            timerDisplay.innerText = finalTime.toFixed(2);
+            glowBg.classList.remove('opacity-100');
+            glowBg.classList.add('opacity-0');
+
+            actionBtn.innerText = '다시 도전하기';
+            actionBtn.className = "w-full py-5 rounded-2xl font-black text-xl tracking-wide uppercase transition-all transform active:scale-95 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg pulse-glow cursor-pointer";
+
+            // Update Best Record
+            if (bestDiff === null || diff < bestDiff) {
+                bestDiff = diff;
+                localStorage.setItem('timer_game_best_diff', bestDiff.toString());
+                updateBestDisplay();
+            }
+
+            showResult(finalTime, diff);
+        }
+
+        function showResult(finalTime, diff) {
+            resultCard.classList.remove('hidden', 'bg-emerald-950/60', 'border-emerald-500/40', 'bg-blue-950/60', 'border-blue-500/40', 'bg-slate-900/60', 'border-slate-700');
+            
+            let badgeClass = '';
+            let badgeText = '';
+            let textMessage = '';
+
+            if (diff === 0) {
+                badgeClass = 'bg-amber-400 text-slate-950';
+                badgeText = '🎯 퍼펙트! 10.00초 달성!';
+                textMessage = `신이 내린 감각입니다! 오차: <span class="text-amber-400 font-bold">0.00초</span>`;
+                resultCard.classList.add('bg-amber-950/60', 'border-amber-500/50');
+                playSound('perfect');
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+            } else if (diff <= 0.15) {
+                badgeClass = 'bg-emerald-400 text-slate-950';
+                badgeText = '🔥 대단해요! (초정밀)';
+                textMessage = `멈춘 시간: ${finalTime.toFixed(2)}초 (오차: ±${diff.toFixed(2)}초)`;
+                resultCard.classList.add('bg-emerald-950/60', 'border-emerald-500/40');
+                if (diff <= 0.05) confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            } else if (diff <= 0.5) {
+                badgeClass = 'bg-blue-400 text-slate-950';
+                badgeText = '👍 아깝네요!';
+                textMessage = `멈춘 시간: ${finalTime.toFixed(2)}초 (오차: ±${diff.toFixed(2)}초)`;
+                resultCard.classList.add('bg-blue-950/60', 'border-blue-500/40');
+            } else {
+                badgeClass = 'bg-slate-700 text-slate-200';
+                badgeText = '😅 타이밍 재도전!';
+                textMessage = `멈춘 시간: ${finalTime.toFixed(2)}초 (오차: ±${diff.toFixed(2)}초)`;
+                resultCard.classList.add('bg-slate-900/60', 'border-slate-700');
+            }
+
+            resultBadge.className = `inline-block px-3 py-1 rounded-full text-xs font-extrabold mb-1 ${badgeClass}`;
+            resultBadge.innerText = badgeText;
+            resultText.innerHTML = textMessage;
+
+            diffDisplay.innerText = `최종 오차: ±${diff.toFixed(2)}초`;
+            diffDisplay.className = "text-xs font-semibold text-slate-300 h-5 transition-all";
+        }
+
+        function clearBestRecord() {
+            localStorage.removeItem('timer_game_best_diff');
+            bestDiff = null;
+            updateBestDisplay();
+        }
+
+        // Keyboard spacebar control
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleGameAction();
+            }
+        });
+
+        // Initialize display
+        window.onload = function() {
+            updateBestDisplay();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+1.kor_name=[무한의 공룡게임]
+2.eng_name=[Infinite Dino Game]
+3.maker=[김제 루하]
+3.genre=[*]

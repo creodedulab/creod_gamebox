@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>흙을 좋아하는 새 - Little Bird & The Warm Earth</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        earth: {
+                            50: '#fdf8f5',
+                            100: '#f8ece3',
+                            200: '#ebd5c1',
+                            300: '#daab87',
+                            400: '#c58253',
+                            500: '#a65e31',
+                            600: '#8d4a27',
+                            700: '#713920',
+                            800: '#5c301e',
+                            900: '#4c291c',
+                        },
+                        sprout: {
+                            300: '#a3e635',
+                            400: '#84cc16',
+                            500: '#65a30d',
+                        }
+                    },
+                    keyframes: {
+                        peck: {
+                            '0%, 100%': { transform: 'rotate(0deg) translateY(0)' },
+                            '50%': { transform: 'rotate(-25deg) translateY(8px)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        sparkle: {
+                            '0%': { opacity: '0', transform: 'scale(0.5) translateY(0)' },
+                            '50%': { opacity: '1', transform: 'scale(1.2) translateY(-10px)' },
+                            '100%': { opacity: '0', transform: 'scale(0.8) translateY(-20px)' }
+                        }
+                    },
+                    animation: {
+                        peck: 'peck 0.25s ease-in-out',
+                        float: 'float 3s ease-in-out infinite',
+                        wiggle: 'wiggle 2s ease-in-out infinite',
+                        sparkle: 'sparkle 1s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Gowun+Dodum&display=swap');
+        
+        body {
+            font-family: 'Gowun Dodum', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-story {
+            font-family: 'Gamja Flower', cursive;
+        }
+
+        /* Custom Scrollbar for storybook */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8ece3;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #daab87;
+            border-radius: 3px;
+        }
+
+        /* Dirt Layer Pattern */
+        .dirt-pattern {
+            background-color: #5c301e;
+            background-image: radial-gradient(#713920 15%, transparent 16%), radial-gradient(#4c291c 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        .void-pattern {
+            background-color: #0f172a !important;
+            background-image: radial-gradient(#4c1d95 20%, transparent 20%), radial-gradient(#1e1b4b 20%, transparent 20%) !important;
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+            border-color: #7e22ce !important;
+            box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.4) !important;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-stone-800 min-h-screen flex flex-col justify-between overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="w-full max-w-2xl mx-auto px-4 pt-3 pb-2 flex justify-between items-center z-20">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🐦</span>
+            <div>
+                <h1 class="text-lg font-bold text-earth-800 font-story leading-none">흙을 좋아하는 새</h1>
+                <p class="text-xs text-earth-600">따뜻한 생명의 집 가꾸기</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button id="btn-void-toggle" onclick="toggleVoidMode()" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-500 px-3 py-1.5 rounded-full flex items-center space-x-1 shadow-sm text-xs font-semibold transition hidden animate-pulse">
+                <span>🌌</span>
+                <span id="void-toggle-text">보이드 모드</span>
+            </button>
+
+            <!-- Story Book Button -->
+            <button id="btn-story" onclick="openStoryModal()" class="relative bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-full flex items-center space-x-1.5 shadow-sm text-xs font-semibold text-earth-800 transition">
+                <span>📖</span>
+                <span>동화책/샵</span>
+                <span class="bg-amber-300 text-earth-900 text-[10px] px-1 rounded font-mono font-bold">X</span>
+                <span id="story-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">!</span>
+            </button>
+            <!-- Sound Toggle -->
+            <button id="btn-sound" onclick="toggleAudio()" class="bg-amber-100 hover:bg-amber-200 border border-amber-300 p-1.5 rounded-full shadow-sm text-xs text-earth-800 transition">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- Resources HUD -->
+    <section class="w-full max-w-2xl mx-auto px-4 py-1 z-20">
+        <div id="hud-panel" class="glass-panel rounded-2xl p-2.5 shadow-md border border-amber-200/60 flex justify-around items-center text-xs md:text-sm transition-all duration-500">
+            <div class="flex items-center space-x-1.5" title="부리 쪼기 공격력">
+                <span class="text-base">⚔️</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-stone-500 leading-tight">부리 파워</span>
+                    <span id="res-attack" class="font-bold text-red-600">11</span>
+                </div>
+            </div>
+
+            <div class="h-6 w-px bg-amber-200"></div>
+
+            <div class="flex items-center space-x-1.5" title="흙을 파서 모은 생기">
+                <span id="res-earth-icon" class="text-base">🤎</span>
+                <div class="flex flex-col">
+                    <span id="res-earth-label" class="text-[10px] text-stone-500 leading-tight">흙의 온기</span>
+                    <span id="res-earth" class="font-bold text-earth-800">0</span>
+                </div>
+            </div>
+
+            <div class="h-6 w-px bg-amber-200"></div>
+
+            <div class="flex items-center space-x-1.5" title="햇살 에너지">
+                <span class="text-base">☀️</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-stone-500 leading-tight">따스한 햇살</span>
+                    <span id="res-sun" class="font-bold text-amber-600">0</span>
+                </div>
+            </div>
+
+            <div class="h-6 w-px bg-amber-200"></div>
+
+            <div class="flex items-center space-x-1.5" title="단비 에너지">
+                <span class="text-base">💧</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-stone-500 leading-tight">촉촉한 비</span>
+                    <span id="res-water" class="font-bold text-blue-600">0</span>
+                </div>
+            </div>
+
+            <div class="h-6 w-px bg-amber-200"></div>
+
+            <div class="flex items-center space-x-1.5" title="피어난 꽃의 수">
+                <span class="text-base">🌸</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-stone-500 leading-tight">피어난 꽃</span>
+                    <span id="res-flower" class="font-bold text-rose-500">0</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Interactive Game Viewport -->
+    <main class="w-full max-w-2xl mx-auto flex-1 flex flex-col relative overflow-hidden px-2 py-1">
+        
+        <!-- Sky & Tree Garden View (Upper Half) -->
+        <div id="sky-area" class="relative w-full h-48 md:h-56 rounded-t-3xl overflow-hidden bg-gradient-to-b from-sky-200 via-sky-100 to-amber-100 border-t border-x border-amber-200/80 shadow-inner flex flex-col justify-between transition-all duration-700">
+            
+            <!-- Sun & Weather Controls Overlay -->
+            <div class="absolute top-2 left-3 right-3 flex justify-between items-center z-10">
+                <div id="weather-status" class="text-xs bg-white/70 px-2.5 py-1 rounded-full text-stone-700 shadow-sm border border-white/50 transition-colors">
+                    🌤️ 화창하고 따뜻한 날씨
+                </div>
+                
+                <!-- Birds Audience Counter -->
+                <div id="bird-count-badge" class="text-xs bg-amber-100/90 border border-amber-300 px-2.5 py-1 rounded-full text-earth-800 shadow-sm flex items-center gap-1 transition-colors">
+                    <span>🐤 구경하는 새 친구들:</span>
+                    <span id="bird-count" class="font-bold text-amber-700">0</span>명
+                </div>
+            </div>
+
+            <!-- Clouds floating -->
+            <div id="cloud-1" class="absolute top-6 left-8 text-white/80 text-3xl animate-float transition-all" style="animation-duration: 7s;">☁️</div>
+            <div id="cloud-2" class="absolute top-10 right-12 text-white/70 text-2xl animate-float transition-all" style="animation-duration: 9s;">☁️</div>
+
+            <!-- Tree & Bird Friends Area -->
+            <div class="relative w-full h-full flex items-end justify-between px-4 pb-2">
+                <!-- Left Trees & Skeptical Birds -->
+                <div class="flex items-end gap-1">
+                    <svg class="w-16 h-28 text-emerald-600 drop-shadow" viewBox="0 0 100 150">
+                        <path d="M50 150 L50 100 Q30 70 50 10 Q70 70 50 100" fill="#8d4a27" />
+                        <circle cx="50" cy="40" r="35" fill="currentColor"/>
+                        <circle cx="35" cy="50" r="25" fill="#059669"/>
+                    </svg>
+                    <!-- Other Birds sitting on tree -->
+                    <div id="other-birds-container" class="flex gap-1 mb-12">
+                        <!-- Dynamic birds will spawn here -->
+                    </div>
+                </div>
+
+                <!-- Plants & Garden Bed (Ground Level) -->
+                <div id="garden-bed" class="flex-1 mx-2 h-16 flex items-end justify-center gap-3 border-b-4 border-earth-700/40 relative">
+                    <!-- Dynamic Plants/Flowers render here -->
+                </div>
+
+                <!-- Right Tree -->
+                <div class="flex items-end">
+                    <svg class="w-14 h-24 text-emerald-500 drop-shadow" viewBox="0 0 100 150">
+                        <path d="M50 150 L50 100 Q30 70 50 10 Q70 70 50 100" fill="#713920" />
+                        <circle cx="50" cy="45" r="30" fill="currentColor"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Weather Rain Animation Overlay (Hidden by default) -->
+            <div id="rain-overlay" class="absolute inset-0 bg-blue-900/10 pointer-events-none hidden flex flex-wrap justify-around items-center opacity-70">
+                <div class="animate-bounce text-blue-400 text-xs">💧</div>
+                <div class="animate-bounce text-blue-300 text-xs" style="animation-delay: 0.2s">💧</div>
+                <div class="animate-bounce text-blue-500 text-xs" style="animation-delay: 0.4s">💧</div>
+                <div class="animate-bounce text-blue-400 text-xs" style="animation-delay: 0.1s">💧</div>
+            </div>
+        </div>
+
+        <!-- Soil Digging Area (Lower Half) -->
+        <div id="dirt-zone" onclick="peckSoil(event)" class="relative w-full h-44 md:h-52 rounded-b-3xl dirt-pattern border-b-4 border-x border-earth-900 shadow-2xl cursor-pointer overflow-hidden flex flex-col justify-between p-3 select-none transition-all duration-500">
+            
+            <!-- Soil Surface / Instruction Banner -->
+            <div class="w-full flex justify-between items-center pointer-events-none z-10">
+                <span id="dirt-banner-hint" class="text-xs text-amber-200/90 bg-earth-900/80 px-2.5 py-1 rounded-full border border-earth-700">
+                    👇 흙을 콕콕! 눌러서 파보세요
+                </span>
+                <span id="click-feedback" class="text-xs text-amber-300 font-story font-bold animate-pulse">
+                    부리로 콕콕! 사각사각!
+                </span>
+            </div>
+
+            <!-- The Little Brown Bird Hero -->
+            <div id="little-bird" class="absolute transition-all duration-300 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none" style="left: 50%; top: 50%;">
+                <div id="bird-graphic" class="relative w-16 h-16 transition-all duration-500">
+                    <!-- Little Bird SVG Illustration -->
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+                        <!-- Body -->
+                        <ellipse cx="45" cy="55" rx="30" ry="22" fill="#a65e31" />
+                        <!-- Belly -->
+                        <ellipse cx="42" cy="62" rx="20" ry="14" fill="#ebd5c1" />
+                        <!-- Head -->
+                        <circle cx="68" cy="40" r="18" fill="#8d4a27" />
+                        <!-- Eye -->
+                        <circle cx="73" cy="36" r="3.5" fill="#1c1917" />
+                        <circle cx="74.5" cy="34.5" r="1.2" fill="#ffffff" />
+                        <!-- Beak -->
+                        <polygon points="84,40 96,44 83,48" fill="#f59e0b" />
+                        <!-- Wing -->
+                        <path d="M 25 52 Q 40 40 52 55 Q 38 65 25 52 Z" fill="#713920" />
+                        <!-- Legs -->
+                        <line x1="40" y1="75" x2="36" y2="90" stroke="#d97706" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="52" y1="75" x2="52" y2="90" stroke="#d97706" stroke-width="3.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Buried Treasures / Insects floating in soil -->
+            <div id="soil-contents" class="relative w-full h-full pointer-events-none">
+                <!-- Worms & Seeds discovered render dynamically -->
+            </div>
+
+            <!-- Dialogue / Speech Bubble -->
+            <div id="bird-dialogue" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-amber-100/95 border-2 border-earth-400 text-earth-900 text-xs px-3 py-1.5 rounded-xl shadow-lg transition-all duration-300 opacity-90 font-semibold z-30 pointer-events-none">
+                "흙 냄새는 참 좋아! 콕콕!"
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Action Controls Bottom Bar -->
+    <footer class="w-full max-w-2xl mx-auto px-4 py-2 z-20">
+        <div class="grid grid-cols-3 gap-2">
+            <!-- Rain Button -->
+            <button onclick="triggerRain()" class="bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white font-bold py-2.5 px-2 rounded-2xl shadow-md border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition flex flex-col items-center justify-center relative">
+                <span class="absolute top-1 right-2 text-[10px] bg-blue-900/40 px-1.5 py-0.5 rounded font-mono">A</span>
+                <span class="text-lg">🌧️ 단비 내리기</span>
+                <span class="text-[10px] font-normal text-blue-100">온기 10 소비 (비 +10)</span>
+            </button>
+
+            <!-- Sun Button -->
+            <button onclick="triggerSun()" class="bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white font-bold py-2.5 px-2 rounded-2xl shadow-md border-b-4 border-amber-800 active:border-b-0 active:translate-y-1 transition flex flex-col items-center justify-center relative">
+                <span class="absolute top-1 right-2 text-[10px] bg-amber-900/40 px-1.5 py-0.5 rounded font-mono">E</span>
+                <span class="text-lg">☀️ 햇빛 비추기</span>
+                <span class="text-[10px] font-normal text-amber-100">온기 10 소비 (햇살 +10)</span>
+            </button>
+
+            <!-- Plant Care Button -->
+            <button onclick="careForGarden()" class="bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 text-white font-bold py-2.5 px-2 rounded-2xl shadow-md border-b-4 border-emerald-900 active:border-b-0 active:translate-y-1 transition flex flex-col items-center justify-center relative">
+                <span class="absolute top-1 right-2 text-[10px] bg-emerald-950/40 px-1.5 py-0.5 rounded font-mono">Q+1</span>
+                <span class="text-lg">🌱 정원 돌보기</span>
+                <span class="text-[10px] font-normal text-emerald-100">햇살 5 + 비 5 필요</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Storybook & Shop Modal Overlay -->
+    <div id="story-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-earth-400 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-float" style="animation-duration: 0.3s;">
+            <!-- Modal Header -->
+            <div class="bg-earth-200 border-b border-earth-300 p-3 px-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📖</span>
+                    <h2 class="text-xl font-bold font-story text-earth-900">동화책 및 보이드 상점</h2>
+                </div>
+                <button onclick="closeStoryModal()" class="text-stone-500 hover:text-stone-800 font-bold text-xl px-2">✕</button>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex border-b border-earth-300 bg-amber-100/60 text-xs font-bold text-earth-800">
+                <button id="tab-story-btn" onclick="switchModalTab('story')" class="flex-1 py-2 text-center border-b-2 border-earth-600 bg-amber-200/50">
+                    📖 동화책 목록
+                </button>
+                <button id="tab-shop-btn" onclick="switchModalTab('shop')" class="flex-1 py-2 text-center border-b-2 border-transparent hover:bg-amber-200/30">
+                    🛒 부리 강화 & 자동 쪼기
+                </button>
+            </div>
+
+            <!-- Modal Content - Story Pages Tab -->
+            <div id="story-pages-container" class="p-4 overflow-y-auto flex-1 space-y-4">
+                <!-- Pages will be dynamically rendered here -->
+            </div>
+
+            <!-- Modal Content - Shop Tab -->
+            <div id="shop-container" class="p-4 overflow-y-auto flex-1 space-y-3 hidden">
+                <div class="bg-white p-3 rounded-2xl border border-amber-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-earth-900 text-sm">⚡ 부리 수련 (공격력 +5)</div>
+                        <div class="text-xs text-stone-500">클릭당 획득 온기/생기 대폭 증가</div>
+                    </div>
+                    <button onclick="buyUpgrade('attack')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow">
+                        온기 30 소모
+                    </button>
+                </div>
+
+                <div class="bg-white p-3 rounded-2xl border border-amber-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-earth-900 text-sm">🐤 조수 새 친구 (자동 쪼기)</div>
+                        <div class="text-xs text-stone-500">1초마다 자동으로 흙을 쪼아줍니다!</div>
+                    </div>
+                    <button id="btn-buy-autopeck" onclick="buyUpgrade('autopeck')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow">
+                        온기 50 소모
+                    </button>
+                </div>
+
+                <div class="bg-purple-900/10 p-3 rounded-2xl border border-purple-300 shadow-sm flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-purple-900 text-sm">🌌 보이드 차원 무료 즉시 개설</div>
+                        <div class="text-xs text-purple-700">50회 쪼기 전에도 즉시 보이드 차원을 엽니다</div>
+                    </div>
+                    <button onclick="triggerVoidGeneration()" class="bg-purple-800 hover:bg-purple-900 text-purple-100 font-bold text-xs px-3 py-1.5 rounded-xl shadow">
+                        즉시 해금 ✨
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-amber-100 border-t border-amber-200 p-2.5 text-center text-xs text-stone-600">
+                💡 흙을 더 많이 쪼고 꽃을 피워 보이드 이야기와 신비한 능력을 해금하세요!
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Toast Alert Box (No system alert()) -->
+    <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-stone-900/90 text-white text-xs md:text-sm px-4 py-2 rounded-full shadow-2xl z-50 opacity-0 pointer-events-none transition-opacity duration-300 border border-stone-700">
+        메시지 내용
+    </div>
+
+    <script>
+        // ... existing sound FX class code ...
+        // --- Story Pages Data ---
+        const storyPages = [
+            { page: 1, title: "1페이지", text: "어느 숲에 흙을 세상에서 가장 좋아하는 작은 새가 살았어요.\n다른 새들은 높은 나무를 좋아했지만, 작은 새는 늘 땅으로 내려왔어요.", reqPecks: 0 },
+            { page: 2, title: "2페이지", text: "작은 새는 부리로 흙을 콕콕 쪼고, 발로 사각사각 흙을 헤집는 걸 좋아했어요.\n\"흙 냄새는 참 좋아!\"", reqPecks: 5 },
+            { page: 3, title: "3페이지", text: "다른 새들이 말했어요.\n\"흙은 더럽잖아! 왜 맨날 흙하고만 놀아?\"\n작은 새는 그저 빙긋 웃었어요.", reqPecks: 10 },
+            { page: 4, title: "4페이지", text: "\"흙은 하나도 더럽지 않아. 흙 속에는 소중한 친구들이 살고 있거든.\"\n작은 새는 다시 흙을 살살 쪼았어요.", reqPecks: 20 },
+            { page: 5, title: "5페이지", text: "그러자 흙 속에서 작은 지렁이가 꿈틀!\n\"안녕!\" 지렁이가 인사했어요.\n작은 새도 반갑게 인사했어요.", reqPecks: 30 },
+            { page: 6, title: "6페이지", text: "조금 더 파 보니 작은 씨앗도 숨어 있었어요.\n\"곧 멋진 꽃이 될 거야.\"\n작은 새는 씨앗을 다치지 않게 조심조심 흙을 덮어 주었어요.", reqPecks: 40 },
+            { page: 7, title: "7페이지", text: "며칠 뒤 비가 내리고 따뜻한 햇살이 비쳤어요.\n씨앗은 작은 새싹이 되었어요.", reqFlowers: 1 },
+            { page: 8, title: "8페이지", text: "시간이 지나자 예쁜 꽃이 활짝 피었어요.\n벌도 오고, 나비도 찾아왔어요.", reqFlowers: 3 },
+            { page: 9, title: "9페이지", text: "다른 새들이 놀랐어요.\n\"우와! 흙 속에서 이런 일이 생겼구나!\"", reqFlowers: 5 },
+            { page: 10, title: "10페이지", text: "작은 새가 말했어요.\n\"흙은 생명을 키우는 따뜻한 집이야. 그래서 나는 흙을 좋아해.\"", reqFlowers: 8 },
+            { page: 11, title: "11페이지", text: "그날부터 다른 새들도 흙을 함부로 더럽다고 하지 않았어요.\n모두 함께 흙을 아끼고 소중히 돌보기 시작했어요.", reqFlowers: 12 },
+            { page: 12, title: "12페이지", text: "오늘도 작은 새는 부리로 흙을 콕!\n\"안녕, 흙아.\"\n흙은 아무 말도 하지 않았지만, 새싹 하나가 살며시 고개를 내밀었어요.", reqFlowers: 15 },
+            { page: 13, title: "13페이지 (비밀: 보이드 차원의 문)", text: "🌌 [50번의 정성과 차원의 균열]\n\n흙을 50번 정성껏 쪼자, 땅속 깊은 곳에서 암흑 우주의 보이드 균열이 열렸어요!\n어둡고 아득한 보이드 속에서 별빛 지렁이와 신비한 우주 씨앗이 고개를 내밀었습니다.\n\n\"우주의 어둠도 따뜻한 생명의 뿌리가 될 수 있어!\" ✨👾🪐", reqPecks: 50 },
+            { page: 14, title: "14페이지 (최종장: 우주와 땅의 완성)", text: "🌌🤎🌱 [영원히 따뜻한 생명의 집]\n\n이제 흙은 땅 위뿐만 아니라 은하수 너머 우주까지 생명의 온기를 전합니다.\n작은 새와 모든 친구들은 흙과 함께 영원히 행복하고 따뜻하게 살아갔답니다.\n\n~ 『흙을 좋아하는 새』 완결 ~ 🐦✨🌸", reqPecks: 100 }
+        ];
+
+        // --- Game State Object ---
+        const gameState = {
+            attackPower: 11,
+            earthWarmth: 0,
+            sunEnergy: 0,
+            waterEnergy: 0,
+            totalPecks: 0,
+            flowersBloomed: 0,
+            unlockedPages: [1],
+            plants: [
+                { id: 1, stage: 0, progress: 0 },
+                { id: 2, stage: 0, progress: 0 },
+                { id: 3, stage: 0, progress: 0 }
+            ],
+            birdsConvinced: 0,
+            hasNewStory: false,
+            isVoidMode: false,
+            voidUnlocked: false,
+            autoPeckLevel: 0
+        };
+
+        const birdQuotes = [
+            "흙 냄새는 참 좋아! 콕콕!",
+            "흙 속에 소중한 친구가 있을까?",
+            "사각사각, 따뜻한 흙 촉감!",
+            "지렁이야 안녕! 반가워!",
+            "씨앗을 다치지 않게 조심조심!",
+            "흙은 생명을 키우는 집이야 🌱"
+        ];
+
+        const voidQuotes = [
+            "우주의 어둠 속에서도 콕콕! 🌌",
+            "보이드 지렁이야 안녕! 👾",
+            "별빛이 차오르는 신비한 우주 보이드!",
+            "보이드 차원 가동 완료! ✨",
+            "어둠 속에서도 생명의 온기는 피어나..."
+        ];
+
+        function peckSoil(event) {
+            sfx.playPeck();
+
+            const dirtZone = document.getElementById('dirt-zone');
+            const rect = dirtZone.getBoundingClientRect();
+            const clickX = event ? (event.clientX - rect.left) : (dirtZone.clientWidth / 2 + (Math.random() * 100 - 50));
+            const clickY = event ? (event.clientY - rect.top) : (dirtZone.clientHeight / 2 + (Math.random() * 60 - 30));
+
+            const bird = document.getElementById('little-bird');
+            const birdGraphic = document.getElementById('bird-graphic');
+            
+            bird.style.left = `${clickX}px`;
+            bird.style.top = `${clickY}px`;
+
+            birdGraphic.classList.remove('animate-peck');
+            void birdGraphic.offsetWidth;
+            birdGraphic.classList.add('animate-peck');
+
+            gameState.totalPecks++;
+            const warmthGain = gameState.attackPower + (gameState.isVoidMode ? 10 : 0);
+            gameState.earthWarmth += warmthGain;
+
+            spawnSparkle(clickX, clickY, `💥 +${warmthGain} ${gameState.isVoidMode ? '🌌' : '🤎'}`);
+
+            if (gameState.totalPecks >= 50 && !gameState.voidUnlocked) {
+                triggerVoidGeneration();
+            }
+
+            const rand = Math.random();
+            if (gameState.isVoidMode) {
+                if (rand < 0.35) {
+                    spawnSoilItem(clickX, clickY, '👾', '보이드 지렁이!');
+                    gameState.earthWarmth += 10;
+                    sfx.playVoidSound();
+                } else if (rand < 0.60) {
+                    spawnSoilItem(clickX, clickY, '🪐', '우주 씨앗!');
+                    gameState.sunEnergy += 5;
+                } else {
+                    spawnSparkle(clickX, clickY, '+5 🌌');
+                }
+            } else {
+                if (rand < 0.25) {
+                    spawnSoilItem(clickX, clickY, '🐛', '지렁이 발견!');
+                    gameState.earthWarmth += 3;
+                    sfx.playDiscover();
+                } else if (rand < 0.40) {
+                    spawnSoilItem(clickX, clickY, '🌰', '씨앗 발견!');
+                    gameState.sunEnergy += 2;
+                } else if (rand < 0.50) {
+                    spawnSoilItem(clickX, clickY, '💧', '이슬방울!');
+                    gameState.waterEnergy += 2;
+                }
+            }
+
+            if (gameState.totalPecks % 5 === 0) {
+                const quotesList = gameState.isVoidMode ? voidQuotes : birdQuotes;
+                const quote = quotesList[Math.floor(Math.random() * quotesList.length)];
+                document.getElementById('bird-dialogue').innerText = `"${quote}"`;
+            }
+
+            checkStoryUnlocks();
+            updateUI();
+        }
+
+        function triggerVoidGeneration() {
+            gameState.voidUnlocked = true;
+            gameState.isVoidMode = true;
+            sfx.playVoidSound();
+
+            document.getElementById('btn-void-toggle').classList.remove('hidden');
+            applyVoidTheme();
+
+            showToast('🌌 [보이드 차원 해금] 50회 쪼기 달성! 신비로운 보이드 차원이 열렸습니다!');
+            document.getElementById('bird-dialogue').innerText = '"우주의 보이드 사각사각... 🌌"';
+        }
+
+        function toggleVoidMode() {
+            if (!gameState.voidUnlocked) {
+                triggerVoidGeneration();
+                return;
+            }
+            gameState.isVoidMode = !gameState.isVoidMode;
+            sfx.playVoidSound();
+            applyVoidTheme();
+
+            if (gameState.isVoidMode) {
+                showToast('🌌 우주 보이드 차원으로 전환되었습니다.');
+            } else {
+                showToast('🤎 따뜻한 흙 모드로 돌아왔습니다.');
+            }
+        }
+
+        function applyVoidTheme() {
+            const skyArea = document.getElementById('sky-area');
+            const dirtZone = document.getElementById('dirt-zone');
+            const toggleBtnText = document.getElementById('void-toggle-text');
+            const weatherStatus = document.getElementById('weather-status');
+            const birdGraphic = document.getElementById('bird-graphic');
+            const resEarthIcon = document.getElementById('res-earth-icon');
+            const resEarthLabel = document.getElementById('res-earth-label');
+            const dirtBannerHint = document.getElementById('dirt-banner-hint');
+
+            if (gameState.isVoidMode) {
+                skyArea.className = 'relative w-full h-48 md:h-56 rounded-t-3xl overflow-hidden bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950 border-t border-x border-purple-500/80 shadow-2xl flex flex-col justify-between transition-all duration-700';
+                dirtZone.classList.add('void-pattern');
+                toggleBtnText.innerText = '흙 모드로';
+                weatherStatus.innerText = '🌌 신비로운 우주 보이드 차원';
+                weatherStatus.className = 'text-xs bg-purple-900/80 px-2.5 py-1 rounded-full text-purple-200 shadow-sm border border-purple-500 transition-colors';
+                birdGraphic.classList.add('drop-shadow-[0_0_12px_rgba(168,85,247,0.9)]');
+                resEarthIcon.innerText = '🌌';
+                resEarthLabel.innerText = '보이드 생기';
+                dirtBannerHint.innerText = '🌌 보이드 흙을 콕콕! 파보세요';
+                document.getElementById('click-feedback').innerText = '보이드 부리로 콕콕! ✨';
+            } else {
+                skyArea.className = 'relative w-full h-48 md:h-56 rounded-t-3xl overflow-hidden bg-gradient-to-b from-sky-200 via-sky-100 to-amber-100 border-t border-x border-amber-200/80 shadow-inner flex flex-col justify-between transition-all duration-700';
+                dirtZone.classList.remove('void-pattern');
+                toggleBtnText.innerText = '보이드 모드';
+                weatherStatus.innerText = '🌤️ 화창하고 따뜻한 날씨';
+                weatherStatus.className = 'text-xs bg-white/70 px-2.5 py-1 rounded-full text-stone-700 shadow-sm border border-white/50 transition-colors';
+                birdGraphic.classList.remove('drop-shadow-[0_0_12px_rgba(168,85,247,0.9)]');
+                resEarthIcon.innerText = '🤎';
+                resEarthLabel.innerText = '흙의 온기';
+                dirtBannerHint.innerText = '👇 흙을 콕콕! 눌러서 파보세요';
+                document.getElementById('click-feedback').innerText = '부리로 콕콕! 사각사각!';
+            }
+        }
+
+        function switchModalTab(tab) {
+            const storyContainer = document.getElementById('story-pages-container');
+            const shopContainer = document.getElementById('shop-container');
+            const tabStoryBtn = document.getElementById('tab-story-btn');
+            const tabShopBtn = document.getElementById('tab-shop-btn');
+
+            if (tab === 'story') {
+                storyContainer.classList.remove('hidden');
+                shopContainer.classList.add('hidden');
+                tabStoryBtn.className = 'flex-1 py-2 text-center border-b-2 border-earth-600 bg-amber-200/50';
+                tabShopBtn.className = 'flex-1 py-2 text-center border-b-2 border-transparent hover:bg-amber-200/30';
+            } else {
+                storyContainer.classList.add('hidden');
+                shopContainer.classList.remove('hidden');
+                tabStoryBtn.className = 'flex-1 py-2 text-center border-b-2 border-transparent hover:bg-amber-200/30';
+                tabShopBtn.className = 'flex-1 py-2 text-center border-b-2 border-earth-600 bg-amber-200/50';
+            }
+        }
+
+        function buyUpgrade(type) {
+            if (type === 'attack') {
+                if (gameState.earthWarmth < 30) {
+                    showToast('온기/보이드 생기가 부족합니다! (30 필요)');
+                    return;
+                }
+                gameState.earthWarmth -= 30;
+                gameState.attackPower += 5;
+                sfx.playDiscover();
+                showToast(`⚡ 부리 파워 강화 완료! (현재 부리 파워: ${gameState.attackPower})`);
+            } else if (type === 'autopeck') {
+                if (gameState.earthWarmth < 50) {
+                    showToast('온기/보이드 생기가 부족합니다! (50 필요)');
+                    return;
+                }
+                gameState.earthWarmth -= 50;
+                gameState.autoPeckLevel++;
+                sfx.playDiscover();
+                document.getElementById('btn-buy-autopeck').innerText = `강화됨 (Lv.${gameState.autoPeckLevel})`;
+                showToast(`🐤 조수 새 가동 중! (자동 쪼기 Lv.${gameState.autoPeckLevel})`);
+            }
+            updateUI();
+        }
+
+        // Auto Peck Timer Interval
+        setInterval(() => {
+            if (gameState.autoPeckLevel > 0) {
+                for (let i = 0; i < gameState.autoPeckLevel; i++) {
+                    peckSoil(null);
+                }
+            }
+        }, 1200);
+
+        // Make Void button always visible or auto unlock if pecks >= 50
+        window.addEventListener('load', () => {
+            document.getElementById('btn-void-toggle').classList.remove('hidden');
+        });
+
+            // Update Skeptical Birds on Tree based on bloomed flowers
+            renderBirdFriends();
+        }
+
+        function renderBirdFriends() {
+            const container = document.getElementById('other-birds-container');
+            container.innerHTML = '';
+
+            // 1 bird unlocked per 2 bloomed flowers
+            const birdsCount = Math.min(6, Math.floor(gameState.flowersBloomed / 2));
+            gameState.birdsConvinced = birdsCount;
+
+            document.getElementById('bird-count').innerText = birdsCount;
+
+            for (let i = 0; i < birdsCount; i++) {
+                const birdEl = document.createElement('div');
+                birdEl.className = 'text-lg animate-float';
+                birdEl.style.animationDelay = `${i * 0.3}s`;
+                birdEl.title = "흙의 가치를 깨달은 새 친구";
+                birdEl.innerText = i % 2 === 0 ? '🐤' : '🐦';
+                container.appendChild(birdEl);
+            }
+        }
+
+        function checkStoryUnlocks() {
+            let newlyUnlocked = false;
+
+            storyPages.forEach(p => {
+                if (!gameState.unlockedPages.includes(p.page)) {
+                    let unlockable = false;
+                    if (p.reqPecks !== undefined && gameState.totalPecks >= p.reqPecks) {
+                        unlockable = true;
+                    }
+                    if (p.reqFlowers !== undefined && gameState.flowersBloomed >= p.reqFlowers) {
+                        unlockable = true;
+                    }
+
+                    if (unlockable) {
+                        gameState.unlockedPages.push(p.page);
+                        newlyUnlocked = true;
+                    }
+                }
+            });
+
+            if (newlyUnlocked) {
+                gameState.hasNewStory = true;
+                document.getElementById('story-badge').classList.remove('hidden');
+                showToast('📖 새로운 동화 이야기가 해금되었습니다!');
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('res-attack').innerText = gameState.attackPower;
+            document.getElementById('res-earth').innerText = gameState.earthWarmth;
+            document.getElementById('res-sun').innerText = gameState.sunEnergy;
+            document.getElementById('res-water').innerText = gameState.waterEnergy;
+            document.getElementById('res-flower').innerText = gameState.flowersBloomed;
+        }
+
+        // --- Story Modal Management ---
+        function openStoryModal() {
+            gameState.hasNewStory = false;
+            document.getElementById('story-badge').classList.add('hidden');
+
+            const container = document.getElementById('story-pages-container');
+            container.innerHTML = '';
+
+            storyPages.forEach(p => {
+                const isUnlocked = gameState.unlockedPages.includes(p.page);
+                const pageCard = document.createElement('div');
+                pageCard.className = `p-4 rounded-2xl border transition-all ${
+                    isUnlocked 
+                        ? (p.page === 13 ? 'bg-purple-950/80 border-purple-500 shadow-lg text-purple-100' : 'bg-white border-amber-200 shadow-sm text-stone-800')
+                        : 'bg-stone-100 border-stone-300 text-stone-400 opacity-75'
+                }`;
+
+                if (isUnlocked) {
+                    pageCard.innerHTML = `
+                        <div class="flex justify-between items-center mb-2 border-b border-amber-100/30 pb-1">
+                            <span class="font-bold font-story text-lg ${p.page === 13 ? 'text-purple-300' : 'text-earth-800'}">${p.title}</span>
+                            <span class="text-xs ${p.page === 13 ? 'text-purple-300 bg-purple-900 border-purple-600' : 'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-0.5 rounded-full border">해금됨 ✨</span>
+                        </div>
+                        <p class="whitespace-pre-line text-sm leading-relaxed font-medium">${p.text}</p>
+                    `;
+                } else {
+                    let reqHint = p.reqPecks !== undefined 
+                        ? `흙 쪼기 ${p.reqPecks}회 필요 (현재 ${gameState.totalPecks}회)`
+                        : `꽃 ${p.reqFlowers}송이 피우기 필요 (현재 ${gameState.flowersBloomed}송이)`;
+
+                    pageCard.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold font-story text-stone-500">${p.title} (잠김 🔒)</span>
+                        </div>
+                        <p class="text-xs text-stone-500">조건: ${reqHint}</p>
+                    `;
+                }
+
+                container.appendChild(pageCard);
+            });
+
+            document.getElementById('story-modal').classList.remove('hidden');
+        }
+
+        function closeStoryModal() {
+            document.getElementById('story-modal').classList.add('hidden');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2200);
+        }
+
+        // Automated passive resource gain (Earth warmth gently accumulates)
+        setInterval(() => {
+            if (gameState.flowersBloomed > 0) {
+                // Flowers naturally gather sun & warmth over time
+                gameState.earthWarmth += Math.floor(gameState.flowersBloomed / 2) + 1;
+                updateUI();
+            }
+        }, 5000);
+
+        // Window Load Initialization
+        window.onload = function() {
+            renderGarden();
+            updateUI();
+        };
+
+        // Keyboard Shortcuts Handler
+        const keysPressed = {};
+
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            const key = e.key.toLowerCase();
+            keysPressed[key] = true;
+
+            // 'a' key -> Rain
+            if (key === 'a' && !e.repeat) {
+                triggerRain();
+            }
+
+            // 'e' key -> Sun
+            if (key === 'e' && !e.repeat) {
+                triggerSun();
+            }
+
+            // 'x' key -> Toggle Story/Shop Modal
+            if (key === 'x' && !e.repeat) {
+                const modal = document.getElementById('story-modal');
+                if (modal.classList.contains('hidden')) {
+                    openStoryModal();
+                } else {
+                    closeStoryModal();
+                }
+            }
+
+            // 'q' + '1' combo -> Care for garden
+            if (keysPressed['q'] && (keysPressed['1'] || e.key === '!')) {
+                careForGarden();
+                // Reset keys to prevent continuous firing when held down
+                keysPressed['q'] = false;
+                keysPressed['1'] = false;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            keysPressed[key] = false;
+        });
+    </script>
+</body>
+</html>
