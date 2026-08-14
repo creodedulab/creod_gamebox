@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>25번 보도블록의 초록 식구 - 초록이 키우기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFFBF3',
+                        warmgray: '#EFECE6',
+                        plantgreen: '#10B981',
+                        darkgreen: '#1B382B',
+                        sunyellow: '#F59E0B',
+                        skyblue: '#3B82F6',
+                        brickred: '#D97706'
+                    },
+                    fontFamily: {
+                        gowun: ['Gowun Dodum', 'sans-serif'],
+                        noto: ['Noto Sans KR', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+            background-color: #ECE8DF;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+        }
+        .btn-bounce:active {
+            transform: scale(0.94);
+        }
+
+        .glow-gold {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Floating tap text animation */
+        @keyframes floatUpFade {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-25px) scale(1.15);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-55px) scale(0.9);
+            }
+        }
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUpFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            font-weight: 800;
+            z-index: 60;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Pulse tab border glow */
+        @keyframes pulseGlow {
+            0%, 100% { border-color: rgba(16, 185, 129, 0.3); }
+            50% { border-color: rgba(16, 185, 129, 0.9); }
+        }
+        .pulse-border {
+            animation: pulseGlow 2s infinite;
+        }
+
+        .tab-btn {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between text-slate-800">
+
+    <header class="bg-cream/90 backdrop-blur-md border-b border-amber-200/60 px-3 sm:px-5 py-2.5 flex items-center justify-between shadow-sm z-30 flex-shrink-0">
+        <div class="flex items-center space-x-2.5 sm:space-x-3">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg sm:text-xl shadow-inner border border-emerald-200">
+                🌱
+            </div>
+            <div>
+                <h1 class="text-sm sm:text-base md:text-lg font-extrabold text-emerald-950 flex items-center gap-1.5">
+                    <span>25번 보도블록</span>
+                    <span id="stageBadge" class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">1단계</span>
+                </h1>
+                <p id="stageTitle" class="text-[11px] sm:text-xs text-slate-500 font-medium">캄캄한 틈새의 새싹</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5 sm:space-x-3">
+            <!-- Sun Counter -->
+            <div class="flex items-center bg-white/90 border border-amber-200/90 rounded-xl px-2 sm:px-3 py-1 shadow-sm" title="햇살 (기본 재화)">
+                <span class="text-amber-500 text-sm sm:text-base mr-1 animate-pulse">☀️</span>
+                <span id="sunCount" class="font-extrabold text-amber-900 text-xs sm:text-base">0</span>
+                <span id="sunRate" class="text-[9px] sm:text-[10px] text-amber-600/90 ml-1 font-bold">(+0/초)</span>
+            </div>
+
+            <!-- Rain Counter -->
+            <div class="flex items-center bg-white/90 border border-blue-200/90 rounded-xl px-2 sm:px-3 py-1 shadow-sm" title="빗물 (버프 재화)">
+                <span class="text-blue-500 text-sm sm:text-base mr-1">🌧️</span>
+                <span id="rainCount" class="font-extrabold text-blue-900 text-xs sm:text-base">0</span>
+            </div>
+
+            <!-- Courage Counter -->
+            <div class="flex items-center bg-white/90 border border-emerald-200/90 rounded-xl px-2 sm:px-3 py-1 shadow-sm" title="용기 포인트">
+                <span class="text-emerald-500 text-sm sm:text-base mr-1">✨</span>
+                <span id="courageCount" class="font-extrabold text-emerald-900 text-xs sm:text-base">0</span>
+            </div>
+
+            <!-- Return to Welcome Screen Button -->
+            <button id="welcomeBtn" onclick="openWelcomeModal()" class="h-8 sm:h-9 px-2.5 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition-all btn-bounce shadow-sm flex items-center gap-1.5" title="처음 화면 안내 보기">
+                <span>🏠</span>
+                <span class="text-[11px] font-bold">처음 화면</span>
+            </button>
+
+            <!-- Reset All Button -->
+            <button id="resetBtn" onclick="openResetModal()" class="h-8 sm:h-9 px-2.5 sm:px-3 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs rounded-xl transition-all btn-bounce shadow-sm flex items-center gap-1.5" title="모든 데이터 초기화">
+                <span>🔄</span>
+                <span class="text-[11px] font-bold">모두 초기화</span>
+            </button>
+
+            <!-- Audio Control Button -->
+            <button id="bgmBtn" onclick="toggleAudio()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all btn-bounce shadow-sm" title="BGM/ASMR 사운드 ON/OFF">
+                <i id="bgmIcon" class="fa-solid fa-volume-xmark text-xs sm:text-sm"></i>
+            </button>
+
+            <!-- Admin Test Button -->
+            <button id="adminBtn" onclick="openAdminPasswordModal()" class="h-8 sm:h-9 px-2.5 sm:px-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl transition-all btn-bounce shadow-sm flex items-center gap-1.5" title="관리자 비밀번호 인증">
+                <span>⚙️</span>
+                <span class="text-[11px] font-bold">무한 관리자</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="relative flex-grow flex flex-col md:flex-row overflow-hidden">
+
+        <!-- Canvas Container -->
+        <div id="canvasContainer" class="relative flex-grow h-1/2 md:h-full bg-slate-300 overflow-hidden cursor-pointer select-none">
+            <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+
+            <!-- Weather Indicator Badge -->
+            <div id="weatherBadge" class="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full border border-amber-200/80 text-xs font-bold text-slate-700 shadow-sm flex items-center gap-1.5 pointer-events-none">
+                <span id="weatherIcon">☀️</span>
+                <span id="weatherText">화창한 햇살</span>
+            </div>
+
+            <!-- Active Rain Buff Banner -->
+            <div id="buffBanner" class="hidden absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 animate-pulse">
+                <span>⚡</span>
+                <span id="buffText">단비 성장 버프 (2.0x)</span>
+            </div>
+
+            <!-- Tap Floating Hint -->
+            <div id="tapHint" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/70 text-white/95 text-xs font-medium px-3.5 py-1.5 rounded-full pointer-events-none transition-opacity duration-500 opacity-90 backdrop-blur shadow-lg border border-white/10">
+                👆 화면을 터치하여 따스한 햇살을 모아주세요!
+            </div>
+
+            <!-- Hidden Admin Password Hint in Corner (Clickable) -->
+            <div onclick="openAdminPasswordModal('4402')" class="absolute bottom-1.5 right-2 text-[9px] font-mono text-slate-500/50 hover:text-amber-700 hover:opacity-100 opacity-40 transition-all cursor-pointer z-10 flex items-center gap-1 bg-white/40 hover:bg-white/90 px-1.5 py-0.5 rounded-md border border-slate-300/50 shadow-sm" title="클릭 시 관리자 인증창으로 바로 이동합니다">
+                <span>🔑 4402</span>
+                <span class="text-[8px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">인증하기</span>
+            </div>
+        </div>
+
+        <!-- Control Sidebar / Bottom Sheet -->
+        <aside class="w-full md:w-[420px] lg:w-[460px] h-1/2 md:h-full bg-cream/95 backdrop-blur border-t md:border-t-0 md:border-l border-amber-200/60 flex flex-col shadow-xl z-20 flex-shrink-0">
+
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-amber-200/60 bg-white/70 p-1.5 gap-1 overflow-x-auto custom-scrollbar flex-shrink-0">
+                <button onclick="switchTab('care')" id="tab-care" class="tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center transition-all bg-emerald-600 text-white shadow-sm flex flex-col items-center gap-1">
+                    <span class="text-sm sm:text-base">🌱</span>
+                    <span>돌보기</span>
+                </button>
+                <button onclick="switchTab('minwoo')" id="tab-minwoo" class="tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center text-slate-600 hover:bg-amber-100/50 transition-all flex flex-col items-center gap-1">
+                    <span class="text-sm sm:text-base">👦</span>
+                    <span>민우</span>
+                </button>
+                <button onclick="switchTab('ahjussi')" id="tab-ahjussi" class="tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center text-slate-600 hover:bg-amber-100/50 transition-all flex flex-col items-center gap-1">
+                    <span class="text-sm sm:text-base">👷</span>
+                    <span>아저씨</span>
+                </button>
+                <button onclick="switchTab('wildlife')" id="tab-wildlife" class="tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center text-slate-600 hover:bg-amber-100/50 transition-all flex flex-col items-center gap-1">
+                    <span class="text-sm sm:text-base">🐝</span>
+                    <span>생태 도감</span>
+                </button>
+                <button onclick="switchTab('story')" id="tab-story" class="tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center text-slate-600 hover:bg-amber-100/50 transition-all flex flex-col items-center gap-1">
+                    <span class="text-sm sm:text-base">📖</span>
+                    <span>동화 책</span>
+                </button>
+            </div>
+
+            <!-- Tab Panels Scroll Area -->
+            <div class="flex-grow overflow-y-auto custom-scrollbar p-3.5 sm:p-4 space-y-4">
+
+                <div id="panel-care" class="tab-panel space-y-3.5">
+                    <!-- Growth Progress Box -->
+                    <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-900 flex items-center gap-1">
+                                <span>🌿</span> 초록이 성장도
+                            </span>
+                            <span id="growthPercentText" class="text-xs font-extrabold text-emerald-600">0%</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/70">
+                            <div id="growthProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-300 w-0 shadow-inner"></div>
+                        </div>
+                        <p id="nextStageDesc" class="text-[11px] text-slate-500 font-medium">성장 목표: 다음 단계까지 100 햇살 필요</p>
+                    </div>
+
+                    <!-- Level Up Button -->
+                    <button onclick="growPlant()" id="growBtn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition-all btn-bounce flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">🌱</span>
+                            <div class="text-left">
+                                <div class="text-sm font-bold">초록이 영양 주기</div>
+                                <div class="text-[10px] text-emerald-100 font-normal">줄기와 잎을 더 튼튼하게 성장시킵니다</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span id="growCostText" class="text-xs font-extrabold bg-white/20 px-2.5 py-1 rounded-lg">☀️ 20</span>
+                        </div>
+                    </button>
+
+                    <!-- Quick Buff Actions -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="triggerRainBuff()" id="rainBuffBtn" class="bg-blue-50/90 border border-blue-200 hover:bg-blue-100/80 p-3 rounded-2xl text-left transition-all btn-bounce space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">🌧️</span>
+                                <span class="text-[10px] font-bold bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded">단비 내리기</span>
+                            </div>
+                            <div class="text-xs font-bold text-blue-950">빗물 급성장</div>
+                            <div class="text-[10px] text-blue-600 font-medium">20초간 햇살 생산 2배</div>
+                            <div id="rainCostText" class="text-[11px] font-bold text-blue-800 pt-0.5">비용: 🌧️ 10</div>
+                        </button>
+
+                        <button onclick="praiseSprout()" class="bg-amber-50/90 border border-amber-200 hover:bg-amber-100/80 p-3 rounded-2xl text-left transition-all btn-bounce space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">💚</span>
+                                <span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">따뜻한 토닥임</span>
+                            </div>
+                            <div class="text-xs font-bold text-amber-950">사랑 주기</div>
+                            <div class="text-[10px] text-amber-700 font-medium">즉시 용기 포인트 +5</div>
+                            <div class="text-[11px] font-bold text-amber-800 pt-0.5">비용: 🌧️ 5</div>
+                        </button>
+                    </div>
+
+                    <!-- Tap Booster Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">☀️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">햇살 흡수력 강화</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">화면 터치당 햇살 획득량 증가</div>
+                                </div>
+                            </div>
+                            <span id="clickPowerLvl" class="text-xs font-extrabold bg-slate-100 px-2 py-0.5 rounded-md text-slate-600">Lv.1</span>
+                        </div>
+                        <button onclick="upgradeClickPower()" id="clickPowerBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>터치 수집량 강화 (+1 ☀️)</span>
+                            <span id="clickPowerCost" class="bg-amber-600 px-2 py-0.5 rounded-md">☀️ 15</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="panel-minwoo" class="tab-panel hidden space-y-3">
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-200 flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-amber-200 flex items-center justify-center text-2xl flex-shrink-0 shadow-inner">
+                            👦
+                        </div>
+                        <div>
+                            <h3 class="text-xs sm:text-sm font-bold text-amber-950">소년 민우의 다정한 마음</h3>
+                            <p class="text-[11px] text-amber-800/90 font-medium leading-snug">학교길 25번 보도블록을 지나며 초록이를 지켜주는 소년입니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- Yellow Umbrella Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">☂️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">노란 우산 피규어 세우기</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">자동 햇살 수집속도 지속 증가 (+2/초)</div>
+                                </div>
+                            </div>
+                            <span id="umbrellaLvl" class="text-xs font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">Lv.0</span>
+                        </div>
+                        <button onclick="upgradeUmbrella()" id="umbrellaBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>우산 세우기</span>
+                            <span id="umbrellaCost" class="bg-amber-600 px-2 py-0.5 rounded-md">☀️ 50</span>
+                        </button>
+                    </div>
+
+                    <!-- Cheering Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">💬</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">민우의 따뜻한 응원</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">초록이의 생기 증폭 (+3/초)</div>
+                                </div>
+                            </div>
+                            <span id="cheerLvl" class="text-xs font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">Lv.0</span>
+                        </div>
+                        <button onclick="upgradeCheer()" id="cheerBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>응원 배우기</span>
+                            <span id="cheerCost" class="bg-amber-600 px-2 py-0.5 rounded-md">✨ 10</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="panel-ahjussi" class="tab-panel hidden space-y-3">
+                    <div class="bg-gradient-to-br from-stone-100 to-amber-50 p-4 rounded-2xl border border-stone-200 flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-stone-200 flex items-center justify-center text-2xl flex-shrink-0 shadow-inner">
+                            👷
+                        </div>
+                        <div>
+                            <h3 class="text-xs sm:text-sm font-bold text-stone-900">공사 아저씨의 섬세한 손길</h3>
+                            <p class="text-[11px] text-stone-600 font-medium leading-snug">무뚝뚝하지만 따뜻하게 초록이의 틈새를 가꾸어 줍니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- Crack Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">⛏️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">시멘트 틈새 넓히기</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">뿌리 공간 확장 & 자동 햇살 (+5/초)</div>
+                                </div>
+                            </div>
+                            <span id="crackLvl" class="text-xs font-extrabold bg-stone-100 text-stone-800 px-2 py-0.5 rounded-md">Lv.0</span>
+                        </div>
+                        <button onclick="upgradeCrack()" id="crackBtn" class="w-full bg-stone-700 hover:bg-stone-800 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>틈새 확장하기</span>
+                            <span id="crackCost" class="bg-stone-800 px-2 py-0.5 rounded-md">☀️ 100</span>
+                        </button>
+                    </div>
+
+                    <!-- Soil Quality Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">🤎</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">영양분 흙 보충하기</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">비옥한 토양 조성 (+10/초)</div>
+                                </div>
+                            </div>
+                            <span id="soilLvl" class="text-xs font-extrabold bg-stone-100 text-stone-800 px-2 py-0.5 rounded-md">Lv.0</span>
+                        </div>
+                        <button onclick="upgradeSoil()" id="soilBtn" class="w-full bg-stone-700 hover:bg-stone-800 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>영양 흙 채우기</span>
+                            <span id="soilCost" class="bg-stone-800 px-2 py-0.5 rounded-md">☀️ 200</span>
+                        </button>
+                    </div>
+
+                    <!-- Stone Fence Upgrade -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">🪨</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">돌 울타리 쌓기</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">보호 울타리 구축 (+25/초)</div>
+                                </div>
+                            </div>
+                            <span id="fenceLvl" class="text-xs font-extrabold bg-stone-100 text-stone-800 px-2 py-0.5 rounded-md">Lv.0</span>
+                        </div>
+                        <button onclick="upgradeFence()" id="fenceBtn" class="w-full bg-stone-700 hover:bg-stone-800 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all btn-bounce flex justify-between items-center shadow-sm">
+                            <span>돌 울타리 제작</span>
+                            <span id="fenceCost" class="bg-stone-800 px-2 py-0.5 rounded-md">☀️ 500</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="panel-wildlife" class="tab-panel hidden space-y-3">
+                    <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                        <h3 class="text-xs font-bold text-emerald-950 flex items-center gap-1">
+                            <span>🐝</span> 보도블록 작은 손님 도감
+                        </h3>
+                        <p class="text-[11px] text-emerald-700 font-medium leading-snug">초록이가 커질수록 생태계 친구들이 날아옵니다. 필드의 친구를 직접 터치해보세요!</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Honeybee -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm">
+                            <div class="text-3xl">🐝</div>
+                            <div class="text-xs font-bold text-slate-800">꿀벌</div>
+                            <p class="text-[10px] text-slate-500 font-medium">햇살 +25 보너스</p>
+                            <span id="beeStatus" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">1단계 등장</span>
+                        </div>
+
+                        <!-- Ladybug -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm">
+                            <div class="text-3xl">🐞</div>
+                            <div class="text-xs font-bold text-slate-800">무당벌레</div>
+                            <p class="text-[10px] text-slate-500 font-medium">행운의 햇살 +30</p>
+                            <span id="ladybugStatus" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">1단계 등장</span>
+                        </div>
+
+                        <!-- Butterfly -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm">
+                            <div class="text-3xl">🦋</div>
+                            <div class="text-xs font-bold text-slate-800">노랑나비</div>
+                            <p class="text-[10px] text-slate-500 font-medium">빗물 +2 & 햇살 +50</p>
+                            <span id="butterflyStatus" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">20단계 해금</span>
+                        </div>
+
+                        <!-- Sparrow -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm">
+                            <div class="text-3xl">🐦</div>
+                            <div class="text-xs font-bold text-slate-800">참새</div>
+                            <p class="text-[10px] text-slate-500 font-medium">용기 포인트 +15</p>
+                            <span id="sparrowStatus" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">35단계 해금</span>
+                        </div>
+
+                        <!-- Mole -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm col-span-2 sm:col-span-1">
+                            <div class="text-3xl">🦡</div>
+                            <div class="text-xs font-bold text-slate-800">두더지</div>
+                            <p class="text-[10px] text-slate-500 font-medium">땅파기 특수 보너스 (햇살 +100 & 용기 +10)</p>
+                            <span id="moleStatus" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">45단계 해금</span>
+                        </div>
+
+                        <!-- Stray Cat (Threat) -->
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-1 shadow-sm col-span-2 sm:col-span-1 border-rose-200 bg-rose-50/30">
+                            <div class="text-3xl">🐱</div>
+                            <div class="text-xs font-bold text-rose-900">장난꾸러기 길고양이</div>
+                            <p class="text-[10px] text-rose-600 font-medium">초록이를 치면 무작위 업그레이드 -1 레벨! 다가오기 전에 터치하세요!</p>
+                            <span id="catStatus" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">20단계 해금</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-story" class="tab-panel hidden space-y-3">
+                    <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200">
+                        <h3 class="text-xs font-bold text-amber-950 flex items-center gap-1">
+                            <span>📖</span> 원작 감동 동화집
+                        </h3>
+                        <p class="text-[11px] text-amber-800 font-medium">초록이의 성장 단계에 따라 차례대로 해금되는 따뜻한 이야기입니다.</p>
+                    </div>
+
+                    <div id="storyListContainer" class="space-y-2.5">
+                        <!-- Story chapters rendered dynamically via JS -->
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </main>
+
+    <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div class="bg-cream border border-amber-200 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 transform transition-all">
+            <div class="flex justify-between items-center border-b border-amber-200/70 pb-3">
+                <span id="modalCategory" class="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">🌱 스토리 해금</span>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-all border border-slate-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="text-center space-y-3">
+                <div id="modalIcon" class="text-5xl animate-bounce">🌼</div>
+                <h2 id="modalTitle" class="text-base sm:text-lg font-extrabold text-slate-900">25번 보도블록 위의 기적</h2>
+                <div id="modalBody" class="text-xs sm:text-sm text-slate-700 leading-relaxed max-h-56 overflow-y-auto custom-scrollbar px-2 font-medium">
+                    <!-- Dynamic text content -->
+                </div>
+            </div>
+
+            <button onclick="closeModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow-md transition-all btn-bounce text-sm">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Password Modal -->
+    <div id="passwordModalOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div class="bg-cream border border-amber-200 rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4 text-center">
+            <div class="flex justify-between items-center border-b border-amber-200/70 pb-3">
+                <span class="text-xs font-extrabold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">🔒 관리자 인증</span>
+                <button onclick="closePasswordModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-all border border-slate-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="space-y-1.5">
+                <div class="text-4xl">🔐</div>
+                <h3 class="text-sm font-bold text-slate-900">비밀번호를 입력하세요</h3>
+                <p class="text-xs text-slate-500 font-medium">관리자 전용 무한 자본금을 지급받으려면 비밀번호가 필요합니다.</p>
+            </div>
+            <div class="space-y-2">
+                <input type="password" id="adminPasswordInput" maxlength="4" placeholder="비밀번호 4자리" class="w-full text-center text-lg font-bold tracking-widest px-4 py-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white" onkeydown="if(event.key==='Enter') verifyAdminPassword()">
+                <p id="passwordErrorMsg" class="hidden text-xs text-red-500 font-bold">비밀번호가 올바르지 않습니다.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+                <button onclick="closePasswordModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition-all btn-bounce text-[11px] flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                    <span>게임으로</span>
+                </button>
+                <button onclick="openWelcomeModal()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold py-2.5 rounded-xl transition-all btn-bounce text-[11px] flex items-center justify-center gap-1 border border-emerald-300">
+                    <span>🏠 처음으로</span>
+                </button>
+                <button onclick="verifyAdminPassword()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow-md transition-all btn-bounce text-[11px] flex items-center justify-center gap-1">
+                    <span>인증하기</span>
+                    <i class="fa-solid fa-check text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetModalOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div class="bg-cream border border-rose-200 rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4 text-center">
+            <div class="flex justify-between items-center border-b border-rose-200 pb-3">
+                <span class="text-xs font-extrabold text-rose-800 bg-rose-100 px-3 py-1 rounded-full border border-rose-200">⚠️ 데이터 초기화</span>
+                <button onclick="closeResetModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-all border border-slate-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="space-y-1.5">
+                <div class="text-4xl animate-bounce">🗑️</div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">모든 진행 상황을 초기화하시겠습니까?</h3>
+                <p class="text-xs text-slate-600 font-medium leading-relaxed">모든 햇살, 빗물, 용기, 레벨 및 시설 업그레이드 기록이 모두 정리되며 1단계로 되돌아갑니다.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="closeResetModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition-all btn-bounce text-xs">
+                    취소
+                </button>
+                <button onclick="confirmResetGame()" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-2.5 rounded-xl shadow-md transition-all btn-bounce text-xs flex items-center justify-center gap-1">
+                    <span>🔄 전체 초기화</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           GAME STATE & CONFIGURATION
+           ========================================================================== */
+        const MAX_LEVEL = 50;
+        const MAX_UPGRADE_LEVEL = 50;
+
+        const state = {
+            sun: 0,
+            rain: 0,
+            courage: 0,
+            clickPower: 1,
+            clickPowerLvl: 1,
+            growthExp: 0,
+            stage: 1, // 1 to 50
+            autoSunPerSec: 0,
+
+            // Upgrades
+            umbrellaLvl: 0,
+            cheerLvl: 0,
+            crackLvl: 0,
+            soilLvl: 0,
+            fenceLvl: 0,
+
+            // Weather & Buffs
+            weather: 'sunny', // 'sunny' or 'rainy'
+            rainBuffActive: false,
+            rainBuffTimer: 0,
+
+            // Animals on field
+            animals: [],
+
+            // Unlocked Stories
+            unlockedStories: [1]
+        };
+
+        function getStageConfig(lvl) {
+            let name = "";
+            let desc = "";
+
+            if (lvl >= MAX_LEVEL) {
+                name = "희망으로 피어난 전설의 민들레";
+                desc = "최대 레벨 달성! 회색 도시 전체를 초록빛 기적으로 가득 채웠습니다.";
+            } else if (lvl >= 40) {
+                name = "바람 타고 날아가는 황금 홀씨";
+                desc = "초록 씨앗들이 온 도시로 퍼져나갑니다.";
+            } else if (lvl >= 30) {
+                name = "활짝 피어난 노란 민들레";
+                desc = "아름다운 노란 꽃잎이 햇살 아래 빛납니다.";
+            } else if (lvl >= 20) {
+                name = "단단하게 자라난 초록 줄기";
+                desc = "민우와 공사 아저씨의 보살핌 속에서 굳건해졌습니다.";
+            } else if (lvl >= 10) {
+                name = "빗속을 견디는 다정한 줄기";
+                desc = "노란 우산의 응원을 받으며 곧게 자라납니다.";
+            } else {
+                name = "캄캄한 틈새의 작은 새싹";
+                desc = "햇살을 모아 초록이를 튼튼하게 키워주세요.";
+            }
+
+            // Exponential growth curve scaled smoothly up to level 50
+            const expNeeded = Math.floor(100 * Math.pow(1.14, lvl - 1));
+            return { stage: lvl, name, expNeeded, desc };
+        }
+
+        const storiesData = [
+            {
+                stage: 1,
+                title: "1. 캄캄한 틈새의 비밀",
+                icon: "🌱",
+                content: "‘쿵! 쿵! 쿵!’ 차가운 보도블록 밑 캄캄한 틈새. 이곳에선 매일 거대한 발소리만 들려요. 어린 초록이는 지나가는 발들의 진동에 잔뜩 겁을 먹고 바짝 몸을 움츠렸지요. 하지만 하루에 딱 한 번, 틈새로 스쳐 지나가는 따스한 빛줄기를 맞기 위해 까치발을 듭니다."
+            },
+            {
+                stage: 2,
+                title: "2. 신발끈과 소년 민우",
+                icon: "👦",
+                content: "빗방울이 촉촉히 내리던 어느 날 오후, 신발끈을 매려던 소년 민우가 25번 보도블록 앞에 쪼그려 앉았어요. '어?' 고개를 숙인 민우의 눈에 꿋꿋이 서 있는 작은 초록 줄기가 보렸습니다. 민우는 주머니에서 아끼는 '노란 우산 피규어'를 꺼내 조심스레 세워주었습니다."
+            },
+            {
+                stage: 3,
+                title: "3. 다가오는 거대한 그림자와 외침",
+                icon: "👷",
+                content: "도로 공사가 시작되고 시멘트를 바르며 다가오는 공사 아저씨! 위기의 순간, 민우는 아저씨의 옷자락을 꽉 붙잡고 소리쳤어요. '아저씨, 잠깐만요! 여기 작은 아이가 살고 있어요!' 아저씨는 허허 웃으며 섬세한 손길로 초록이의 틈새를 넓혀주고 흙을 보충해주었답니다."
+            },
+            {
+                stage: 4,
+                title: "4. 25번 블록 위의 노란 민들레",
+                icon: "🌼",
+                content: "따뜻한 봄바람과 민우의 용기, 아저씨의 배려 덕분에 마침내 눈부신 노란 민들레 꽃이 활짝 피어났습니다! 거리를 지나던 사람들도 작은 틈새 속 피어난 노란 기적을 보며 미소를 지었습니다."
+            },
+            {
+                stage: 5,
+                title: "5. 초록 도시의 시작",
+                icon: "💨",
+                content: "바람이 불어오자 민들레 홀씨들이 춤을 추며 하늘 높이 떠올랐습니다. 25번 보도블록에서 시작된 작지만 단단한 생명력은 이제 회색 도시 전체로 퍼져나가 곳곳에 초록빛 꿈을 피워낼 것입니다."
+            }
+        ];
+
+        /* ==========================================================================
+           CANVAS & ANIMATION ENGINE
+           ========================================================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let canvasWidth = 0;
+        let canvasHeight = 0;
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            canvasWidth = container.clientWidth;
+            canvasHeight = container.clientHeight;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        let particles = [];
+        function createParticles() {
+            particles = [];
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    size: Math.random() * 3 + 1,
+                    speedY: Math.random() * 1 + 0.5,
+                    speedX: (Math.random() - 0.5) * 0.5,
+                    opacity: Math.random() * 0.6 + 0.2
+                });
+            }
+        }
+
+        let plantWindOffset = 0;
+
+        function renderCanvas() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // 1. Sky & Atmosphere Gradient
+            const isRain = state.weather === 'rainy' || state.rainBuffActive;
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+            if (isRain) {
+                skyGrad.addColorStop(0, '#64748B');
+                skyGrad.addColorStop(1, '#94A3B8');
+            } else {
+                skyGrad.addColorStop(0, '#FEF08A');
+                skyGrad.addColorStop(0.55, '#FDE68A');
+                skyGrad.addColorStop(1, '#E2E8F0');
+            }
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // 2. Sidewalk Concrete Ground
+            const groundY = canvasHeight * 0.65;
+            
+            ctx.fillStyle = '#CBD5E1';
+            ctx.fillRect(0, groundY, canvasWidth, canvasHeight - groundY);
+
+            // Horizontal Line
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvasWidth, groundY);
+            ctx.stroke();
+
+            // Vertical Tile Lines
+            const tileWidth = 140;
+            for (let x = 0; x < canvasWidth + tileWidth; x += tileWidth) {
+                ctx.beginPath();
+                ctx.moveTo(x, groundY);
+                ctx.lineTo(x, canvasHeight);
+                ctx.stroke();
+            }
+
+            // Sidewalk Block #25 Label
+            ctx.fillStyle = '#64748B';
+            ctx.font = 'bold 13px "Gowun Dodum", sans-serif';
+            ctx.fillText('NO. 25', canvasWidth * 0.5 - 70, groundY + 25);
+
+            // 3. Crack #25
+            const centerX = canvasWidth * 0.5;
+            const crackWidth = 22 + Math.min(state.crackLvl, 15) * 4;
+            
+            // Dark Hole
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.ellipse(centerX, groundY + 10, crackWidth, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Soil Layer
+            ctx.fillStyle = state.soilLvl > 0 ? '#78350F' : '#334155';
+            ctx.beginPath();
+            ctx.ellipse(centerX, groundY + 10, crackWidth * 0.85, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. Stone Fence (if built)
+            if (state.fenceLvl > 0) {
+                const stoneCount = 7;
+                ctx.fillStyle = '#A8A29E';
+                ctx.strokeStyle = '#78716C';
+                ctx.lineWidth = 1.5;
+                for (let i = 0; i < stoneCount; i++) {
+                    const angle = (i / (stoneCount - 1)) * Math.PI - Math.PI;
+                    const sx = centerX + Math.cos(angle) * (crackWidth + 10);
+                    const sy = groundY + 10 + Math.sin(angle) * 12;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            }
+
+            // 5. Swaying Plant "초록이"
+            plantWindOffset += 0.03;
+            const sway = Math.sin(plantWindOffset) * 5;
+
+            drawPlant(centerX, groundY + 8, state.stage, sway);
+
+            // 6. Yellow Umbrella (Minwoo Upgrade)
+            if (state.umbrellaLvl > 0) {
+                drawUmbrella(centerX - 38, groundY - 12);
+            }
+
+            // 7. Visiting Wildlife
+            drawAnimals();
+
+            // 8. Rain or Sunbeam Particles
+            drawWeatherParticles(isRain);
+
+            requestAnimationFrame(renderCanvas);
+        }
+
+        function drawPlant(x, y, stage, sway) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const visualStage = stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 25 ? 3 : stage >= 10 ? 2 : 1;
+
+            // Stem
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = visualStage >= 3 ? 5 : 3.5;
+            ctx.lineCap = 'round';
+
+            const stemHeight = Math.min(115, 32 + stage * 1.6);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(sway * 0.5, -stemHeight * 0.5, sway, -stemHeight);
+            ctx.stroke();
+
+            // Leaves
+            const leafSize = Math.min(30, 10 + stage * 0.45);
+            ctx.fillStyle = '#059669';
+            // Left Leaf
+            ctx.beginPath();
+            ctx.ellipse(-leafSize * 0.7, -stemHeight * 0.35, leafSize, leafSize * 0.45, -Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Right Leaf
+            ctx.beginPath();
+            ctx.ellipse(leafSize * 0.7 + sway * 0.3, -stemHeight * 0.45, leafSize, leafSize * 0.45, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Flower Head / Sprout Top
+            const topX = sway;
+            const topY = -stemHeight;
+
+            if (visualStage === 1) {
+                // First Sprout
+                ctx.fillStyle = '#34D399';
+                ctx.beginPath();
+                ctx.arc(topX, topY, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (visualStage === 2 || visualStage === 3) {
+                // Bud
+                ctx.fillStyle = '#A3E635';
+                ctx.beginPath();
+                ctx.arc(topX, topY, 9 + (stage * 0.15), 0, Math.PI * 2);
+                ctx.fill();
+            } else if (visualStage >= 4) {
+                // Dandelion Flower Bloom
+                const petalCount = stage >= MAX_LEVEL ? 24 : 18;
+                ctx.fillStyle = '#F59E0B';
+                for (let i = 0; i < petalCount; i++) {
+                    const angle = (i / petalCount) * Math.PI * 2;
+                    const radius = stage >= MAX_LEVEL ? 19 : 16;
+                    const px = topX + Math.cos(angle) * radius;
+                    const py = topY + Math.sin(angle) * radius;
+                    ctx.beginPath();
+                    ctx.arc(px, py, stage >= MAX_LEVEL ? 5.5 : 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.fillStyle = stage >= MAX_LEVEL ? '#FEF08A' : '#FBBF24';
+                ctx.beginPath();
+                ctx.arc(topX, topY, stage >= MAX_LEVEL ? 13 : 11, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Stage 5 (Lvl 50) Floating Seed Fluff
+                if (visualStage === 5) {
+                    ctx.fillStyle = '#FFFFFF';
+                    const fluffCount = stage >= MAX_LEVEL ? 12 : 8;
+                    for (let i = 0; i < fluffCount; i++) {
+                        const angle = (i / fluffCount) * Math.PI * 2 + plantWindOffset;
+                        const fx = topX + Math.cos(angle) * 26;
+                        const fy = topY + Math.sin(angle) * 26;
+                        ctx.beginPath();
+                        ctx.arc(fx, fy, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // Draw Umbrella
+        function drawUmbrella(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Umbrella Handle
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -38);
+            ctx.stroke();
+
+            // Canopy
+            ctx.fillStyle = '#FBBF24';
+            ctx.beginPath();
+            ctx.arc(0, -38, 22, Math.PI, 0, false);
+            ctx.fill();
+
+            // Canopy Accent Line
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, -38, 22, Math.PI, 0, false);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawAnimals() {
+            state.animals.forEach(a => {
+                ctx.font = '24px sans-serif';
+                ctx.fillText(a.emoji, a.x, a.y);
+
+                if (a.emoji === '🐱') {
+                    // Stray Cat moves towards Choroki (center)
+                    const centerX = canvasWidth * 0.5;
+                    const dir = a.x < centerX ? 1 : -1;
+                    
+                    if (a.fleeing) {
+                        a.x += dir * -3.5; // Runs away fast
+                        a.y -= 1;
+                    } else {
+                        a.x += dir * 0.9; // Walks toward Choroki
+                        
+                        // Check if cat reached Choroki
+                        if (Math.abs(a.x - centerX) < 18 && !a.hasHit) {
+                            a.hasHit = true;
+                            a.fleeing = true;
+                            strikeChorokiByCat(a.x, a.y);
+                        }
+                    }
+                } else if (a.emoji === '🦡') {
+                    // Moles move sideways along the ground
+                    a.x += Math.sin(plantWindOffset * 1.5 + a.id) * 0.6;
+                } else {
+                    a.x += Math.sin(plantWindOffset * 2 + a.id) * 0.8;
+                    a.y += Math.cos(plantWindOffset * 2 + a.id) * 0.5;
+                }
+            });
+
+            // Clean up off-screen fleeing animals
+            state.animals = state.animals.filter(a => a.x > -60 && a.x < canvasWidth + 60 && a.y > -50 && a.y < canvasHeight + 50);
+        }
+
+        function strikeChorokiByCat(x, y) {
+            playTapSound();
+            reduceRandomUpgrade();
+        }
+
+        function reduceRandomUpgrade() {
+            const activeUpgrades = [];
+            if (state.clickPowerLvl > 1) activeUpgrades.push('clickPower');
+            if (state.umbrellaLvl > 0) activeUpgrades.push('umbrella');
+            if (state.cheerLvl > 0) activeUpgrades.push('cheer');
+            if (state.crackLvl > 0) activeUpgrades.push('crack');
+            if (state.soilLvl > 0) activeUpgrades.push('soil');
+            if (state.fenceLvl > 0) activeUpgrades.push('fence');
+
+            if (activeUpgrades.length === 0) {
+                showFloatingText(canvasWidth * 0.5, canvasHeight * 0.65 - 80, '🐾 냥냥펀치! (다행히 차감할 레벨이 없습니다)', '#EF4444');
+                return;
+            }
+
+            const chosen = activeUpgrades[Math.floor(Math.random() * activeUpgrades.length)];
+            let name = '';
+
+            if (chosen === 'clickPower') {
+                state.clickPowerLvl--;
+                state.clickPower = Math.max(1, state.clickPower - 1);
+                name = '햇살 흡수력';
+            } else if (chosen === 'umbrella') {
+                state.umbrellaLvl--;
+                name = '노란 우산';
+            } else if (chosen === 'cheer') {
+                state.cheerLvl--;
+                name = '민우의 응원';
+            } else if (chosen === 'crack') {
+                state.crackLvl--;
+                name = '시멘트 틈새';
+            } else if (chosen === 'soil') {
+                state.soilLvl--;
+                name = '영양 흙';
+            } else if (chosen === 'fence') {
+                state.fenceLvl--;
+                name = '돌 울타리';
+            }
+
+            recalcAutoSun();
+            updateUI();
+
+            showFloatingText(canvasWidth * 0.5, canvasHeight * 0.65 - 80, `🐱 냥냥펀치! [${name}] -1 레벨!`, '#EF4444');
+        }
+
+        function drawWeatherParticles(isRain) {
+            particles.forEach(p => {
+                p.y += isRain ? p.speedY * 4 : p.speedY;
+                p.x += p.speedX;
+
+                if (p.y > canvasHeight) {
+                    p.y = -10;
+                    p.x = Math.random() * canvasWidth;
+                }
+                if (p.x < 0) p.x = canvasWidth;
+                if (p.x > canvasWidth) p.x = 0;
+
+                ctx.save();
+                if (isRain) {
+                    ctx.strokeStyle = `rgba(59, 130, 246, ${p.opacity})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x + p.speedX * 2, p.y + p.size * 3);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = `rgba(245, 158, 11, ${p.opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
+        /* ==========================================================================
+           WEB AUDIO SYNTHESIZER
+           ========================================================================== */
+        let audioCtx = null;
+        let isAudioPlaying = false;
+        let ambientNoiseNode = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTapSound() {
+            if (!isAudioPlaying || !audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+            const note = notes[Math.floor(Math.random() * notes.length)];
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.36);
+        }
+
+        function toggleAudio() {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            isAudioPlaying = !isAudioPlaying;
+            const btnIcon = document.getElementById('bgmIcon');
+
+            if (isAudioPlaying) {
+                btnIcon.className = 'fa-solid fa-volume-high text-emerald-600';
+                startAmbientBGM();
+                showFloatingText(canvasWidth / 2, canvasHeight / 2, '🎵 오디오 켜짐', '#10B981');
+            } else {
+                btnIcon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                if (ambientNoiseNode) ambientNoiseNode.disconnect();
+                showFloatingText(canvasWidth / 2, canvasHeight / 2, '🔇 오디오 끔', '#64748B');
+            }
+        }
+
+        function startAmbientBGM() {
+            if (!isAudioPlaying || !audioCtx) return;
+
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(350, audioCtx.currentTime);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+
+            whiteNoise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            whiteNoise.start();
+            ambientNoiseNode = whiteNoise;
+        }
+
+        /* ==========================================================================
+           INTERACTION & CLICK HANDLERS
+           ========================================================================== */
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        canvasContainer.addEventListener('click', (e) => {
+            const rect = canvasContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            let animalClicked = false;
+            state.animals = state.animals.filter(a => {
+                const dist = Math.hypot(a.x - clickX, a.y - clickY);
+                if (dist < 36) {
+                    animalClicked = true;
+                    if (a.emoji === '🐱') {
+                        a.fleeing = true;
+                        addSun(40);
+                        addCourage(5);
+                        showFloatingText(clickX, clickY, '🐾 야옹! 도망쳤다! (+40 ☀️ 수호 성공)', '#10B981');
+                        playTapSound();
+                        return false; // remove cat when tapped
+                    } else if (a.emoji === '🦡') {
+                        addSun(100);
+                        addCourage(10);
+                        showFloatingText(clickX, clickY, '+100 ☀️ +10 ✨', '#D97706');
+                    } else if (a.emoji === '🦋') {
+                        addSun(50);
+                        addRain(2);
+                        showFloatingText(clickX, clickY, '+50 ☀️ +2 🌧️', '#3B82F6');
+                    } else if (a.emoji === '🐦') {
+                        addSun(30);
+                        addCourage(15);
+                        showFloatingText(clickX, clickY, '+30 ☀️ +15 ✨', '#10B981');
+                    } else {
+                        addSun(30);
+                        addCourage(5);
+                        showFloatingText(clickX, clickY, '+30 ☀️ +5 ✨', '#F59E0B');
+                    }
+                    playTapSound();
+                    return false;
+                }
+                return true;
+            });
+
+            if (!animalClicked) {
+                const gain = state.clickPower;
+                addSun(gain);
+                playTapSound();
+                showFloatingText(clickX, clickY, `+${gain} ☀️`, '#F59E0B');
+            }
+        });
+
+        function showFloatingText(x, y, text, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text text-sm font-black drop-shadow-md';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.color = color || '#F59E0B';
+            el.innerText = text;
+
+            canvasContainer.appendChild(el);
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, 1150);
+        }
+
+        /* ==========================================================================
+           GAME MECHANICS & UPGRADES
+           ========================================================================== */
+        function formatNumber(num) {
+            if (num === Infinity || num >= 1e15) {
+                return '∞';
+            }
+            if (num >= 1e12) {
+                const jo = (num / 1e12).toFixed(1).replace(/\.0$/, '');
+                return `${jo}조`;
+            }
+            if (num >= 1e8) {
+                const eok = (num / 1e8).toFixed(1).replace(/\.0$/, '');
+                return `${eok}억`;
+            }
+            return Math.floor(num).toLocaleString();
+        }
+
+        function openAdminPasswordModal(presetCode) {
+            closeModal();
+            const passwordInput = document.getElementById('adminPasswordInput');
+            const errorMsg = document.getElementById('passwordErrorMsg');
+            if (passwordInput) passwordInput.value = presetCode || '';
+            if (errorMsg) errorMsg.classList.add('hidden');
+            document.getElementById('passwordModalOverlay').classList.remove('hidden');
+            setTimeout(() => { if (passwordInput) passwordInput.focus(); }, 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModalOverlay').classList.add('hidden');
+        }
+
+        function openWelcomeModal() {
+            closePasswordModal();
+            closeResetModal();
+            openModal(
+                '🌱 25번 보도블록의 초록 식구',
+                '작은 기적의 시작',
+                '단단한 회색 도심, 보도블록 25번 틈새에서 작은 새싹 초록이가 눈을 떴습니다.<br><br>화면을 터치하여 햇살을 모으고, 민우와 공사 아저씨의 도움을 받아 어엿한 노란 민들레로 키워주세요!<br><br><div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-2"><div><div class="text-xs font-bold text-amber-950">⚙️ 테스트 관리자 모드</div><div class="text-[10px] text-amber-700">관리자 인증 후 무한 자본금으로 시작할 수 있습니다.</div></div><button onclick="openAdminPasswordModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-extrabold text-xs shadow-md transition-all btn-bounce flex-shrink-0">🚀 무한 자본금으로 시작</button></div>',
+                '🌼'
+            );
+        }
+
+        function openResetModal() {
+            closeModal();
+            closePasswordModal();
+            document.getElementById('resetModalOverlay').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModalOverlay').classList.add('hidden');
+        }
+
+        function confirmResetGame() {
+            closeResetModal();
+
+            // Reset Game States
+            state.sun = 0;
+            state.rain = 0;
+            state.courage = 0;
+            state.clickPower = 1;
+            state.clickPowerLvl = 1;
+            state.growthExp = 0;
+            state.stage = 1;
+            state.autoSunPerSec = 0;
+
+            // Reset Upgrades
+            state.umbrellaLvl = 0;
+            state.cheerLvl = 0;
+            state.crackLvl = 0;
+            state.soilLvl = 0;
+            state.fenceLvl = 0;
+
+            // Reset Weather & Buffs
+            state.weather = 'sunny';
+            state.rainBuffActive = false;
+            state.rainBuffTimer = 0;
+
+            state.animals = [];
+            state.unlockedStories = [1];
+
+            recalcAutoSun();
+            updateUI();
+            playTapSound();
+
+            showFloatingText(canvasWidth / 2, canvasHeight / 2, '🔄 완전히 초기화되었습니다!', '#EF4444');
+            showModalAlert('초기화 완료', '모든 게임 데이터가 1단계 초기 상태로 완전히 리셋되었습니다.');
+        }
+
+        function verifyAdminPassword() {
+            const passwordInput = document.getElementById('adminPasswordInput');
+            const errorMsg = document.getElementById('passwordErrorMsg');
+            if (passwordInput && passwordInput.value === '4402') {
+                closePasswordModal();
+                grantAdminFunds();
+            } else {
+                if (errorMsg) {
+                    errorMsg.innerText = '비밀번호가 올바르지 않습니다.';
+                    errorMsg.classList.remove('hidden');
+                }
+                if (passwordInput) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            }
+        }
+
+        function grantAdminFunds() {
+            state.sun = Infinity;
+            state.rain = Infinity;
+            state.courage = Infinity;
+            updateUI();
+            playTapSound();
+            showFloatingText(canvasWidth / 2, canvasHeight / 2, '⚙️ 무한 자본금 지급! ☀️', '#F59E0B');
+            showModalAlert('⚙️ 관리자 인증 성공', '관리자 비밀번호가 확인되었습니다.<br><b>무한(∞) 햇살, 빗물, 용기 포인트</b>가 성공적으로 지급되었습니다!');
+        }
+
+        function addSun(amount) {
+            const multiplier = state.rainBuffActive ? 2 : 1;
+            state.sun += amount * multiplier;
+            updateUI();
+        }
+
+        function addRain(amount) {
+            state.rain += amount;
+            updateUI();
+        }
+
+        function addCourage(amount) {
+            state.courage += amount;
+            updateUI();
+        }
+
+        function unlockStory(storyStage) {
+            if (!state.unlockedStories.includes(storyStage)) {
+                state.unlockedStories.push(storyStage);
+            }
+        }
+
+        function growPlant() {
+            if (state.stage >= MAX_LEVEL) {
+                showModalAlert('최대 레벨 달성!', '초록이가 최고 레벨(50)에 도달하여 전설의 민들레로 만개하였습니다!');
+                return;
+            }
+
+            const curStage = getStageConfig(state.stage);
+            const cost = Math.floor(curStage.expNeeded * 0.2);
+
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.growthExp += cost;
+
+                if (state.growthExp >= curStage.expNeeded && state.stage < MAX_LEVEL) {
+                    state.stage++;
+                    state.growthExp = 0;
+
+                    const storyStage = Math.min(5, Math.ceil(state.stage / 10));
+                    unlockStory(storyStage);
+
+                    if (state.stage === MAX_LEVEL) {
+                        openModal('👑 MAX 레벨 달성!', `초록이가 <b>50단계 (MAX)</b>에 도달했습니다!`, '회색 도심 속 보도블록에서 피어난 가장 눈부신 황금빛 민들레 기적이 완성되었습니다.', '👑');
+                    } else {
+                        openModal('🌱 레벨 업!', `초록이가 <b>${state.stage}단계</b>로 성장했습니다!`, getStageConfig(state.stage).desc, '✨');
+                    }
+                }
+
+                playTapSound();
+                updateUI();
+            } else {
+                showModalAlert('햇살이 부족합니다!', '화면을 터치하거나 자동 수집으로 햇살을 더 모아주세요.');
+            }
+        }
+
+        function triggerRainBuff() {
+            if (state.rain >= 10 && !state.rainBuffActive) {
+                state.rain -= 10;
+                state.rainBuffActive = true;
+                state.rainBuffTimer = 20;
+                updateUI();
+                playTapSound();
+                showFloatingText(canvasWidth / 2, canvasHeight / 2, '🌧️ 단비 내리기 시작! (햇살 2배)', '#3B82F6');
+            } else if (state.rainBuffActive) {
+                showModalAlert('알림', '이미 단비 버프가 활성화되어 있습니다!');
+            } else {
+                showModalAlert('빗물이 부족합니다!', '비 오는 날씨나 보상으로 빗물을 더 모아주세요.');
+            }
+        }
+
+        function praiseSprout() {
+            if (state.rain >= 5) {
+                state.rain -= 5;
+                addCourage(5);
+                playTapSound();
+                showFloatingText(canvasWidth / 2, canvasHeight / 2, '💚 따뜻한 용기 +5', '#10B981');
+            } else {
+                showModalAlert('빗물이 부족합니다!', '사랑을 주려면 빗물 5개가 필요합니다. 비 오는 날씨나 생태 친구 클릭으로 빗물을 모아주세요!');
+            }
+        }
+
+        function upgradeClickPower() {
+            if (state.clickPowerLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(15 * Math.pow(1.5, state.clickPowerLvl - 1));
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.clickPowerLvl++;
+                state.clickPower += 1;
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function upgradeUmbrella() {
+            if (state.umbrellaLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(50 * Math.pow(1.6, state.umbrellaLvl));
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.umbrellaLvl++;
+                recalcAutoSun();
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function upgradeCheer() {
+            if (state.cheerLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(10 * Math.pow(1.8, state.cheerLvl));
+            if (state.courage >= cost) {
+                state.courage -= cost;
+                state.cheerLvl++;
+                recalcAutoSun();
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function upgradeCrack() {
+            if (state.crackLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(100 * Math.pow(1.7, state.crackLvl));
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.crackLvl++;
+                recalcAutoSun();
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function upgradeSoil() {
+            if (state.soilLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(200 * Math.pow(1.8, state.soilLvl));
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.soilLvl++;
+                recalcAutoSun();
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function upgradeFence() {
+            if (state.fenceLvl >= MAX_UPGRADE_LEVEL) return;
+            const cost = Math.floor(500 * Math.pow(2.0, state.fenceLvl));
+            if (state.sun >= cost) {
+                state.sun -= cost;
+                state.fenceLvl++;
+                recalcAutoSun();
+                updateUI();
+                playTapSound();
+            }
+        }
+
+        function recalcAutoSun() {
+            state.autoSunPerSec = (state.umbrellaLvl * 2) + (state.cheerLvl * 3) + (state.crackLvl * 5) + (state.soilLvl * 10) + (state.fenceLvl * 25);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['care', 'minwoo', 'ahjussi', 'wildlife', 'story'];
+            tabs.forEach(name => {
+                const panel = document.getElementById(`panel-${name}`);
+                const btn = document.getElementById(`tab-${name}`);
+                if (panel) {
+                    if (name === tabName) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (btn) {
+                    if (name === tabName) {
+                        btn.className = 'tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center transition-all bg-emerald-600 text-white shadow-sm flex flex-col items-center gap-1';
+                    } else {
+                        btn.className = 'tab-btn flex-1 min-w-[65px] py-2 px-1 rounded-xl text-xs font-bold text-center text-slate-600 hover:bg-amber-100/50 transition-all flex flex-col items-center gap-1';
+                    }
+                }
+            });
+        }
+
+        /* ==========================================================================
+           UI UPDATES & TABS
+           ========================================================================== */
+        function updateUI() {
+            document.getElementById('sunCount').innerText = formatNumber(state.sun);
+            document.getElementById('rainCount').innerText = formatNumber(state.rain);
+            document.getElementById('courageCount').innerText = formatNumber(state.courage);
+            document.getElementById('sunRate').innerText = `(+${formatNumber(state.autoSunPerSec)}/초)`;
+
+            // Stage Info & MAX Badge Handling
+            const curStage = getStageConfig(state.stage);
+            const stageBadgeEl = document.getElementById('stageBadge');
+            
+            if (state.stage >= MAX_LEVEL) {
+                stageBadgeEl.innerText = 'MAX';
+                stageBadgeEl.className = 'text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-500 text-white shadow-md animate-bounce';
+                document.getElementById('stageTitle').innerText = `${curStage.name} (MAX)`;
+
+                document.getElementById('growthPercentText').innerText = 'MAX (100%)';
+                document.getElementById('growthProgressBar').style.width = '100%';
+                document.getElementById('nextStageDesc').innerText = '🎉 최고 레벨(50)에 도달하였습니다!';
+                document.getElementById('growCostText').innerText = 'MAX';
+            } else {
+                stageBadgeEl.innerText = `${state.stage}단계`;
+                stageBadgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
+                document.getElementById('stageTitle').innerText = curStage.name;
+
+                const pct = Math.min(100, Math.floor((state.growthExp / curStage.expNeeded) * 100));
+                document.getElementById('growthPercentText').innerText = `${pct}%`;
+                document.getElementById('growthProgressBar').style.width = `${pct}%`;
+                document.getElementById('nextStageDesc').innerText = `성장 목표: 다음 단계까지 ${formatNumber(curStage.expNeeded - state.growthExp)} 햇살 필요`;
+
+                const growCost = Math.floor(curStage.expNeeded * 0.2);
+                document.getElementById('growCostText').innerText = `☀️ ${formatNumber(growCost)}`;
+            }
+
+            // Click power
+            if (state.clickPowerLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('clickPowerLvl').innerText = 'MAX';
+                document.getElementById('clickPowerCost').innerText = 'MAX';
+            } else {
+                const cpCost = Math.floor(15 * Math.pow(1.5, state.clickPowerLvl - 1));
+                document.getElementById('clickPowerLvl').innerText = `Lv.${state.clickPowerLvl}`;
+                document.getElementById('clickPowerCost').innerText = `☀️ ${formatNumber(cpCost)}`;
+            }
+
+            // Umbrella
+            if (state.umbrellaLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('umbrellaLvl').innerText = 'MAX';
+                document.getElementById('umbrellaCost').innerText = 'MAX';
+            } else {
+                const umbCost = Math.floor(50 * Math.pow(1.6, state.umbrellaLvl));
+                document.getElementById('umbrellaLvl').innerText = `Lv.${state.umbrellaLvl}`;
+                document.getElementById('umbrellaCost').innerText = `☀️ ${formatNumber(umbCost)}`;
+            }
+
+            // Cheer
+            if (state.cheerLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('cheerLvl').innerText = 'MAX';
+                document.getElementById('cheerCost').innerText = 'MAX';
+            } else {
+                const cheerCost = Math.floor(10 * Math.pow(1.8, state.cheerLvl));
+                document.getElementById('cheerLvl').innerText = `Lv.${state.cheerLvl}`;
+                document.getElementById('cheerCost').innerText = `✨ ${formatNumber(cheerCost)}`;
+            }
+
+            // Crack
+            if (state.crackLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('crackLvl').innerText = 'MAX';
+                document.getElementById('crackCost').innerText = 'MAX';
+            } else {
+                const crackCost = Math.floor(100 * Math.pow(1.7, state.crackLvl));
+                document.getElementById('crackLvl').innerText = `Lv.${state.crackLvl}`;
+                document.getElementById('crackCost').innerText = `☀️ ${formatNumber(crackCost)}`;
+            }
+
+            // Soil
+            if (state.soilLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('soilLvl').innerText = 'MAX';
+                document.getElementById('soilCost').innerText = 'MAX';
+            } else {
+                const soilCost = Math.floor(200 * Math.pow(1.8, state.soilLvl));
+                document.getElementById('soilLvl').innerText = `Lv.${state.soilLvl}`;
+                document.getElementById('soilCost').innerText = `☀️ ${formatNumber(soilCost)}`;
+            }
+
+            // Fence
+            if (state.fenceLvl >= MAX_UPGRADE_LEVEL) {
+                document.getElementById('fenceLvl').innerText = 'MAX';
+                document.getElementById('fenceCost').innerText = 'MAX';
+            } else {
+                const fenceCost = Math.floor(500 * Math.pow(2.0, state.fenceLvl));
+                document.getElementById('fenceLvl').innerText = `Lv.${state.fenceLvl}`;
+                document.getElementById('fenceCost').innerText = `☀️ ${formatNumber(fenceCost)}`;
+            }
+
+            // Rain Buff Banner
+            const buffBanner = document.getElementById('buffBanner');
+            if (state.rainBuffActive) {
+                buffBanner.classList.remove('hidden');
+                document.getElementById('buffText').innerText = `단비 성장 버프 (${state.rainBuffTimer}초)`;
+            } else {
+                buffBanner.classList.add('hidden');
+            }
+
+            // Wildlife status update
+            if (state.stage >= 20) {
+                const butterflyEl = document.getElementById('butterflyStatus');
+                if (butterflyEl) {
+                    butterflyEl.className = 'text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100';
+                    butterflyEl.innerText = '등장 중';
+                }
+            }
+            if (state.stage >= 35) {
+                const sparrowEl = document.getElementById('sparrowStatus');
+                if (sparrowEl) {
+                    sparrowEl.className = 'text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100';
+                    sparrowEl.innerText = '등장 중';
+                }
+            }
+            if (state.stage >= 45) {
+                const moleEl = document.getElementById('moleStatus');
+                if (moleEl) {
+                    moleEl.className = 'text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100';
+                    moleEl.innerText = '등장 중';
+                }
+            }
+            if (state.stage >= 20) {
+                const catEl = document.getElementById('catStatus');
+                if (catEl) {
+                    catEl.className = 'text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100';
+                    catEl.innerText = '경계 중 (위험)';
+                }
+            }
+
+            renderStoryList();
+        }
+
+        function renderStoryList() {
+            const container = document.getElementById('storyListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            storiesData.forEach(story => {
+                const isUnlocked = state.unlockedStories.includes(story.stage);
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-2xl border transition-all ${isUnlocked ? 'bg-white border-amber-200 cursor-pointer hover:shadow-md' : 'bg-slate-100 border-slate-200 opacity-60'}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">${story.icon}</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-900">${story.title}</h4>
+                                <p class="text-[10px] text-slate-500 font-medium">${isUnlocked ? '터치하여 다시 읽기' : `${story.stage}단계 달성 시 해금`}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold ${isUnlocked ? 'text-amber-600' : 'text-slate-400'}">${isUnlocked ? '읽기' : '🔒'}</span>
+                    </div>
+                `;
+
+                if (isUnlocked) {
+                    card.onclick = () => openModal('📖 원작 동화', story.title, story.content, story.icon);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        /* ==========================================================================
+           MODALS & GAME LOOPS
+           ========================================================================== */
+        function openModal(category, title, bodyHtml, icon) {
+            document.getElementById('modalCategory').innerText = category;
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            document.getElementById('modalIcon').innerText = icon || '🌱';
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function showModalAlert(title, message) {
+            openModal('알림', title, message, '💡');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+
+        // Spawn Wildlife Guests
+        function spawnAnimalLoop() {
+            setInterval(() => {
+                if (state.animals.length < 4) {
+                    const animalTypes = ['🐝', '🐞'];
+                    if (state.stage >= 20) {
+                        animalTypes.push('🦋');
+                        // 30% chance to spawn Stray Cat if stage >= 20
+                        if (Math.random() < 0.35 && !state.animals.some(a => a.emoji === '🐱')) {
+                            const spawnLeft = Math.random() < 0.5;
+                            state.animals.push({
+                                id: Date.now(),
+                                emoji: '🐱',
+                                x: spawnLeft ? -20 : canvasWidth + 20,
+                                y: canvasHeight * 0.65 - 12,
+                                fleeing: false,
+                                hasHit: false
+                            });
+                            showFloatingText(canvasWidth * 0.5, 40, '⚠️ 길고양이가 접근 중입니다! 터치해서 쫓아내세요!', '#EF4444');
+                            return;
+                        }
+                    }
+                    if (state.stage >= 35) animalTypes.push('🐦');
+                    if (state.stage >= 45) animalTypes.push('🦡');
+
+                    const emoji = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+                    let animalY = 80 + Math.random() * (canvasHeight * 0.4);
+                    if (emoji === '🦡') {
+                        // Mole appears near ground
+                        animalY = canvasHeight * 0.65 - 12;
+                    }
+
+                    state.animals.push({
+                        id: Date.now(),
+                        emoji: emoji,
+                        x: 50 + Math.random() * (canvasWidth - 100),
+                        y: animalY
+                    });
+                }
+            }, 7000);
+        }
+
+        // Main Idle Loop (1s tick)
+        function mainIdleLoop() {
+            setInterval(() => {
+                if (state.autoSunPerSec > 0) {
+                    addSun(state.autoSunPerSec);
+                }
+
+                if (Math.random() < 0.25) {
+                    addRain(1);
+                }
+
+                if (state.rainBuffActive) {
+                    state.rainBuffTimer--;
+                    if (state.rainBuffTimer <= 0) {
+                        state.rainBuffActive = false;
+                    }
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        // Weather Cycle Loop (30s tick)
+        function weatherCycleLoop() {
+            setInterval(() => {
+                if (!state.rainBuffActive) {
+                    state.weather = Math.random() < 0.35 ? 'rainy' : 'sunny';
+                    const iconEl = document.getElementById('weatherIcon');
+                    const textEl = document.getElementById('weatherText');
+
+                    if (state.weather === 'rainy') {
+                        iconEl.innerText = '🌧️';
+                        textEl.innerText = '촉촉한 단비';
+                    } else {
+                        iconEl.innerText = '☀️';
+                        textEl.innerText = '화창한 햇살';
+                    }
+                }
+            }, 30000);
+        }
+
+        /* ==========================================================================
+           INITIALIZATION
+           ========================================================================== */
+        window.onload = function () {
+            resizeCanvas();
+            createParticles();
+            renderCanvas();
+
+            spawnAnimalLoop();
+            mainIdleLoop();
+            weatherCycleLoop();
+
+            updateUI();
+
+            // Initial Welcome Story Modal with Admin Start option
+            setTimeout(() => {
+                openWelcomeModal();
+            }, 400);
+        };
+    </script>
+</body>
+</html>

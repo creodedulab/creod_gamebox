@@ -1,0 +1,4 @@
+1.kor_name=[초록이 키우기]
+2.eng_name=[Rasing Cho-Rok]
+3.maker=[김제 규민]
+3.genre=[*]

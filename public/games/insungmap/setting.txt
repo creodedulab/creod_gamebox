@@ -1,0 +1,4 @@
+1.kor_name=[인성맵]
+2.eng_name=[InsungMAP]
+3.maker=[김제 규민]
+3.genre=[*]

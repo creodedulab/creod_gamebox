@@ -12,7 +12,7 @@ type PageState =
 
 type HistoryState = PageState & { creodGamebox: true };
 
-const STUDENT_PASSWORD = "EldToa";
+const STUDENT_PASSWORD = "띵쌤";
 const ADMIN_PASSWORD = "creod1029";
 const INSTAGRAM_URL = "https://www.instagram.com/tting_ssam/";
 const HOMEPAGE_URL = "https://creodedulab.github.io/";
@@ -140,10 +140,10 @@ export default function Home() {
             <div className="password-row">
               <input
                 id="password"
-                type="password"
+                type="text"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
+                autoComplete="off"
                 placeholder="비밀번호 입력"
               />
               <button type="submit">입장</button>
