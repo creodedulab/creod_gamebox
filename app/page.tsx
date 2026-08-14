@@ -414,12 +414,16 @@ function GamePlayer({
   const playerPanelRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [frameScale, setFrameScale] = useState(1);
+  const [frameViewport, setFrameViewport] = useState({
+    scale: 1,
+    width: "100%",
+    height: "100%",
+  });
 
   useEffect(() => {
     function handleFullscreenChange() {
       setIsFullscreen(document.fullscreenElement === playerPanelRef.current);
-      window.setTimeout(fitPortraitIframeContent, 0);
+      window.setTimeout(fitGameViewport, 0);
     }
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -428,12 +432,17 @@ function GamePlayer({
 
   useEffect(() => {
     function handleResize() {
-      fitPortraitIframeContent();
+      fitGameViewport();
     }
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const iframeWindow = iframeRef.current?.contentWindow;
+    iframeWindow?.dispatchEvent(new Event("resize"));
+  }, [frameViewport]);
 
   function blockIframeContextMenu() {
     if (isAdminMode) return;
@@ -445,105 +454,43 @@ function GamePlayer({
   }
 
   function resetIframeViewportScale() {
-    setFrameScale(1);
+    setFrameViewport({ scale: 1, width: "100%", height: "100%" });
   }
 
-  function fitPortraitIframeContent() {
+  function fitGameViewport() {
     const iframe = iframeRef.current;
-    const iframeDocument = iframe?.contentDocument;
     const frame = iframe?.parentElement;
-    const body = iframeDocument?.body;
-    const html = iframeDocument?.documentElement;
-    if (!iframe || !frame || !body || !html) return;
+    if (!iframe || !frame) return;
 
     if (document.fullscreenElement === playerPanelRef.current) {
-      setFrameScale(1);
+      resetIframeViewportScale();
       return;
     }
 
     window.requestAnimationFrame(() => {
-      const viewportWidth = frame.clientWidth;
-      const viewportHeight = frame.clientHeight;
-      const primaryElements = [
-        ...Array.from(
-          iframeDocument.querySelectorAll<HTMLElement>(
-            "#game-container, #game, #app, #root, main, canvas, [class*='game'], [class*='container']",
-          ),
-        ),
-        ...(Array.from(body.children) as HTMLElement[]),
-      ];
-      const fallbackSize = {
-        width: Math.max(body.scrollWidth, html.scrollWidth, body.offsetWidth, html.offsetWidth),
-        height: Math.max(body.scrollHeight, html.scrollHeight, body.offsetHeight, html.offsetHeight),
-      };
-      const contentBounds = Array.from(body.querySelectorAll<HTMLElement>("*")).reduce(
-        (bounds, element) => {
-          const rect = element.getBoundingClientRect();
-          const style = iframeDocument.defaultView?.getComputedStyle(element);
+      const frameWidth = frame.clientWidth;
+      const frameHeight = frame.clientHeight;
 
-          if (
-            !style ||
-            style.display === "none" ||
-            style.visibility === "hidden" ||
-            rect.width < 8 ||
-            rect.height < 8
-          ) {
-            return bounds;
-          }
-
-          return {
-            minLeft: Math.min(bounds.minLeft, rect.left),
-            minTop: Math.min(bounds.minTop, rect.top),
-            maxRight: Math.max(bounds.maxRight, rect.right),
-            maxBottom: Math.max(bounds.maxBottom, rect.bottom),
-          };
-        },
-        { minLeft: Number.POSITIVE_INFINITY, minTop: Number.POSITIVE_INFINITY, maxRight: 0, maxBottom: 0 },
-      );
-      const measuredPrimary = primaryElements.reduce(
-        (largest, element) => {
-          const rect = element.getBoundingClientRect();
-          const width = Math.max(rect.width, element.scrollWidth, element.offsetWidth);
-          const height = Math.max(rect.height, element.scrollHeight, element.offsetHeight);
-          const visibleArea = Math.max(0, rect.width) * Math.max(0, rect.height);
-          const contentArea = width * height;
-          const overflowPriority = Math.max(0, height - rect.height) * Math.max(1, width);
-          const score = overflowPriority + contentArea + visibleArea;
-
-          if (width < 120 || height < 180) return largest;
-          return score > largest.score ? { width, height, score } : largest;
-        },
-        { ...fallbackSize, score: 0 },
-      );
-      const boundedWidth = Number.isFinite(contentBounds.minLeft)
-        ? contentBounds.maxRight - contentBounds.minLeft
-        : fallbackSize.width;
-      const boundedHeight = Number.isFinite(contentBounds.minTop)
-        ? contentBounds.maxBottom - contentBounds.minTop
-        : fallbackSize.height;
-      const contentWidth = Math.max(measuredPrimary.width, boundedWidth);
-      const contentHeight = Math.max(measuredPrimary.height, boundedHeight);
-      const shouldFitContent =
-        contentHeight >= contentWidth * 0.85 || contentWidth <= viewportWidth * 0.78;
-      const isTooTall = contentHeight > viewportHeight + 16;
-
-      if (!viewportWidth || !viewportHeight || !shouldFitContent || !isTooTall) {
-        setFrameScale(1);
+      if (!frameWidth || !frameHeight) {
+        resetIframeViewportScale();
         return;
       }
 
-      const scale = Math.max(
-        0.35,
-        Math.min(1, (viewportWidth - 2) / contentWidth, (viewportHeight - 2) / contentHeight),
-      );
+      const virtualHeight = Math.max(1080, frameHeight);
+      const scale = Math.min(1, frameHeight / virtualHeight);
+      const virtualWidth = Math.ceil(frameWidth / scale);
 
-      setFrameScale(scale);
+      setFrameViewport({
+        scale,
+        width: `${virtualWidth}px`,
+        height: `${virtualHeight}px`,
+      });
     });
   }
 
   function scheduleFrameFitChecks() {
     [150, 350, 700, 1200, 2000, 3200].forEach((delay) => {
-      window.setTimeout(fitPortraitIframeContent, delay);
+      window.setTimeout(fitGameViewport, delay);
     });
   }
 
@@ -582,8 +529,9 @@ function GamePlayer({
             allowFullScreen
             style={
               {
-                "--frame-scale": frameScale,
-                "--frame-size": `${100 / frameScale}%`,
+                "--frame-scale": frameViewport.scale,
+                "--frame-width": frameViewport.width,
+                "--frame-height": frameViewport.height,
               } as CSSProperties
             }
             onLoad={() => {

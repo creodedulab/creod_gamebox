@@ -870,8 +870,8 @@ textarea {
   position: absolute;
   top: 0;
   left: 50%;
-  width: var(--frame-size, 100%);
-  height: var(--frame-size, 100%);
+  width: var(--frame-width, 100%);
+  height: var(--frame-height, 100%);
   border: 0;
   background: #0d1117;
   transform: translateX(-50%) scale(var(--frame-scale, 1));
