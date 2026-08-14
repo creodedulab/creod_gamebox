@@ -418,10 +418,20 @@ function GamePlayer({
   useEffect(() => {
     function handleFullscreenChange() {
       setIsFullscreen(document.fullscreenElement === playerPanelRef.current);
+      window.setTimeout(fitPortraitIframeContent, 0);
     }
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    function handleResize() {
+      fitPortraitIframeContent();
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   function blockIframeContextMenu() {
@@ -430,6 +440,60 @@ function GamePlayer({
     const iframeDocument = iframeRef.current?.contentDocument;
     iframeDocument?.addEventListener("contextmenu", (event) => {
       event.preventDefault();
+    });
+  }
+
+  function resetIframeViewportScale() {
+    const iframeDocument = iframeRef.current?.contentDocument;
+    const body = iframeDocument?.body;
+    const html = iframeDocument?.documentElement;
+    if (!body || !html) return;
+
+    html.style.removeProperty("overflow");
+    body.style.removeProperty("overflow");
+    body.style.removeProperty("transform");
+    body.style.removeProperty("transform-origin");
+    body.style.removeProperty("width");
+    body.style.removeProperty("min-height");
+  }
+
+  function fitPortraitIframeContent() {
+    const iframe = iframeRef.current;
+    const iframeDocument = iframe?.contentDocument;
+    const body = iframeDocument?.body;
+    const html = iframeDocument?.documentElement;
+    if (!iframe || !body || !html) return;
+
+    resetIframeViewportScale();
+
+    if (document.fullscreenElement === playerPanelRef.current) return;
+
+    window.requestAnimationFrame(() => {
+      const viewportWidth = iframe.clientWidth;
+      const viewportHeight = iframe.clientHeight;
+      const contentWidth = Math.max(body.scrollWidth, html.scrollWidth, body.offsetWidth, html.offsetWidth);
+      const contentHeight = Math.max(
+        body.scrollHeight,
+        html.scrollHeight,
+        body.offsetHeight,
+        html.offsetHeight,
+      );
+      const isPortraitContent = contentHeight >= contentWidth * 1.1;
+      const isTooTall = contentHeight > viewportHeight + 16;
+
+      if (!viewportWidth || !viewportHeight || !isPortraitContent || !isTooTall) return;
+
+      const scale = Math.max(
+        0.35,
+        Math.min(1, (viewportWidth - 2) / contentWidth, (viewportHeight - 2) / contentHeight),
+      );
+
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+      body.style.transform = `scale(${scale})`;
+      body.style.transformOrigin = "top center";
+      body.style.width = `${100 / scale}%`;
+      body.style.minHeight = `${viewportHeight / scale}px`;
     });
   }
 
@@ -465,7 +529,11 @@ function GamePlayer({
           title={`${game.korName} 실행 화면`}
           src={game.gameUrl}
           allowFullScreen
-          onLoad={blockIframeContextMenu}
+          onLoad={() => {
+            blockIframeContextMenu();
+            fitPortraitIframeContent();
+            window.setTimeout(fitPortraitIframeContent, 250);
+          }}
         />
       </div>
     </section>
