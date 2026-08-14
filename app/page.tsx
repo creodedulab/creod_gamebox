@@ -476,7 +476,8 @@ function GamePlayer({
         return;
       }
 
-      const virtualHeight = Math.max(1080, frameHeight);
+      const baseVirtualHeight = game.id === "malrang-game" ? 900 : 1080;
+      const virtualHeight = Math.max(baseVirtualHeight, frameHeight);
       const scale = Math.min(1, frameHeight / virtualHeight);
       const virtualWidth = Math.ceil(frameWidth / scale);
 
