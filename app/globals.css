@@ -997,7 +997,7 @@ textarea {
   }
 
   .app-shell {
-    padding: 18px 18px 154px;
+    padding: 18px 18px 72px;
   }
 
   .topbar,
@@ -1040,20 +1040,41 @@ textarea {
     justify-content: flex-start;
   }
 
-  .gate-contact,
-  .site-footer,
-  .footer-meta {
+  .gate-contact {
     align-items: flex-start;
     flex-direction: column;
   }
 
   .site-footer {
-    gap: 10px;
-    padding: 12px 18px;
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .site-footer p {
+    min-width: 0;
+    overflow: hidden;
+    font-size: clamp(8px, 2.35vw, 10px);
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .footer-meta {
-    gap: 8px;
-    white-space: normal;
+    flex-direction: row;
+    flex-shrink: 0;
+    gap: 4px;
+    font-size: clamp(8px, 2.25vw, 10px);
+    white-space: nowrap;
+  }
+
+  .footer-meta .icon-link {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .footer-meta .icon-symbol {
+    transform: scale(0.78);
   }
 }
