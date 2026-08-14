@@ -472,19 +472,43 @@ function GamePlayer({
     window.requestAnimationFrame(() => {
       const viewportWidth = iframe.clientWidth;
       const viewportHeight = iframe.clientHeight;
-      const candidateElements = [
+      const primaryElements = [
         ...Array.from(
           iframeDocument.querySelectorAll<HTMLElement>(
             "#game-container, #game, #app, #root, main, canvas, [class*='game'], [class*='container']",
           ),
         ),
-        ...Array.from(body.children) as HTMLElement[],
+        ...(Array.from(body.children) as HTMLElement[]),
       ];
       const fallbackSize = {
         width: Math.max(body.scrollWidth, html.scrollWidth, body.offsetWidth, html.offsetWidth),
         height: Math.max(body.scrollHeight, html.scrollHeight, body.offsetHeight, html.offsetHeight),
       };
-      const measuredContent = candidateElements.reduce(
+      const contentBounds = Array.from(body.querySelectorAll<HTMLElement>("*")).reduce(
+        (bounds, element) => {
+          const rect = element.getBoundingClientRect();
+          const style = iframeDocument.defaultView?.getComputedStyle(element);
+
+          if (
+            !style ||
+            style.display === "none" ||
+            style.visibility === "hidden" ||
+            rect.width < 8 ||
+            rect.height < 8
+          ) {
+            return bounds;
+          }
+
+          return {
+            minLeft: Math.min(bounds.minLeft, rect.left),
+            minTop: Math.min(bounds.minTop, rect.top),
+            maxRight: Math.max(bounds.maxRight, rect.right),
+            maxBottom: Math.max(bounds.maxBottom, rect.bottom),
+          };
+        },
+        { minLeft: Number.POSITIVE_INFINITY, minTop: Number.POSITIVE_INFINITY, maxRight: 0, maxBottom: 0 },
+      );
+      const measuredPrimary = primaryElements.reduce(
         (largest, element) => {
           const rect = element.getBoundingClientRect();
           const width = Math.max(rect.width, element.scrollWidth, element.offsetWidth);
@@ -499,12 +523,19 @@ function GamePlayer({
         },
         { ...fallbackSize, score: 0 },
       );
-      const contentWidth = measuredContent.width;
-      const contentHeight = measuredContent.height;
-      const isPortraitContent = contentHeight >= contentWidth * 1.1 || contentWidth <= viewportWidth * 0.55;
+      const boundedWidth = Number.isFinite(contentBounds.minLeft)
+        ? contentBounds.maxRight - contentBounds.minLeft
+        : fallbackSize.width;
+      const boundedHeight = Number.isFinite(contentBounds.minTop)
+        ? contentBounds.maxBottom - contentBounds.minTop
+        : fallbackSize.height;
+      const contentWidth = Math.max(measuredPrimary.width, boundedWidth);
+      const contentHeight = Math.max(measuredPrimary.height, boundedHeight);
+      const shouldFitContent =
+        contentHeight >= contentWidth * 0.85 || contentWidth <= viewportWidth * 0.78;
       const isTooTall = contentHeight > viewportHeight + 16;
 
-      if (!viewportWidth || !viewportHeight || !isPortraitContent || !isTooTall) return;
+      if (!viewportWidth || !viewportHeight || !shouldFitContent || !isTooTall) return;
 
       const scale = Math.max(
         0.35,
