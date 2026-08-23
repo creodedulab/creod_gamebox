@@ -1,0 +1,4 @@
+1.kor_name=[무기 서바이버]
+2.eng_name=[Weapon Survival]
+3.maker=[완주 창윤]
+4.genre=[*]

@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우주선 조립 및 행성 탐사 착륙 시뮬레이터</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#060913',
+                            800: '#0b1329',
+                            700: '#131e3a',
+                            600: '#1d2b53',
+                            accent: '#00f0ff',
+                            neon: '#ff0055',
+                            gold: '#ffb703'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #060913;
+            color: #f1f5f9;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+        .hangar-grid {
+            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+        }
+        .glass-panel {
+            background: rgba(11, 19, 41, 0.82);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+        }
+        .glow-btn {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transition: all 0.2s ease-in-out;
+        }
+        .glow-btn:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        .glow-btn-danger {
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+        }
+        .glow-btn-danger:hover {
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.6);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-space-900 text-slate-100 selection:bg-space-accent selection:text-black">
+
+    <!-- Top Navigation Bar -->
+    <header class="w-full glass-panel border-b border-cyan-500/30 px-4 py-3 z-30 sticky top-0 flex flex-wrap justify-between items-center shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-cyan-500/20 border border-cyan-400 rounded-lg text-cyan-400">
+                <i class="fa-solid font-orbitron fa-shuttle-space text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 font-orbitron">
+                    KOSMO EXPLORER <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">v3.0</span>
+                </h1>
+                <p class="text-xs text-slate-400 hidden sm:block">나만의 우주선 조립 & 외계 행성 탐사 착륙 프로젝트</p>
+            </div>
+        </div>
+
+        <!-- Resources & Achievements Stats -->
+        <div class="flex items-center gap-4 text-sm font-orbitron">
+            <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-amber-500/40 text-amber-400">
+                <i class="fa-solid fa-coins"></i>
+                <span class="text-xs text-slate-400">자금:</span>
+                <span id="stat-money" class="font-bold text-base">10,000</span> <span class="text-xs">골드</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-cyan-500/40 text-cyan-400">
+                <i class="fa-solid fa-globe"></i>
+                <span class="text-xs text-slate-400">탐사 행성:</span>
+                <span id="stat-planets" class="font-bold text-base">0 / 3</span>
+            </div>
+            <button id="btn-toggle-audio" class="p-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg border border-slate-700 transition" title="음향 토글">
+                <i id="icon-audio" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 relative w-full flex flex-col overflow-hidden">
+        
+        <!-- SCREEN 1: HANGAR / ROCKET BUILDER -->
+        <section id="screen-hangar" class="flex-1 flex flex-col lg:flex-row h-full p-3 lg:p-6 gap-4 hangar-grid">
+            
+            <!-- Left Side: Parts Catalog -->
+            <div class="w-full lg:w-80 glass-panel rounded-2xl p-4 flex flex-col gap-3 shadow-2xl overflow-hidden z-20">
+                <div class="flex justify-between items-center border-b border-slate-700/60 pb-2">
+                    <h2 class="font-bold font-orbitron text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked"></i> 부품 카탈로그
+                    </h2>
+                    <span id="parts-count" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">8개 보유</span>
+                </div>
+
+                <!-- Part Categories Tabs -->
+                <div class="grid grid-cols-4 gap-1 text-xs font-orbitron bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+                    <button class="tab-btn active p-2 rounded-lg text-center font-bold transition bg-cyan-500/20 text-cyan-300 border border-cyan-500/50" data-cat="command">조종</button>
+                    <button class="tab-btn p-2 rounded-lg text-center font-bold transition hover:text-cyan-300 text-slate-400" data-cat="fuel">연료</button>
+                    <button class="tab-btn p-2 rounded-lg text-center font-bold transition hover:text-cyan-300 text-slate-400" data-cat="engine">엔진</button>
+                    <button class="tab-btn p-2 rounded-lg text-center font-bold transition hover:text-cyan-300 text-slate-400" data-cat="utility">보조</button>
+                </div>
+
+                <!-- Parts List Container -->
+                <div id="parts-list" class="flex-1 overflow-y-auto pr-1 space-y-2 max-h-[380px] lg:max-h-none">
+                    <!-- Dynamic Part Cards -->
+                </div>
+            </div>
+
+            <!-- Center: Interactive Assembly Grid Canvas -->
+            <div class="flex-1 glass-panel rounded-2xl p-4 flex flex-col relative items-center justify-center min-h-[450px] shadow-2xl border border-cyan-500/20 overflow-hidden">
+                
+                <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                    <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2 flex items-center gap-4 text-xs font-orbitron shadow-lg">
+                        <span class="text-slate-400"><i class="fa-solid fa-arrows-up-down-left-right text-cyan-400 mr-1"></i> 격납고 조립 구역</span>
+                        <span class="hidden md:inline text-slate-500">|</span>
+                        <span class="hidden md:inline text-slate-400">좌클릭: 부품 배치 / 우클릭: 제거</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="btn-clear-ship" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-700/60 text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i> 전체 초기화
+                        </button>
+                        <button id="btn-auto-build" class="px-3 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 추천 조립
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative flex items-center justify-center w-full h-full pt-12 pb-6">
+                    <canvas id="hangar-canvas" class="cursor-pointer max-w-full max-h-full rounded-xl"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Side: Rocket Telemetry Specs & Launch Console -->
+            <div class="w-full lg:w-80 glass-panel rounded-2xl p-4 flex flex-col justify-between gap-4 shadow-2xl z-20">
+                <div class="space-y-3">
+                    <div class="border-b border-slate-700/60 pb-2 flex justify-between items-center">
+                        <h2 class="font-bold font-orbitron text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line"></i> 기체 제원 분석
+                        </h2>
+                        <span id="ship-status-badge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">발사 가능</span>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs font-orbitron">
+                        <div>
+                            <div class="flex justify-between text-slate-400 mb-1">
+                                <span>총 질량 (Total Mass):</span>
+                                <span id="val-mass" class="text-slate-100 font-bold">0 kg</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div id="bar-mass" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-slate-400 mb-1">
+                                <span>총 추력 (Total Thrust):</span>
+                                <span id="val-thrust" class="text-cyan-400 font-bold">0 kN</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div id="bar-thrust" class="bg-cyan-400 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-slate-400 mb-1">
+                                <span>연료 용량 (Fuel Tank):</span>
+                                <span id="val-fuel" class="text-amber-400 font-bold">0 L</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div id="bar-fuel" class="bg-amber-400 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1 mt-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">추력 대 중량비 (TWR):</span>
+                                <span id="val-twr" class="text-lg font-black text-rose-500">0.00</span>
+                            </div>
+                            <p id="twr-hint" class="text-[11px] text-rose-400/90 font-sans">⚠️ TWR이 1.0 초과여야 이륙이 가능합니다!</p>
+                        </div>
+
+                        <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">탐사 가능 도달 범위:</span>
+                                <span id="val-range" class="font-bold text-amber-400">지구 궤도</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Launch Action Trigger -->
+                <div class="space-y-2 pt-2">
+                    <button id="btn-start-launch" class="w-full py-4 bg-gradient-to-r from-cyan-500 via-teal-400 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black font-orbitron text-lg rounded-xl glow-btn transition flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-rocket text-xl"></i>
+                        <span>발사대로 이동</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: LAUNCHPAD & FLIGHT SIMULATION -->
+        <section id="screen-flight" class="hidden flex-1 relative w-full h-full bg-slate-950 overflow-hidden">
+            
+            <canvas id="flight-canvas" class="absolute inset-0 w-full h-full block z-0"></canvas>
+
+            <!-- Flight Telemetry HUD Overlay Top Left -->
+            <div class="absolute top-4 left-4 z-20 glass-panel rounded-2xl p-4 w-64 md:w-72 space-y-3 border border-cyan-500/30 font-orbitron shadow-2xl">
+                <div class="flex justify-between items-center border-b border-slate-700/60 pb-1.5">
+                    <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-satellite-dish animate-pulse"></i> 실시간 비행 Telemetry
+                    </span>
+                    <span id="flight-phase" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">상승 중</span>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-0.5">
+                            <span>현재 고도 (Altitude):</span>
+                            <span id="hud-altitude" class="text-cyan-300 font-bold text-base">0 m</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="hud-alt-bar" class="bg-cyan-400 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">수직 속도 (V-Speed):</span>
+                        <div class="text-right">
+                            <span id="hud-speed" class="text-amber-300 font-bold">0 m/s</span>
+                            <span id="hud-speed-badge" class="text-[9px] block text-emerald-400 font-sans">충돌 없음 (무조건 안전 착륙)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">수평 속도 (H-Speed):</span>
+                        <span id="hud-vx" class="text-slate-300 font-bold">0 m/s</span>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-0.5">
+                            <span>남은 연료 (Fuel):</span>
+                            <span id="hud-fuel" class="text-amber-400 font-bold">100 %</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-amber-500/30">
+                            <div id="hud-fuel-bar" class="bg-gradient-to-r from-amber-500 to-yellow-300 h-2 rounded-full transition-all" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[11px] pt-1 text-slate-400">
+                        <span>현재 지역:</span>
+                        <span id="hud-target-planet" class="text-cyan-300 font-bold">지구 (Earth)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Atmosphere / Planet Zone Badge -->
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-6 py-2 rounded-full border border-cyan-400/40 font-orbitron text-sm font-bold text-cyan-300 shadow-xl flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-cyan-400"></i>
+                <span id="hud-zone-name">대류권 (Troposphere)</span>
+            </div>
+
+            <!-- Planet Target Selection Banner (Appears in Orbit) -->
+            <div id="orbit-planet-select" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 glass-panel rounded-2xl p-4 border border-cyan-400/60 shadow-2xl text-center hidden space-y-3 max-w-lg w-11/12 animate-pulse-glow">
+                <h3 class="font-orbitron font-black text-cyan-300 text-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-globe text-amber-400"></i> 우주 궤도 진입! 착륙할 행성을 선택하세요
+                </h3>
+                <p class="text-xs text-slate-300">목적지 행성으로 역추진 하강 및 착륙 시퀀스를 시작합니다.</p>
+                <div class="grid grid-cols-3 gap-2 pt-1 font-orbitron text-xs">
+                    <button class="btn-select-planet bg-slate-800/90 hover:bg-slate-700 border border-slate-400/50 p-2.5 rounded-xl text-slate-200 font-bold transition flex flex-col items-center gap-1" data-planet="moon">
+                        <span class="text-base">🌕</span> 달 (Moon)
+                        <span class="text-[10px] text-slate-400">저중력 / 노대기</span>
+                    </button>
+                    <button class="btn-select-planet bg-slate-800/90 hover:bg-slate-700 border border-orange-500/50 p-2.5 rounded-xl text-amber-300 font-bold transition flex flex-col items-center gap-1" data-planet="mars">
+                        <span class="text-base">🔴</span> 화성 (Mars)
+                        <span class="text-[10px] text-amber-400/80">중중력 / 희박대기</span>
+                    </button>
+                    <button class="btn-select-planet bg-slate-800/90 hover:bg-slate-700 border border-yellow-500/50 p-2.5 rounded-xl text-yellow-300 font-bold transition flex flex-col items-center gap-1" data-planet="venus">
+                        <span class="text-base">🟠</span> 금성 (Venus)
+                        <span class="text-[10px] text-yellow-400/80">고중력 / 고밀도대기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controls Overlay (Bottom) -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-11/12 max-w-2xl glass-panel rounded-2xl p-4 border border-cyan-500/30 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xl">
+                
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <button id="btn-ignition" class="flex-1 md:flex-none px-5 py-3.5 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-400 hover:to-orange-400 text-slate-950 font-black font-orbitron text-sm rounded-xl glow-btn-danger transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-fire text-lg"></i>
+                        <span id="btn-ignition-text">엔진 점화</span>
+                    </button>
+                    
+                    <button id="btn-toggle-sas" class="px-3.5 py-3.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/60 text-xs font-bold rounded-xl transition font-orbitron flex items-center gap-1.5" title="자동 자세 제어 및 감속 보조 시스템">
+                        <i class="fa-solid fa-robot text-sm"></i>
+                        <span id="txt-sas-status">SAS 활성</span>
+                    </button>
+
+                    <button id="btn-abort" class="px-3 py-3.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/40 text-xs font-bold rounded-xl transition font-orbitron">
+                        <i class="fa-solid fa-ban"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-64 font-orbitron">
+                    <i class="fa-solid fa-gauge-high text-cyan-400 text-lg"></i>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>추력 출력 (Throttle)</span>
+                            <span id="val-throttle" class="text-cyan-300 font-bold">100%</span>
+                        </div>
+                        <input id="slider-throttle" type="range" min="0" max="100" value="100" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-steer-left" class="p-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-xl border border-slate-700 font-bold active:bg-cyan-500/30 transition">
+                        <i class="fa-solid fa-arrow-left text-lg"></i>
+                    </button>
+                    <span class="text-[10px] text-slate-400 font-orbitron text-center px-1">조향<br>(A / D)</span>
+                    <button id="btn-steer-right" class="p-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-xl border border-slate-700 font-bold active:bg-cyan-500/30 transition">
+                        <i class="fa-solid fa-arrow-right text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MISSION RESULT MODAL -->
+    <div id="modal-result" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel max-w-md w-full rounded-3xl p-6 border border-cyan-500/40 shadow-2xl space-y-5 animate-pulse-glow">
+            <div class="text-center space-y-2">
+                <div id="result-icon-bg" class="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center mx-auto text-cyan-400 text-3xl">
+                    <i id="result-icon" class="fa-solid fa-flag"></i>
+                </div>
+                <h3 id="result-title" class="text-2xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-300">
+                    행성 탐사 미션 완료!
+                </h3>
+                <p id="result-subtitle" class="text-xs text-slate-400">외계 행성 표면 착륙 성공 및 데이터 수집</p>
+            </div>
+
+            <!-- Stats Summary Table -->
+            <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 space-y-2.5 font-orbitron text-xs">
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">탐사 행성:</span>
+                    <span id="res-planet" class="text-cyan-300 font-bold text-sm">달 (Moon)</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">최종 하강 수직 속도:</span>
+                    <span id="res-speed" class="text-amber-300 font-bold text-sm">4.2 m/s</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">착륙 상태:</span>
+                    <span id="res-status" class="text-emerald-400 font-bold">안전 착륙 성공 (Soft Landing)</span>
+                </div>
+                <div class="flex justify-between pt-1">
+                    <span class="text-slate-400">탐사 보상 골드:</span>
+                    <span id="res-reward" class="text-amber-400 font-black text-base">+12,500 Gold</span>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button id="btn-plant-flag" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black font-orbitron rounded-xl glow-btn transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-flag text-lg"></i>
+                    <span>탐사 깃발 설치 및 샘플 채취</span>
+                </button>
+                <button id="btn-close-result" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl transition">
+                    격납고로 돌아가기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Planetary Database
+        const PLANETS = {
+            earth: { id: 'earth', name: '지구 (Earth)', gravity: 9.81, atmDensity: 1.0, topColor: '#02040a', botColor: '#38bdf8', groundColor: '#1e293b', rewardMult: 1 },
+            moon: { id: 'moon', name: '달 (Moon)', gravity: 1.62, atmDensity: 0.0, topColor: '#02040a', botColor: '#0f172a', groundColor: '#475569', rewardMult: 3.0 },
+            mars: { id: 'mars', name: '화성 (Mars)', gravity: 3.72, atmDensity: 0.15, topColor: '#1a0c00', botColor: '#ea580c', groundColor: '#7c2d12', rewardMult: 5.0 },
+            venus: { id: 'venus', name: '금성 (Venus)', gravity: 8.87, atmDensity: 0.85, topColor: '#2e1000', botColor: '#ca8a04', groundColor: '#713f12', rewardMult: 7.5 }
+        };
+
+        // Game Parts Definition Database
+        const PARTS = [
+            { id: 'command_pod', name: '표준 조종석', category: 'command', mass: 150, thrust: 0, fuel: 0, cost: 0, color: '#38bdf8', icon: 'fa-shuttle-space', desc: '우주선 조종용 핵심 모듈 (필수)' },
+            { id: 'command_pod_adv', name: '탐사정 Capsule', category: 'command', mass: 120, thrust: 0, fuel: 0, cost: 2000, color: '#818cf8', icon: 'fa-brain', desc: '경량화된 첨단 자동 항법 조종석' },
+            { id: 'fuel_tank_sm', name: '소형 연료 탱크', category: 'fuel', mass: 250, thrust: 0, fuel: 800, cost: 500, color: '#f59e0b', icon: 'fa-gas-pump', desc: '고성능 액체 연료 800L' },
+            { id: 'fuel_tank_lg', name: '대형 연료 탱크', category: 'fuel', mass: 600, thrust: 0, fuel: 2000, cost: 1200, color: '#d97706', icon: 'fa-database', desc: '대용량 액체 연료 2,000L' },
+            { id: 'engine_basic', name: '표준 추진 엔진', category: 'engine', mass: 350, thrust: 14000, fuel: 0, cost: 800, color: '#ef4444', icon: 'fa-fire', desc: '강력한 14,000 kN 표준 추력 엔진' },
+            { id: 'engine_heavy', name: '하이퍼 연소 엔진', category: 'engine', mass: 750, thrust: 32000, fuel: 0, cost: 2500, color: '#b91c1c', icon: 'fa-fire-flame-curved', desc: '32,000 kN 초대형 고추력 엔진' },
+            { id: 'fin_aerodynamic', name: '공기역학 날개', category: 'utility', mass: 40, thrust: 0, fuel: 0, cost: 300, color: '#10b981', icon: 'fa-feather', desc: '대기권 내 비행 및 착륙 안정성 증대' },
+            { id: 'payload_satellite', name: '탐사 로버 (Rover)', category: 'utility', mass: 200, thrust: 0, fuel: 0, cost: 1500, color: '#a855f7', icon: 'fa-robot', desc: '외계 착륙 탐사 시 +10,000 Gold 추가 보상' }
+        ];
+
+        // Global State
+        const GAME = {
+            money: 10000,
+            exploredPlanets: new Set(),
+            soundEnabled: true,
+            gridCols: 7,
+            gridRows: 9,
+            grid: Array(9).fill(null).map(() => Array(7).fill(null)),
+            selectedPartId: 'command_pod',
+            audioCtx: null
+        };
+
+        const keysPressed = {};
+        window.addEventListener('keydown', (e) => { keysPressed[e.key] = true; });
+        window.addEventListener('keyup', (e) => { keysPressed[e.key] = false; });
+
+        let hangarCanvas, hangarCtx;
+        let flightCanvas, flightCtx;
+        let hangarCellSize = 40;
+        let flightAnimId = null;
+
+        let flightState = {
+            active: false,
+            phase: 'ascent', // 'ascent', 'orbit', 'descent', 'landed', 'crashed'
+            planet: PLANETS.earth,
+            altitude: 0,       
+            speedY: 0,         
+            speedX: 0,         
+            angle: 0,          
+            fuel: 100,         
+            maxFuel: 100,
+            throttle: 1.0,     
+            mass: 1000,        
+            thrust: 0,         
+            maxAltitude: 0,
+            maxSpeed: 0,
+            finCount: 0,
+            hasRover: false,
+            flagPlanted: false,
+            sasEnabled: true,
+            particles: [],
+            smokeTrail: [],
+            clouds: [],
+            shake: 0
+        };
+
+        function playSound(type) {
+            if (!GAME.soundEnabled) return;
+            try {
+                if (!GAME.audioCtx) {
+                    GAME.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const ctx = GAME.audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'place') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'remove') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'explosion') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'fanfare') {
+                    [400, 520, 660, 880, 1040].forEach((freq, idx) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.09);
+                        g.gain.setValueAtTime(0.15, now + idx * 0.09);
+                        g.gain.linearRampToValueAtTime(0.01, now + idx * 0.09 + 0.22);
+                        o.connect(g);
+                        g.connect(ctx.destination);
+                        o.start(now + idx * 0.09);
+                        o.stop(now + idx * 0.09 + 0.22);
+                    });
+                }
+            } catch (e) {
+                console.warn('Audio play error:', e);
+            }
+        }
+
+        function renderPartsCatalog(category = 'command') {
+            const listEl = document.getElementById('parts-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            const filtered = PARTS.filter(p => p.category === category);
+            filtered.forEach(part => {
+                const card = document.createElement('div');
+                const isSelected = GAME.selectedPartId === part.id;
+
+                card.className = `p-3 rounded-xl border cursor-pointer transition flex items-center justify-between gap-3 ${
+                    isSelected 
+                        ? 'bg-cyan-500/20 border-cyan-400 text-slate-100 shadow-md shadow-cyan-500/10' 
+                        : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg shadow" style="background-color: ${part.color}25; color: ${part.color}; border: 1px solid ${part.color}60">
+                            <i class="fa-solid ${part.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs flex items-center gap-1.5">
+                                ${part.name}
+                                ${part.cost > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-orbitron">${part.cost}G</span>` : '<span class="text-[10px] text-emerald-400">무료</span>'}
+                            </div>
+                            <div class="text-[11px] text-slate-400 font-sans mt-0.5">${part.desc}</div>
+                        </div>
+                    </div>
+                `;
+
+                card.onclick = () => {
+                    GAME.selectedPartId = part.id;
+                    playSound('click');
+                    renderPartsCatalog(category);
+                };
+
+                listEl.appendChild(card);
+            });
+        }
+
+        function calculateRocketStats() {
+            let totalMass = 0;
+            let totalThrust = 0;
+            let totalFuel = 0;
+            let hasCommand = false;
+            let finCount = 0;
+            let hasRover = false;
+
+            for (let r = 0; r < GAME.gridRows; r++) {
+                for (let c = 0; c < GAME.gridCols; c++) {
+                    const partId = GAME.grid[r][c];
+                    if (partId) {
+                        const def = PARTS.find(p => p.id === partId);
+                        if (def) {
+                            totalMass += def.mass;
+                            totalThrust += def.thrust;
+                            totalFuel += def.fuel;
+                            if (def.category === 'command') hasCommand = true;
+                            if (def.id === 'fin_aerodynamic') finCount++;
+                            if (def.id === 'payload_satellite') hasRover = true;
+                        }
+                    }
+                }
+            }
+
+            const weightN = totalMass * 9.81;
+            const twr = weightN > 0 ? (totalThrust * 1000) / weightN : 0;
+            const isValid = hasCommand && twr > 1.0;
+
+            let maxRange = '지구 궤도';
+            if (isValid) {
+                if (totalFuel >= 4000) maxRange = '달 & 화성 & 금성';
+                else if (totalFuel >= 2000) maxRange = '달 & 화성';
+                else maxRange = '달 (Moon)';
+            }
+
+            return {
+                totalMass,
+                totalThrust,
+                totalFuel,
+                hasCommand,
+                finCount,
+                hasRover,
+                twr: parseFloat(twr.toFixed(2)),
+                isValid,
+                maxRange
+            };
+        }
+
+        function updateTelemetryUI() {
+            const stats = calculateRocketStats();
+
+            document.getElementById('val-mass').innerText = `${stats.totalMass.toLocaleString()} kg`;
+            document.getElementById('val-thrust').innerText = `${(stats.totalThrust / 1000).toLocaleString()} kN`;
+            document.getElementById('val-fuel').innerText = `${stats.totalFuel.toLocaleString()} L`;
+
+            document.getElementById('bar-mass').style.width = Math.min(100, (stats.totalMass / 5000) * 100) + '%';
+            document.getElementById('bar-thrust').style.width = Math.min(100, (stats.totalThrust / 70000) * 100) + '%';
+            document.getElementById('bar-fuel').style.width = Math.min(100, (stats.totalFuel / 10000) * 100) + '%';
+
+            const twrEl = document.getElementById('val-twr');
+            const twrHint = document.getElementById('twr-hint');
+            twrEl.innerText = stats.twr.toFixed(2);
+
+            if (stats.twr >= 1.0) {
+                twrEl.className = 'text-lg font-black text-emerald-400';
+                twrHint.className = 'text-[11px] text-emerald-400/90 font-sans';
+                twrHint.innerText = '✅ 추력비 양호! 이륙 가능합니다.';
+            } else {
+                twrEl.className = 'text-lg font-black text-rose-500';
+                twrHint.className = 'text-[11px] text-rose-400/90 font-sans';
+                twrHint.innerText = '⚠️ TWR이 1.0 초과여야 이륙이 가능합니다!';
+            }
+
+            const badge = document.getElementById('ship-status-badge');
+            if (stats.isValid) {
+                badge.innerText = '발사 준비 완료';
+                badge.className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+            } else {
+                badge.innerText = !stats.hasCommand ? '조종석 필요' : '추력 부족';
+                badge.className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/40';
+            }
+
+            document.getElementById('val-range').innerText = stats.maxRange;
+        }
+
+        function resizeHangarCanvas() {
+            if (!hangarCanvas) return;
+            const container = hangarCanvas.parentElement;
+            if (!container) return;
+
+            const availWidth = container.clientWidth - 32;
+            const availHeight = container.clientHeight - 64;
+
+            hangarCellSize = Math.floor(Math.min(availWidth / GAME.gridCols, availHeight / GAME.gridRows));
+            hangarCellSize = Math.max(30, Math.min(52, hangarCellSize));
+
+            hangarCanvas.width = GAME.gridCols * hangarCellSize;
+            hangarCanvas.height = GAME.gridRows * hangarCellSize;
+
+            renderHangar();
+        }
+
+        function renderHangar() {
+            if (!hangarCtx) return;
+            const w = hangarCanvas.width;
+            const h = hangarCanvas.height;
+
+            hangarCtx.clearRect(0, 0, w, h);
+
+            for (let r = 0; r <= GAME.gridRows; r++) {
+                hangarCtx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+                hangarCtx.lineWidth = 1;
+                hangarCtx.beginPath();
+                hangarCtx.moveTo(0, r * hangarCellSize);
+                hangarCtx.lineTo(w, r * hangarCellSize);
+                hangarCtx.stroke();
+            }
+
+            for (let c = 0; c <= GAME.gridCols; c++) {
+                hangarCtx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+                hangarCtx.lineWidth = 1;
+                hangarCtx.beginPath();
+                hangarCtx.moveTo(c * hangarCellSize, 0);
+                hangarCtx.lineTo(c * hangarCellSize, h);
+                hangarCtx.stroke();
+            }
+
+            for (let r = 0; r < GAME.gridRows; r++) {
+                for (let c = 0; c < GAME.gridCols; c++) {
+                    const partId = GAME.grid[r][c];
+                    if (partId) {
+                        const partDef = PARTS.find(p => p.id === partId);
+                        if (partDef) {
+                            const px = c * hangarCellSize;
+                            const py = r * hangarCellSize;
+                            drawHangarPart(hangarCtx, partDef, px, py, hangarCellSize);
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawHangarPart(ctx, part, x, y, size) {
+            ctx.save();
+            ctx.fillStyle = part.color;
+            
+            if (part.category === 'command') {
+                ctx.beginPath();
+                ctx.moveTo(x + size / 2, y + 2);
+                ctx.lineTo(x + size - 2, y + size - 2);
+                ctx.lineTo(x + 2, y + size - 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size * 0.6, size * 0.18, 0, Math.PI * 2);
+                ctx.fill();
+
+            } else if (part.category === 'fuel') {
+                ctx.fillRect(x + 3, y + 2, size - 6, size - 4);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 3, y + 2, size - 6, size - 4);
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(x + 5, y + size * 0.4, size - 10, 2);
+
+            } else if (part.category === 'engine') {
+                ctx.fillRect(x + 4, y + 2, size - 8, size * 0.4);
+                ctx.beginPath();
+                ctx.moveTo(x + 6, y + size * 0.4);
+                ctx.lineTo(x + size - 6, y + size * 0.4);
+                ctx.lineTo(x + size - 2, y + size - 2);
+                ctx.lineTo(x + 2, y + size - 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+            } else {
+                ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
+                ctx.strokeStyle = '#ffffff';
+                ctx.strokeRect(x + 4, y + 4, size - 8, size - 8);
+            }
+
+            ctx.restore();
+        }
+
+        function setupHangarCanvasEvents() {
+            hangarCanvas.addEventListener('click', (e) => {
+                const rect = hangarCanvas.getBoundingClientRect();
+                const col = Math.floor((e.clientX - rect.left) / hangarCellSize);
+                const row = Math.floor((e.clientY - rect.top) / hangarCellSize);
+
+                if (row >= 0 && row < GAME.gridRows && col >= 0 && col < GAME.gridCols) {
+                    if (GAME.selectedPartId) {
+                        GAME.grid[row][col] = GAME.selectedPartId;
+                        playSound('place');
+                        renderHangar();
+                        updateTelemetryUI();
+                    }
+                }
+            });
+
+            hangarCanvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const rect = hangarCanvas.getBoundingClientRect();
+                const col = Math.floor((e.clientX - rect.left) / hangarCellSize);
+                const row = Math.floor((e.clientY - rect.top) / hangarCellSize);
+
+                if (row >= 0 && row < GAME.gridRows && col >= 0 && col < GAME.gridCols) {
+                    if (GAME.grid[row][col]) {
+                        GAME.grid[row][col] = null;
+                        playSound('remove');
+                        renderHangar();
+                        updateTelemetryUI();
+                    }
+                }
+            });
+        }
+
+        function autoBuildShip() {
+            GAME.grid = Array(9).fill(null).map(() => Array(7).fill(null));
+            const center = 3;
+
+            GAME.grid[1][center] = 'command_pod';
+            GAME.grid[2][center] = 'fuel_tank_sm';
+            GAME.grid[3][center] = 'fuel_tank_lg';
+            GAME.grid[4][center] = 'fuel_tank_lg';
+            GAME.grid[5][center] = 'engine_heavy';
+            GAME.grid[5][center - 1] = 'fin_aerodynamic';
+            GAME.grid[5][center + 1] = 'fin_aerodynamic';
+            GAME.grid[2][center - 1] = 'payload_satellite';
+
+            renderHangar();
+            updateTelemetryUI();
+            playSound('place');
+        }
+
+        function clearShip() {
+            GAME.grid = Array(9).fill(null).map(() => Array(7).fill(null));
+            renderHangar();
+            updateTelemetryUI();
+            playSound('remove');
+        }
+
+        function resizeFlightCanvas() {
+            if (!flightCanvas) return;
+            flightCanvas.width = window.innerWidth;
+            flightCanvas.height = window.innerHeight;
+        }
+
+        function startFlight() {
+            const stats = calculateRocketStats();
+            if (!stats.isValid) {
+                alert('우주선을 발사하려면 조종석과 충분한 TWR(>1.0)이 필요합니다!');
+                return;
+            }
+
+            const initClouds = [];
+            for (let i = 0; i < 20; i++) {
+                initClouds.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight * 2 - window.innerHeight,
+                    size: Math.random() * 60 + 40,
+                    speed: Math.random() * 0.3 + 0.8
+                });
+            }
+
+            flightState = {
+                active: true,
+                phase: 'ascent',
+                planet: PLANETS.earth,
+                altitude: 0,
+                speedY: 0,
+                speedX: 0,
+                angle: 0,
+                fuel: stats.totalFuel,
+                maxFuel: stats.totalFuel,
+                throttle: parseFloat(document.getElementById('slider-throttle').value) / 100,
+                mass: stats.totalMass,
+                thrust: stats.totalThrust,
+                maxAltitude: 0,
+                maxSpeed: 0,
+                finCount: stats.finCount,
+                hasRover: stats.hasRover,
+                flagPlanted: false,
+                particles: [],
+                smokeTrail: [],
+                clouds: initClouds,
+                shake: 0
+            };
+
+            document.getElementById('screen-hangar').classList.add('hidden');
+            document.getElementById('screen-flight').classList.remove('hidden');
+            document.getElementById('orbit-planet-select').classList.add('hidden');
+            document.getElementById('btn-ignition-text').innerText = '엔진 가동 중';
+            document.getElementById('flight-phase').innerText = '상승 비행 중';
+
+            resizeFlightCanvas();
+            playSound('fanfare');
+
+            lastFrameTime = performance.now();
+            if (flightAnimId) cancelAnimationFrame(flightAnimId);
+            flightLoop(performance.now());
+        }
+
+        let lastFrameTime = performance.now();
+
+        function flightLoop(now) {
+            const dt = Math.min(0.08, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            if (flightState.active) {
+                updateFlightPhysics(dt);
+            }
+
+            renderFlightScene();
+            flightAnimId = requestAnimationFrame(flightLoop);
+        }
+
+        function updateFlightPhysics(dt) {
+            const currentPlanet = flightState.planet;
+
+            // Phase 1: Orbit Destination Selection Trigger
+            if (flightState.phase === 'ascent' && flightState.altitude >= 100000) {
+                flightState.phase = 'orbit';
+                flightState.speedY = 0;
+                flightState.speedX = 0;
+                document.getElementById('orbit-planet-select').classList.remove('hidden');
+                document.getElementById('flight-phase').innerText = '우주 궤도 진입';
+            }
+
+            if (flightState.phase === 'orbit') {
+                flightState.altitude = 100000;
+                updateFlightHUD(0);
+                return;
+            }
+
+            // Atmosphere calculation
+            const density = currentPlanet.atmDensity * Math.max(0, Math.exp(-flightState.altitude / 8000));
+
+            // Engine Thrust
+            let currentThrust = 0;
+            if (flightState.fuel > 0) {
+                currentThrust = flightState.thrust * flightState.throttle * 1000;
+                const fuelBurnRate = (flightState.thrust * 0.12) * flightState.throttle;
+                flightState.fuel = Math.max(0, flightState.fuel - fuelBurnRate * dt);
+            }
+
+            // Drag
+            const speedSq = flightState.speedY * flightState.speedY + flightState.speedX * flightState.speedX;
+            const dragCoeff = 0.002 / Math.max(1, flightState.finCount * 0.5);
+            const dragForce = 0.5 * density * speedSq * dragCoeff * 40;
+
+            const gravity = currentPlanet.gravity;
+            const totalMass = flightState.mass + (flightState.fuel * 0.8);
+
+            const accelThrustY = (currentThrust * Math.cos(flightState.angle)) / totalMass;
+            const accelThrustX = (currentThrust * Math.sin(flightState.angle)) / totalMass;
+
+            const dragY = (dragForce * (flightState.speedY > 0 ? 1 : -1)) / totalMass;
+            const dragX = (dragForce * (flightState.speedX > 0 ? 1 : -1)) / totalMass;
+
+            // Net Acceleration
+            const netAccelY = accelThrustY - gravity - dragY;
+            const netAccelX = accelThrustX - dragX;
+
+            flightState.speedY += netAccelY * dt;
+            flightState.speedX += netAccelX * dt;
+            flightState.altitude += flightState.speedY * dt;
+
+            // Touchdown ground collision logic (Landing Phase)
+            if (flightState.altitude <= 0) {
+                flightState.altitude = 0;
+                
+                if (flightState.phase === 'descent') {
+                    // 충돌 및 폭발 판정을 삭제하고 항상 안전 착륙 성공으로 처리
+                    flightState.phase = 'landed';
+                    finishFlightMission(true);
+                } else if (flightState.altitude < 0) {
+                    flightState.speedY = 0;
+                    flightState.speedX = 0;
+                }
+            }
+
+            if (flightState.sasEnabled && flightState.phase === 'descent') {
+                // Auto-upright orientation stability control
+                flightState.angle *= 0.94;
+
+                // Damping horizontal drift speed
+                flightState.speedX *= 0.96;
+
+                // Gentle retro thrust assistance near ground if falling fast
+                if (flightState.altitude < 700 && flightState.speedY < -20 && flightState.fuel > 0) {
+                    const reqThrottle = Math.min(1.0, Math.max(0.4, Math.abs(flightState.speedY) / 32));
+                    flightState.throttle = reqThrottle;
+                    const throttleSlider = document.getElementById('slider-throttle');
+                    if (throttleSlider) throttleSlider.value = Math.round(reqThrottle * 100);
+                    const throttleVal = document.getElementById('val-throttle');
+                    if (throttleVal) throttleVal.innerText = `${Math.round(reqThrottle * 100)}% (SAS)`;
+                }
+            }
+
+            flightState.maxAltitude = Math.max(flightState.maxAltitude, flightState.altitude);
+            const currentSpeedTotal = Math.round(Math.sqrt(flightState.speedY * flightState.speedY + flightState.speedX * flightState.speedX));
+            flightState.maxSpeed = Math.max(flightState.maxSpeed, currentSpeedTotal);
+
+            if (currentThrust > 0) {
+                flightState.shake = Math.random() * 4 * flightState.throttle;
+            } else {
+                flightState.shake = Math.max(0, flightState.shake - dt * 10);
+            }
+
+            // Clouds Parallax
+            flightState.clouds.forEach(c => {
+                c.y += (flightState.speedY * 0.15 * c.speed + 30) * dt;
+                c.x -= flightState.speedX * 0.1 * dt;
+                if (c.y > window.innerHeight + 100) {
+                    c.y = -100 - Math.random() * 200;
+                    c.x = Math.random() * window.innerWidth;
+                }
+            });
+
+            // Exhaust Particles
+            if (currentThrust > 0) {
+                for (let i = 0; i < 4; i++) {
+                    flightState.particles.push({
+                        x: (Math.random() - 0.5) * 16,
+                        y: 35,
+                        vx: (Math.random() - 0.5) * 40 - flightState.speedX * 0.2,
+                        vy: Math.random() * 120 + 80 + flightState.speedY * 0.1,
+                        life: 1.0,
+                        size: Math.random() * 10 + 6,
+                        color: Math.random() > 0.3 ? '#ff6600' : (Math.random() > 0.5 ? '#ffcc00' : '#ffffff')
+                    });
+                }
+            }
+
+            flightState.particles.forEach(p => {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.life -= dt * 2.5;
+            });
+            flightState.particles = flightState.particles.filter(p => p.life > 0);
+
+            // Steering Key Controls
+            if (keysPressed['ArrowLeft'] || keysPressed['a'] || keysPressed['A']) {
+                flightState.angle -= 0.8 * dt;
+            }
+            if (keysPressed['ArrowRight'] || keysPressed['d'] || keysPressed['D']) {
+                flightState.angle += 0.8 * dt;
+            }
+
+            updateFlightHUD(density);
+        }
+
+        function updateFlightHUD(density) {
+            const altKm = (flightState.altitude / 1000).toFixed(1);
+            document.getElementById('hud-altitude').innerText = flightState.altitude > 10000 
+                ? `${altKm} km` 
+                : `${Math.round(flightState.altitude)} m`;
+
+            const absSpeedY = Math.abs(Math.round(flightState.speedY));
+            const speedHud = document.getElementById('hud-speed');
+            speedHud.innerText = `${Math.round(flightState.speedY)} m/s`;
+            if (absSpeedY <= 32) {
+                speedHud.className = "text-emerald-400 font-bold text-base";
+            } else {
+                speedHud.className = "text-amber-400 font-bold";
+            }
+
+            document.getElementById('hud-vx').innerText = `${Math.round(flightState.speedX)} m/s`;
+
+            const fuelPct = Math.max(0, Math.round((flightState.fuel / flightState.maxFuel) * 100));
+            document.getElementById('hud-fuel').innerText = `${fuelPct}%`;
+            document.getElementById('hud-fuel-bar').style.width = `${fuelPct}%`;
+
+            document.getElementById('hud-alt-bar').style.width = Math.min(100, (flightState.altitude / 100000) * 100) + '%';
+            document.getElementById('hud-target-planet').innerText = flightState.planet.name;
+
+            let zoneName = '대류권';
+            if (flightState.phase === 'descent') zoneName = `${flightState.planet.name} 대기권 강하 및 역추진 착륙`;
+            else if (flightState.altitude >= 100000) zoneName = '외계 우주 (Outer Space Orbit)';
+            else if (flightState.altitude >= 50000) zoneName = '열권/중간권';
+            else if (flightState.altitude >= 10000) zoneName = '성층권';
+            document.getElementById('hud-zone-name').innerText = zoneName;
+        }
+
+        function renderFlightScene() {
+            const w = flightCanvas.width;
+            const h = flightCanvas.height;
+
+            flightCtx.clearRect(0, 0, w, h);
+
+            flightCtx.save();
+            if (flightState.shake > 0) {
+                const sx = (Math.random() - 0.5) * flightState.shake;
+                const sy = (Math.random() - 0.5) * flightState.shake;
+                flightCtx.translate(sx, sy);
+            }
+
+            const currentPlanet = flightState.planet;
+
+            // Dynamic Gradient Sky depending on Planet & Altitude
+            const grad = flightCtx.createLinearGradient(0, 0, 0, h);
+            if (flightState.phase === 'descent') {
+                grad.addColorStop(0, currentPlanet.topColor);
+                grad.addColorStop(1, currentPlanet.botColor);
+            } else if (flightState.altitude > 50000) {
+                grad.addColorStop(0, '#02040a');
+                grad.addColorStop(1, '#060913');
+            } else {
+                grad.addColorStop(0, currentPlanet.topColor);
+                grad.addColorStop(1, currentPlanet.botColor);
+            }
+            flightCtx.fillStyle = grad;
+            flightCtx.fillRect(-20, -20, w + 40, h + 40);
+
+            // Stars
+            if (flightState.altitude > 20000 || currentPlanet.id === 'moon') {
+                flightCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                for (let i = 0; i < 70; i++) {
+                    const sx = (Math.sin(i * 123.45) * 0.5 + 0.5) * w;
+                    const sy = (Math.cos(i * 67.89) * 0.5 + 0.5) * h;
+                    flightCtx.fillRect(sx, sy, (i % 3) + 1, (i % 3) + 1);
+                }
+            }
+
+            // Planetary Surface Terrain Rendering (Low Altitude Landing Phase)
+            if (flightState.altitude < 2000 || flightState.phase === 'descent') {
+                const groundY = h * 0.62 + (flightState.altitude * 0.25);
+                
+                // Mountains / Craters Horizon
+                flightCtx.fillStyle = currentPlanet.groundColor;
+                flightCtx.beginPath();
+                flightCtx.moveTo(0, groundY);
+                flightCtx.lineTo(w * 0.25, groundY - 45);
+                flightCtx.lineTo(w * 0.5, groundY - 15);
+                flightCtx.lineTo(w * 0.75, groundY - 55);
+                flightCtx.lineTo(w, groundY - 10);
+                flightCtx.lineTo(w, groundY + 400);
+                flightCtx.lineTo(0, groundY + 400);
+                flightCtx.fill();
+
+                // Surface Ground Base
+                flightCtx.fillStyle = currentPlanet.groundColor;
+                flightCtx.fillRect(0, groundY, w, 400);
+
+                // Safe Landing Pad Target
+                const padWidth = 240;
+                flightCtx.fillStyle = '#0284c7';
+                flightCtx.fillRect(w / 2 - padWidth / 2, groundY, padWidth, 12);
+                
+                flightCtx.fillStyle = '#38bdf8';
+                flightCtx.font = '12px Orbitron';
+                flightCtx.textAlign = 'center';
+                flightCtx.fillText('▼ SAFE LANDING ZONE ▼', w / 2, groundY - 10);
+
+                // Planted Flag Indicator
+                if (flightState.flagPlanted) {
+                    flightCtx.fillStyle = '#ef4444';
+                    flightCtx.fillRect(w / 2 + 40, groundY - 40, 24, 16);
+                    flightCtx.fillStyle = '#ffffff';
+                    flightCtx.fillRect(w / 2 + 40, groundY - 40, 3, 40);
+                }
+            }
+
+            // Parallax Clouds (Earth/Venus/Mars)
+            if (currentPlanet.atmDensity > 0 && flightState.altitude < 40000) {
+                flightCtx.fillStyle = currentPlanet.id === 'venus' ? 'rgba(234, 179, 8, 0.4)' : 'rgba(255, 255, 255, 0.5)';
+                flightState.clouds.forEach(c => {
+                    flightCtx.beginPath();
+                    flightCtx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+                    flightCtx.arc(c.x + c.size * 0.5, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);
+                    flightCtx.fill();
+                });
+            }
+
+            // Rocket Model Position
+            const rocketX = w / 2;
+            const rocketY = h * 0.55;
+
+            flightCtx.save();
+            flightCtx.translate(rocketX, rocketY);
+            flightCtx.rotate(flightState.angle);
+
+            // Particle plume
+            flightState.particles.forEach(p => {
+                flightCtx.fillStyle = p.color;
+                flightCtx.globalAlpha = p.life;
+                flightCtx.beginPath();
+                flightCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                flightCtx.fill();
+            });
+            flightCtx.globalAlpha = 1.0;
+
+            // Render Rocket Grid Assembly
+            if (flightState.phase !== 'crashed') {
+                const rCell = 22;
+                const offsetCols = GAME.gridCols / 2;
+                const offsetRows = GAME.gridRows / 2;
+
+                for (let r = 0; r < GAME.gridRows; r++) {
+                    for (let c = 0; c < GAME.gridCols; c++) {
+                        const partId = GAME.grid[r][c];
+                        if (partId) {
+                            const partDef = PARTS.find(p => p.id === partId);
+                            if (partDef) {
+                                const px = (c - offsetCols) * rCell;
+                                const py = (r - offsetRows) * rCell;
+                                drawFlightRocketPart(flightCtx, partDef, px, py, rCell);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Crash Debris
+                flightCtx.fillStyle = '#ef4444';
+                flightCtx.font = '24px Orbitron';
+                flightCtx.fillText('💥 CRASHED!', -60, 0);
+            }
+
+            flightCtx.restore();
+            flightCtx.restore();
+        }
+
+        function drawFlightRocketPart(ctx, part, x, y, size) {
+            ctx.save();
+
+            if (part.category === 'command') {
+                ctx.fillStyle = part.color;
+                ctx.beginPath();
+                ctx.moveTo(x + size / 2, y);
+                ctx.lineTo(x + size, y + size);
+                ctx.lineTo(x, y + size);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size * 0.6, size * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+
+            } else if (part.category === 'fuel') {
+                const grad = ctx.createLinearGradient(x, y, x + size, y);
+                grad.addColorStop(0, part.color);
+                grad.addColorStop(0.5, '#ffffff');
+                grad.addColorStop(1, part.color);
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
+
+            } else if (part.category === 'engine') {
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(x + 2, y, size - 4, size * 0.4);
+
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath();
+                ctx.moveTo(x + 4, y + size * 0.4);
+                ctx.lineTo(x + size - 4, y + size * 0.4);
+                ctx.lineTo(x + size, y + size);
+                ctx.lineTo(x, y + size);
+                ctx.closePath();
+                ctx.fill();
+
+                if (flightState.throttle > 0 && flightState.fuel > 0) {
+                    const flameLen = (size * 1.6 + Math.random() * 12) * flightState.throttle;
+                    const flameGrad = ctx.createLinearGradient(x, y + size, x, y + size + flameLen);
+                    flameGrad.addColorStop(0, '#f97316');
+                    flameGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+                    ctx.fillStyle = flameGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 2, y + size);
+                    ctx.lineTo(x + size - 2, y + size);
+                    ctx.lineTo(x + size / 2, y + size + flameLen);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+            } else {
+                ctx.fillStyle = part.color;
+                ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
+            }
+
+            ctx.restore();
+        }
+
+        function finishFlightMission(isSuccess) {
+            flightState.active = false;
+
+            const planet = flightState.planet;
+            let reward = 0;
+
+            if (isSuccess) {
+                reward = Math.round(5000 * planet.rewardMult);
+                if (flightState.hasRover) reward += 10000;
+                
+                GAME.money += reward;
+                GAME.exploredPlanets.add(planet.id);
+
+                document.getElementById('result-title').innerText = `${planet.name} 착륙 성공! 🎉`;
+                document.getElementById('result-subtitle').innerText = '역추진을 통한 소프트 랜딩에 성공하였습니다.';
+                document.getElementById('res-status').innerText = '안전 소프트 랜딩 (Soft Landing)';
+                document.getElementById('res-status').className = 'text-emerald-400 font-bold';
+                document.getElementById('btn-plant-flag').classList.remove('hidden');
+                playSound('fanfare');
+            } else {
+                reward = 500;
+                GAME.money += reward;
+                document.getElementById('result-title').innerText = `💥 ${planet.name} 착륙 충돌 폭발!`;
+                document.getElementById('result-subtitle').innerText = '하강 수직 속도가 너무 빠르거나 기체가 기울어져 폭발했습니다.';
+                document.getElementById('res-status').innerText = '강제 충돌 (Crash Impact)';
+                document.getElementById('res-status').className = 'text-rose-500 font-bold';
+                document.getElementById('btn-plant-flag').classList.add('hidden');
+            }
+
+            document.getElementById('stat-money').innerText = GAME.money.toLocaleString();
+            document.getElementById('stat-planets').innerText = `${GAME.exploredPlanets.size} / 3`;
+
+            document.getElementById('res-planet').innerText = planet.name;
+            document.getElementById('res-speed').innerText = `${Math.abs(Math.round(flightState.speedY))} m/s`;
+            document.getElementById('res-reward').innerText = `+${reward.toLocaleString()} Gold`;
+
+            document.getElementById('modal-result').classList.remove('hidden');
+        }
+
+        // Orbit Destination Buttons
+        document.querySelectorAll('.btn-select-planet').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetKey = btn.getAttribute('data-planet');
+                const selectedPlanet = PLANETS[targetKey];
+                
+                flightState.planet = selectedPlanet;
+                flightState.phase = 'descent';
+                flightState.altitude = 2000; // Raised starting altitude for extra reaction time
+                flightState.speedY = -25;   // Significantly reduced initial descent speed from -120 to -25 m/s
+
+                document.getElementById('orbit-planet-select').classList.add('hidden');
+                document.getElementById('flight-phase').innerText = `${selectedPlanet.name} 역추진 착륙 하강`;
+                playSound('click');
+            });
+        });
+
+        // Toggle SAS Auto Landing Assist Button
+        const btnSas = document.getElementById('btn-toggle-sas');
+        if (btnSas) {
+            btnSas.addEventListener('click', () => {
+                flightState.sasEnabled = !flightState.sasEnabled;
+                const txtSas = document.getElementById('txt-sas-status');
+                if (flightState.sasEnabled) {
+                    btnSas.className = "px-3.5 py-3.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/60 text-xs font-bold rounded-xl transition font-orbitron flex items-center gap-1.5";
+                    if (txtSas) txtSas.innerText = "SAS 활성";
+                } else {
+                    btnSas.className = "px-3.5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 text-xs font-bold rounded-xl transition font-orbitron flex items-center gap-1.5";
+                    if (txtSas) txtSas.innerText = "SAS 비활성";
+                }
+                playSound('click');
+            });
+        }
+
+        window.onload = function () {
+            hangarCanvas = document.getElementById('hangar-canvas');
+            if (hangarCanvas) hangarCtx = hangarCanvas.getContext('2d');
+
+            flightCanvas = document.getElementById('flight-canvas');
+            if (flightCanvas) flightCtx = flightCanvas.getContext('2d');
+
+            // Attach core button event listeners
+            document.getElementById('btn-start-launch')?.addEventListener('click', startFlight);
+            
+            document.getElementById('btn-ignition')?.addEventListener('click', () => {
+                if (!flightState.active) return;
+                flightState.throttle = flightState.throttle > 0 ? 0 : 1;
+                const slider = document.getElementById('slider-throttle');
+                if (slider) slider.value = flightState.throttle * 100;
+                const valText = document.getElementById('val-throttle');
+                if (valText) valText.innerText = `${Math.round(flightState.throttle * 100)}%`;
+                playSound('click');
+            });
+
+            document.getElementById('btn-abort')?.addEventListener('click', () => {
+                flightState.active = false;
+                if (flightAnimId) cancelAnimationFrame(flightAnimId);
+                document.getElementById('screen-flight').classList.add('hidden');
+                document.getElementById('screen-hangar').classList.remove('hidden');
+                playSound('click');
+            });
+
+            document.getElementById('slider-throttle')?.addEventListener('input', (e) => {
+                flightState.throttle = parseFloat(e.target.value) / 100;
+                document.getElementById('val-throttle').innerText = `${e.target.value}%`;
+            });
+
+            // Touch / Click Steering
+            const steerLeft = document.getElementById('btn-steer-left');
+            const steerRight = document.getElementById('btn-steer-right');
+
+            if (steerLeft) {
+                steerLeft.addEventListener('mousedown', () => { keysPressed['ArrowLeft'] = true; });
+                steerLeft.addEventListener('mouseup', () => { keysPressed['ArrowLeft'] = false; });
+                steerLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keysPressed['ArrowLeft'] = true; });
+                steerLeft.addEventListener('touchend', () => { keysPressed['ArrowLeft'] = false; });
+            }
+
+            if (steerRight) {
+                steerRight.addEventListener('mousedown', () => { keysPressed['ArrowRight'] = true; });
+                steerRight.addEventListener('mouseup', () => { keysPressed['ArrowRight'] = false; });
+                steerRight.addEventListener('touchstart', (e) => { e.preventDefault(); keysPressed['ArrowRight'] = true; });
+                steerRight.addEventListener('touchend', () => { keysPressed['ArrowRight'] = false; });
+            }
+
+            // Audio Toggle
+            document.getElementById('btn-toggle-audio')?.addEventListener('click', () => {
+                GAME.soundEnabled = !GAME.soundEnabled;
+                const icon = document.getElementById('icon-audio');
+                if (icon) {
+                    icon.className = GAME.soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+                }
+            });
+
+            // Result Modal Actions
+            document.getElementById('btn-plant-flag')?.addEventListener('click', () => {
+                flightState.flagPlanted = true;
+                GAME.money += 3000;
+                document.getElementById('stat-money').innerText = GAME.money.toLocaleString();
+                document.getElementById('btn-plant-flag').classList.add('hidden');
+                playSound('fanfare');
+            });
+
+            document.getElementById('btn-close-result')?.addEventListener('click', () => {
+                document.getElementById('modal-result').classList.add('hidden');
+                document.getElementById('screen-flight').classList.add('hidden');
+                document.getElementById('screen-hangar').classList.remove('hidden');
+                playSound('click');
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.className = 'tab-btn p-2 rounded-lg text-center font-bold transition hover:text-cyan-300 text-slate-400';
+                    });
+                    btn.className = 'tab-btn active p-2 rounded-lg text-center font-bold transition bg-cyan-500/20 text-cyan-300 border border-cyan-500/50';
+                    renderPartsCatalog(btn.getAttribute('data-cat'));
+                    playSound('click');
+                });
+            });
+
+            document.getElementById('btn-clear-ship').addEventListener('click', clearShip);
+            document.getElementById('btn-auto-build').addEventListener('click', autoBuildShip);
+
+            window.addEventListener('resize', () => {
+                resizeHangarCanvas();
+                resizeFlightCanvas();
+            });
+
+            setupHangarCanvasEvents();
+            renderPartsCatalog('command');
+            autoBuildShip();
+            resizeHangarCanvas();
+        };
+    </script>
+</body>
+</html>

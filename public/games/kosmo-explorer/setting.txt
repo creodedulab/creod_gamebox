@@ -1,0 +1,4 @@
+1.kor_name=[우주선 만들기]
+2.eng_name=[Kosmo Explorer]
+3.maker=[완주 창윤]
+4.genre=[*]
