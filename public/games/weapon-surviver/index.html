@@ -457,6 +457,7 @@
         let enemiesToSpawn = 0;
         let enemySpawnTimer = 0;
         let screenShake = 0;
+        let animationFrameId = null;
 
         // Entities
         let player = null;
@@ -1031,7 +1032,7 @@
 
             if (isPaused) {
                 lastTime = time;
-                requestAnimationFrame(gameLoop);
+                animationFrameId = requestAnimationFrame(gameLoop);
                 return;
             }
 
@@ -1182,11 +1183,20 @@
 
             ctx.restore();
 
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         function initGame() {
             resizeCanvas();
+            Object.keys(keys).forEach((key) => {
+                keys[key] = false;
+            });
+            mouse.isDown = false;
+            joystickVector = { x: 0, y: 0 };
+            const joystickStick = document.getElementById('joystick-stick');
+            if (joystickStick) {
+                joystickStick.style.transform = 'translate(0px, 0px)';
+            }
             player = new Player(width / 2, height / 2);
             bullets = [];
             enemies = [];
@@ -1205,6 +1215,10 @@
         }
 
         function startGame() {
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             sound.init();
             initGame();
             isPlaying = true;
@@ -1220,7 +1234,7 @@
             }
 
             lastTime = performance.now();
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         function togglePause() {
@@ -1240,6 +1254,11 @@
 
         function gameOver() {
             isPlaying = false;
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            mouse.isDown = false;
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('touch-controls').classList.add('hidden');
             document.getElementById('final-score').innerText = score;
@@ -1371,4 +1390,7 @@
         }
 
         // Initial Canvas Sizing
-// ... existing code ... -->
+        resizeCanvas();
+    </script>
+</body>
+</html>
