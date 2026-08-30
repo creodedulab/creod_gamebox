@@ -1,0 +1,4 @@
+1.kor_name=[중학교 미술 만화와 애니메이션 스튜디오]
+2.eng_name=[Catoon&Anime Studio]
+3.maker=[세종 윤후]
+4.genre=[*]

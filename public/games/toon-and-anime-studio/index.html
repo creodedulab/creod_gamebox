@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>중학교 미술 - 만화와 애니메이션 스튜디오</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ==========================================
+       1. GLOBAL SYSTEM STYLES & RESET
+       ========================================== */
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-light: #eff6ff;
+      --danger-color: #ef4444;
+      --success-color: #10b981;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --font-main: 'Noto Sans KR', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      font-size: 17px;
+      line-height: 1.6;
+      padding-bottom: 40px;
+    }
+
+    /* HEADER & NAVIGATION */
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .logo i {
+      color: var(--accent-color);
+      font-size: 28px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .nav-tabs {
+        width: auto;
+      }
+    }
+
+    .nav-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-sm);
+      padding: 10px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* MAIN CONTAINER */
+    main {
+      max-width: 1200px;
+      margin: 24px auto 0;
+      padding: 0 16px;
+    }
+
+    .section-panel {
+      display: none;
+    }
+
+    .section-panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CARD COMPONENT */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1e293b;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 10px;
+    }
+
+    .card-title i {
+      color: var(--accent-color);
+    }
+
+    /* CONTROLS & SLIDERS */
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .control-val {
+      color: var(--accent-color);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: #e2e8f0;
+      outline: none;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background: #fef2f2;
+      color: var(--danger-color);
+      border-color: #fecaca;
+    }
+
+    .btn-danger:hover {
+      background: #fee2e2;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .btn-active {
+      background: #1e293b !important;
+      color: #ffffff !important;
+      border-color: #1e293b !important;
+    }
+
+    /* GRID LAYOUTS */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 850px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* ==========================================
+       2. SIMULATORS STYLING (CONCEPT LAB)
+       ========================================== */
+    .sim-display-box {
+      width: 100%;
+      height: 320px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 1) Character Ratio SVG Canvas */
+    #ratioCanvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 2) Shot Framing Box */
+    .shot-box {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .shot-frame-view {
+      transition: all 0.3s ease;
+      transform-origin: center center;
+    }
+
+    /* 3) Shading Box */
+    .shading-demo-obj {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #64748b, #0f172a);
+      transition: background 0.1s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    /* 4) Effect & Sound Effect Display */
+    .effect-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .sound-effect-text {
+      font-weight: 900;
+      color: #ef4444;
+      text-shadow: 3px 3px 0px #000, -2px -2px 0px #fff;
+      font-style: italic;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* ==========================================
+       3. STORYBOARD BUILDER
+       ========================================== */
+    .cut-layout-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .storyboard-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .storyboard-grid.layout-4cut {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .storyboard-grid.layout-vertical {
+      grid-template-columns: 1fr;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .cut-card {
+      border: 2px solid #0f172a;
+      border-radius: var(--radius-sm);
+      background: #fff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cut-header {
+      font-weight: 900;
+      font-size: 16px;
+      background: #0f172a;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .cut-image-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #f1f5f9;
+      border: 1px dashed #94a3b8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cut-image-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .cut-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cut-inputs textarea, .cut-inputs input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .cut-inputs textarea {
+      resize: vertical;
+      min-height: 50px;
+    }
+
+    /* ==========================================
+       4. ANIMATION & DRAWING STUDIO
+       ========================================== */
+    .studio-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 992px) {
+      .studio-layout {
+        grid-template-columns: 320px 1fr;
+      }
+    }
+
+    /* Toolbar Panel */
+    .tool-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Palette Accordion */
+    .palette-container {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      background: #fafafa;
+    }
+
+    .palette-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 8px 0 4px 4px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+      gap: 4px;
+    }
+
+    .color-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.2);
+      z-index: 2;
+    }
+
+    .color-swatch.selected {
+      outline: 2px solid #000;
+      outline-offset: 1px;
+    }
+
+    /* Canvas Work Area */
+    .canvas-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background: #e2e8f0;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      position: relative;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 4/3;
+      background: #ffffff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      border-radius: 8px;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #onionCanvas {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    /* Animation Timeline */
+    .timeline-bar {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .frames-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 6px 2px;
+      min-height: 80px;
+      align-items: center;
+    }
+
+    .frame-thumb {
+      width: 80px;
+      height: 60px;
+      background: #f1f5f9;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .frame-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .frame-thumb.active {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    }
+
+    .frame-thumb .frame-num {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* ==========================================
+       5. QUIZ SECTION
+       ========================================== */
+    .quiz-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .quiz-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .quiz-question {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-main);
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .quiz-opt-btn {
+      text-align: left;
+      padding: 14px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: #f8fafc;
+      font-size: 17px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+
+    .quiz-opt-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .quiz-opt-btn.correct {
+      background: #dcfce7 !important;
+      border-color: #4ade80 !important;
+      color: #166534 !important;
+      font-weight: 700;
+    }
+
+    .quiz-opt-btn.wrong {
+      background: #fee2e2 !important;
+      border-color: #fca5a5 !important;
+      color: #991b1b !important;
+    }
+
+    .quiz-feedback {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      display: none;
+    }
+
+    .quiz-feedback.show {
+      display: block;
+    }
+
+    /* UTILITY & INFO BADGES */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--accent-light);
+      color: var(--accent-color);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    /* TOOLTIP / HELP POP */
+    .help-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      color: #166534;
+      font-size: 15px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER NAVIGATION -->
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <i class="fa-solid fa-pen-nib"></i>
+        <span>만화 & 애니메이션 탐구실</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('conceptsTab')">
+          <i class="fa-solid fa-sliders"></i> 원리 시뮬레이터
+        </button>
+        <button class="nav-btn" onclick="switchTab('storyboardTab')">
+          <i class="fa-solid fa-border-all"></i> 스토리보드 & 컷 구성
+        </button>
+        <button class="nav-btn" onclick="switchTab('studioTab')">
+          <i class="fa-solid fa-film"></i> 애니메이션 스튜디오
+        </button>
+        <button class="nav-btn" onclick="switchTab('quizTab')">
+          <i class="fa-solid fa-circle-check"></i> 배운 내용 확인
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- SECTION 1: CONCEPTS SIMULATOR LAB -->
+    <section id="conceptsTab" class="section-panel active">
+      <div class="badge">기본 교과 개념 배우기</div>
+      <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">만화 표현 요소 값 조절 시뮬레이터</h1>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">슬라이더와 버튼을 조작하며 효과, 비율, 장면 크기, 명암의 변화를 실시간으로 확인해보세요.</p>
+
+      <div class="grid-2">
+        
+        <!-- 1. Character Proportions Simulator -->
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-child"></i> 1. 캐릭터 신체 비율 (등신대)
+          </div>
+          <div class="sim-display-box">
+            <svg id="ratioCanvas" viewBox="0 0 300 300">
+              <!-- SVG elements updated dynamically via JS -->
+            </svg>
+          </div>
+          <div style="margin-top: 16px;">
+            <div class="control-group">
+              <div class="control-label">
+                <span>머리 비율 (등신 설정)</span>
+                <span id="ratioVal" class="control-val">3 등신 (SD 캐릭터)</span>
+              </div>
+              <input type="range" id="ratioSlider" min="2" max="8" step="1" value="3" oninput="updateRatioSim()">
+            </div>
+            <p style="font-size: 15px; color: var(--text-muted); background: #f1f5f9; padding: 10px; border-radius: 6px;">
+              💡 <strong>개념 요약:</strong> 2~3등신은 귀엽고 친근한 캐릭터(SD), 7~8등신은 사실적인 만화 및 웹툰 캐릭터 표현에 자주 쓰입니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. Shot Size & Camera Framing -->
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-video"></i> 2. 장면 크기 (샷 / 프레임)
+          </div>
+          <div class="sim-display-box">
+            <div class="shot-box">
+              <div id="shotFrameView" class="shot-frame-view">
+                <!-- Inner character image/graphic -->
+                <svg width="220" height="220" viewBox="0 0 100 100">
+                  <!-- Background landscape -->
+                  <rect x="0" y="0" width="100" height="100" fill="#bae6fd"/>
+                  <path d="M0 70 L30 50 L60 70 L100 40 L100 100 L0 100 Z" fill="#86efac"/>
+                  <!-- Sun -->
+                  <circle cx="85" cy="20" r="10" fill="#fde047"/>
+                  <!-- Character -->
+                  <circle cx="50" cy="45" r="8" fill="#f87171"/> <!-- Head -->
+                  <rect x="46" y="53" width="8" height="18" fill="#1e40af"/> <!-- Body -->
+                  <line x1="42" y1="58" x2="58" y2="58" stroke="#1e40af" stroke-width="2"/> <!-- Arms -->
+                  <line x1="47" y1="71" x2="47" y2="85" stroke="#0f172a" stroke-width="2.5"/> <!-- Leg L -->
+                  <line x1="53" y1="71" x2="53" y2="85" stroke="#0f172a" stroke-width="2.5"/> <!-- Leg R -->
+                  <!-- Eye details -->
+                  <circle cx="48" cy="44" r="1" fill="#fff"/>
+                  <circle cx="52" cy="44" r="1" fill="#fff"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <div class="btn-group" style="margin-bottom: 12px;">
+              <button class="btn btn-sm" onclick="setShotSize('els', this)">익스트림 롱샷</button>
+              <button class="btn btn-sm" onclick="setShotSize('fs', this)">풀샷</button>
+              <button class="btn btn-sm btn-active" onclick="setShotSize('ms', this)">미디엄샷</button>
+              <button class="btn btn-sm" onclick="setShotSize('cu', this)">클로즈업</button>
+            </div>
+            <p id="shotDesc" style="font-size: 15px; color: var(--text-muted); background: #f1f5f9; padding: 10px; border-radius: 6px;">
+              <strong>미디엄샷 (Medium Shot):</strong> 인물의 상반신 위주로 담아 인물의 행동과 대화를 자연스럽게 표현합니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Shading & Lighting Simulator -->
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-sun"></i> 3. 명암과 입체감 (빛과 그림자)
+          </div>
+          <div class="sim-display-box">
+            <div id="shadingObj" class="shading-demo-obj"></div>
+          </div>
+          <div style="margin-top: 16px;">
+            <div class="control-group">
+              <div class="control-label">
+                <span>빛의 방향 (각도)</span>
+                <span id="lightAngleVal" class="control-val">45° (대각선 상단)</span>
+              </div>
+              <input type="range" id="lightAngleSlider" min="0" max="360" value="45" oninput="updateShadingSim()">
+            </div>
+            <div class="control-group">
+              <div class="control-label">
+                <span>빛의 대비 / 선명도</span>
+                <span id="lightContrastVal" class="control-val">보통</span>
+              </div>
+              <input type="range" id="lightContrastSlider" min="1" max="5" value="3" oninput="updateShadingSim()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Effects & Visual Sound Effects -->
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-bolt"></i> 4. 효과선 & 효과음 연출
+          </div>
+          <div class="sim-display-box" id="effectBox" style="background:#0f172a; color:#fff;">
+            <!-- Dynamic Canvas Background for Speed lines -->
+            <canvas id="effectBgCanvas" width="400" height="320" style="position:absolute; inset:0;"></canvas>
+            <div id="soundText" class="sound-effect-text" style="font-size: 48px;">콰쾅!!</div>
+          </div>
+          <div style="margin-top: 16px;">
+            <div class="control-group">
+              <div class="control-label">
+                <span>집중선 / 속도선 세기</span>
+                <span id="effectLineVal" class="control-val">강함</span>
+              </div>
+              <input type="range" id="effectLineSlider" min="0" max="50" value="30" oninput="updateEffectSim()">
+            </div>
+            <div class="control-group">
+              <div class="control-label">
+                <span>효과음 크기 & 문구</span>
+                <span id="soundTextVal" class="control-val">48px</span>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="soundTextInput" value="콰쾅!!" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-weight:700; width:120px;" oninput="updateEffectSim()">
+                <input type="range" id="soundTextSizeSlider" min="20" max="80" value="48" oninput="updateEffectSim()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 2: STORYBOARD & CUT LAYOUT -->
+    <section id="storyboardTab" class="section-panel">
+      <div class="badge">만화 구성해보기</div>
+      <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">스토리보드 및 컷 나누기</h1>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">컷의 크기와 배치를 선택하고 장면 설명, 대사, 효과음을 구상해 보세요.</p>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div class="card-title" style="margin-bottom:0; border:none; padding:0;">
+            <i class="fa-solid fa-table-cells-large"></i> 레이아웃 선택
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-active" onclick="changeCutLayout('4cut', this)">4컷 웹툰형</button>
+            <button class="btn btn-sm" onclick="changeCutLayout('vertical', this)">스마트폰 세로 스크롤형</button>
+            <button class="btn btn-sm" onclick="changeCutLayout('dynamic', this)">변형 강조 컷형</button>
+          </div>
+        </div>
+
+        <div id="storyboardContainer" class="storyboard-grid layout-4cut">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div style="margin-top: 24px; text-align: right;">
+          <button class="btn btn-primary" onclick="exportStoryboardInfo()">
+            <i class="fa-solid fa-download"></i> 스토리보드 구성 완료 확인
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: ANIMATION & DRAWING STUDIO -->
+    <section id="studioTab" class="section-panel">
+      <div class="badge">직접 그리고 프레임 애니메이션 만들기</div>
+      <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">드로잉 & 프레임 애니메이션 스튜디오</h1>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">
+        원하는 그림을 그리고 프레임을 추가하여 애니메이션을 만들어 보세요. (최대 30 FPS 지원)
+      </p>
+
+      <div class="studio-layout">
+        
+        <!-- Left: Tool & Palette Control -->
+        <div class="tool-panel">
+          <div class="card" style="padding: 16px;">
+            <div class="card-title" style="font-size:18px; margin-bottom:12px;">
+              <i class="fa-solid fa-paint-brush"></i> 그린 도구
+            </div>
+            
+            <div class="btn-group" style="margin-bottom: 12px;">
+              <button class="btn btn-sm btn-active" id="toolPencil" onclick="setTool('pencil')"><i class="fa-solid fa-pencil"></i> 연필</button>
+              <button class="btn btn-sm" id="toolEraser" onclick="setTool('eraser')"><i class="fa-solid fa-eraser"></i> 지우개</button>
+              <button class="btn btn-sm" id="toolLine" onclick="setTool('line')"><i class="fa-solid fa-slash"></i> 직선</button>
+              <button class="btn btn-sm" id="toolRect" onclick="setTool('rect')"><i class="fa-regular fa-square"></i> 네모</button>
+            </div>
+
+            <!-- Brush Size Slider -->
+            <div class="control-group">
+              <div class="control-label">
+                <span>두께</span>
+                <span id="brushSizeVal" class="control-val">5px</span>
+              </div>
+              <input type="range" id="brushSizeSlider" min="1" max="40" value="5" oninput="updateBrushSettings()">
+            </div>
+
+            <!-- Opacity Slider -->
+            <div class="control-group">
+              <div class="control-label">
+                <span>투명도 (Alpha)</span>
+                <span id="brushOpacityVal" class="control-val">100%</span>
+              </div>
+              <input type="range" id="brushOpacitySlider" min="10" max="100" value="100" oninput="updateBrushSettings()">
+            </div>
+
+            <!-- Edit Action Buttons -->
+            <div class="btn-group" style="margin-top: 8px;">
+              <button class="btn btn-sm" onclick="undoCanvas()"><i class="fa-solid fa-rotate-left"></i> 뒤로가기</button>
+              <button class="btn btn-sm" onclick="clearActiveCanvas()"><i class="fa-solid fa-trash"></i> 전체 지우기</button>
+              <button class="btn btn-sm" onclick="copyActiveFrame()"><i class="fa-solid fa-copy"></i> 복사</button>
+              <button class="btn btn-sm" onclick="pasteActiveFrame()"><i class="fa-solid fa-paste"></i> 붙여넣기</button>
+            </div>
+          </div>
+
+          <!-- Color Palette with 100+ organized colors -->
+          <div class="card" style="padding: 16px;">
+            <div class="card-title" style="font-size:18px; margin-bottom:12px; justify-content:space-between;">
+              <span><i class="fa-solid fa-palette"></i> 색상 선택 (100+ 색상)</span>
+              <input type="color" id="customPicker" value="#000000" onchange="selectCustomColor(this.value)" style="cursor:pointer; width:30px; height:30px; border:none; background:none;">
+            </div>
+
+            <div class="palette-container" id="paletteAccordion">
+              <!-- Dynamically Populated 100+ Colors -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Canvas & Animation Timeline -->
+        <div class="canvas-container">
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <!-- Background Onion Skin Canvas -->
+            <canvas id="onionCanvas" width="560" height="420"></canvas>
+            <!-- Active Drawing Canvas -->
+            <canvas id="drawCanvas" width="560" height="420"></canvas>
+          </div>
+
+          <!-- Timeline Control Bar -->
+          <div class="timeline-bar">
+            <div class="timeline-controls">
+              <div class="btn-group">
+                <button class="btn btn-primary" id="playAnimBtn" onclick="togglePlayAnimation()">
+                  <i class="fa-solid fa-play"></i> 재생
+                </button>
+                <button class="btn" onclick="addNewFrame()">
+                  <i class="fa-solid fa-plus"></i> 새 프레임
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCurrentFrame()">
+                  <i class="fa-solid fa-minus"></i> 프레임 삭제
+                </button>
+              </div>
+
+              <!-- FPS Slider (Up to 30 FPS) -->
+              <div style="display:flex; align-items:center; gap:12px;">
+                <label style="font-weight:700; font-size:15px; white-space:nowrap;">재생 속도 (FPS):</label>
+                <span id="fpsVal" style="font-weight:900; color:var(--accent-color); width:50px;">12 FPS</span>
+                <input type="range" id="fpsSlider" min="1" max="30" value="12" style="width:120px;" oninput="updateFPS(this.value)">
+              </div>
+
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="onionSkinToggle" checked onchange="toggleOnionSkin(this.checked)">
+                <label for="onionSkinToggle" style="font-weight:700; font-size:15px; cursor:pointer;">어니언 스킨 (이전 프레임 비추기)</label>
+              </div>
+            </div>
+
+            <!-- Frames Horizontal Scroll Window -->
+            <div class="frames-scroll" id="framesScroll">
+              <!-- Dynamic Frame Thumbnails -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 4: QUIZ & EVALUATION -->
+    <section id="quizTab" class="section-panel">
+      <div class="badge">배운 내용 점검하기</div>
+      <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">만화와 애니메이션 단원 확인 문제</h1>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">수업 중 배운 주요 개념을 퀴즈로 확인해 봅시다.</p>
+
+      <div class="quiz-container">
+        
+        <!-- Question 1 -->
+        <div class="quiz-card">
+          <div class="quiz-question">Q1. 만화에서 인물의 인상이나 친근함, 귀여움을 강조하기 위해 머리와 몸의 비율을 2~3등신으로 줄여 표현하는 캐릭터를 무엇이라고 할까요?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt-btn" onclick="checkAnswer(1, 0, this)">① 극화체 캐릭터</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(1, 1, this)">② SD ( 변형/축소 ) 캐릭터</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(1, 2, this)">③ 8등신 사실적 캐릭터</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(1, 3, this)">④ 캐리커처 캐릭터</button>
+          </div>
+          <div id="quizFeedback1" class="quiz-feedback"></div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-card">
+          <div class="quiz-question">Q2. 인물의 상반신 위주로 화면에 담아 인물의 행동과 대화를 가장 자연스럽게 보여주는 장면 크기(Shot)는 무엇인가요?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt-btn" onclick="checkAnswer(2, 0, this)">① 익스트림 롱샷 (Extreme Long Shot)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(2, 1, this)">② 클로즈업 샷 (Close-up Shot)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(2, 2, this)">③ 미디엄 샷 (Medium Shot)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(2, 3, this)">④ 바스트 샷 (Bust Shot)</button>
+          </div>
+          <div id="quizFeedback2" class="quiz-feedback"></div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-card">
+          <div class="quiz-question">Q3. 정지된 그림 여러 장을 연속으로 빠르게 보여주어 마치 움직이는 것처럼 느끼게 하는 시각적 착시 원리를 이용한 미술 분야는 무엇인가요?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt-btn" onclick="checkAnswer(3, 0, this)">① 애니메이션 (Animation)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(3, 1, this)">② 일러스트레이션 (Illustration)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(3, 2, this)">③ 타이포그래피 (Typography)</button>
+            <button class="quiz-opt-btn" onclick="checkAnswer(3, 3, this)">④ 조소 (Sculpture)</button>
+          </div>
+          <div id="quizFeedback3" class="quiz-feedback"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       JAVASCRIPT LOGIC
+       ========================================== -->
+  <script>
+    /* ----------------------------------------------------
+       1. NAVIGATION TAB SWITCHER
+       ---------------------------------------------------- */
+    function switchTab(tabId) {
+      document.querySelectorAll('.section-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId === 'studioTab') {
+        resizeCanvas();
+      }
+    }
+
+    /* ----------------------------------------------------
+       2. CONCEPT SIMULATORS LOGIC
+       ---------------------------------------------------- */
+    // 1) Character Proportions (등신대)
+    function updateRatioSim() {
+      const val = document.getElementById('ratioSlider').value;
+      const valText = document.getElementById('ratioVal');
+      const svg = document.getElementById('ratioCanvas');
+
+      let label = `${val} 등신대`;
+      if (val <= 3) label += " (귀여운 SD 캐릭터)";
+      else if (val <= 5) label += " (아동/청소년 비율)";
+      else label += " (사실적인 극화체 캐릭터)";
+      valText.innerText = label;
+
+      // Draw SVG character based on head ratio
+      const heads = parseInt(val);
+      const totalH = 240;
+      const headH = totalH / heads;
+      const headRadius = headH / 2;
+      const startY = 30;
+
+      let html = '';
+      // Guide Grid Lines
+      for (let i = 0; i <= heads; i++) {
+        const y = startY + i * headH;
+        html += `<line x1="20" y1="${y}" x2="280" y2="${y}" stroke="#cbd5e1" stroke-dasharray="3,3"/>`;
+        html += `<text x="285" y="${y + 4}" font-size="10" fill="#94a3b8">${i}</text>`;
+      }
+
+      // Head
+      const headCY = startY + headRadius;
+      html += `<circle cx="150" cy="${headCY}" r="${headRadius - 2}" fill="#fecdd3" stroke="#e11d48" stroke-width="2"/>`;
+      // Eyes
+      html += `<circle cx="${150 - headRadius/2.5}" cy="${headCY}" r="${Math.max(2, headRadius/5)}" fill="#000"/>`;
+      html += `<circle cx="${150 + headRadius/2.5}" cy="${headCY}" r="${Math.max(2, headRadius/5)}" fill="#000"/>`;
+
+      // Body & Legs
+      const bodyTop = startY + headH;
+      const bodyBottom = startY + totalH;
+      const torsoH = (totalH - headH) * 0.45;
+      const legsH = (totalH - headH) * 0.55;
+
+      // Torso
+      html += `<rect x="${150 - headRadius*0.7}" y="${bodyTop}" width="${headRadius*1.4}" height="${torsoH}" rx="4" fill="#60a5fa" stroke="#2563eb" stroke-width="2"/>`;
+      // Legs
+      html += `<line x1="${150 - headRadius*0.3}" y1="${bodyTop + torsoH}" x2="${150 - headRadius*0.3}" y2="${bodyBottom}" stroke="#1e293b" stroke-width="4"/>`;
+      html += `<line x1="${150 + headRadius*0.3}" y1="${bodyTop + torsoH}" x2="${150 + headRadius*0.3}" y2="${bodyBottom}" stroke="#1e293b" stroke-width="4"/>`;
+
+      svg.innerHTML = html;
+    }
+
+    // 2) Shot Size Simulator
+    function setShotSize(type, btn) {
+      document.querySelectorAll('#conceptsTab .card:nth-child(2) .btn').forEach(b => b.classList.remove('btn-active'));
+      btn.classList.add('btn-active');
+
+      const frame = document.getElementById('shotFrameView');
+      const desc = document.getElementById('shotDesc');
+
+      if (type === 'els') {
+        frame.style.transform = "scale(0.35)";
+        desc.innerHTML = "<strong>익스트림 롱샷 (Extreme Long Shot):</strong> 배경 전체와 인물의 아주 작은 모습을 담아 배경의 분위기나 광활함을 강조합니다.";
+      } else if (type === 'fs') {
+        frame.style.transform = "scale(0.7)";
+        desc.innerHTML = "<strong>풀샷 (Full Shot):</strong> 인물의 머리부터 발끝까지 전신을 담아 인물의 행동과 주변 상황을 보여줍니다.";
+      } else if (type === 'ms') {
+        frame.style.transform = "scale(1.1)";
+        desc.innerHTML = "<strong>미디엄샷 (Medium Shot):</strong> 인물의 상반신 위주로 담아 대화 장면과 행동을 가장 균형있게 보여줍니다.";
+      } else if (type === 'cu') {
+        frame.style.transform = "scale(2.4)";
+        desc.innerHTML = "<strong>클로즈업 (Close-up):</strong> 인물의 얼굴이나 특정 부위를 크게 확대하여 감정 변화나 중요한 소품을 강조합니다.";
+      }
+    }
+
+    // 3) Shading Simulator
+    function updateShadingSim() {
+      const angle = document.getElementById('lightAngleSlider').value;
+      const contrast = document.getElementById('lightContrastSlider').value;
+      const obj = document.getElementById('shadingObj');
+
+      document.getElementById('lightAngleVal').innerText = `${angle}°`;
+
+      // Calculate radial gradient focus point based on angle
+      const rad = (angle * Math.PI) / 180;
+      const x = 50 + Math.cos(rad) * 35;
+      const y = 50 + Math.sin(rad) * 35;
+
+      const darkCol = contrast > 3 ? '#020617' : '#334155';
+      obj.style.background = `radial-gradient(circle at ${x}% ${y}%, #ffffff 5%, #94a3b8 40%, ${darkCol} 90%)`;
+    }
+
+    // 4) Effect Simulator
+    function updateEffectSim() {
+      const lineVal = document.getElementById('effectLineSlider').value;
+      const soundText = document.getElementById('soundTextInput').value;
+      const textSize = document.getElementById('soundTextSizeSlider').value;
+
+      document.getElementById('effectLineVal').innerText = lineVal > 30 ? "강함" : (lineVal > 10 ? "보통" : "약함");
+      document.getElementById('soundTextVal').innerText = `${textSize}px`;
+
+      const textEl = document.getElementById('soundText');
+      textEl.innerText = soundText;
+      textEl.style.fontSize = `${textSize}px`;
+
+      // Render radial speedlines on canvas
+      const cvs = document.getElementById('effectBgCanvas');
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      if (lineVal > 0) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 2;
+        const cx = cvs.width / 2;
+        const cy = cvs.height / 2;
+        const lines = parseInt(lineVal) * 2;
+
+        for (let i = 0; i < lines; i++) {
+          const a = (Math.PI * 2 / lines) * i;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40);
+          ctx.lineTo(cx + Math.cos(a) * 250, cy + Math.sin(a) * 250);
+          ctx.stroke();
+        }
+      }
+    }
+
+    /* ----------------------------------------------------
+       3. STORYBOARD BUILDER LOGIC
+       ---------------------------------------------------- */
+    let currentCutLayout = '4cut';
+
+    function changeCutLayout(layout, btn) {
+      document.querySelectorAll('#storyboardTab .btn').forEach(b => b.classList.remove('btn-active'));
+      btn.classList.add('btn-active');
+
+      currentCutLayout = layout;
+      renderStoryboard();
+    }
+
+    function renderStoryboard() {
+      const container = document.getElementById('storyboardContainer');
+      container.className = `storyboard-grid layout-${currentCutLayout}`;
+
+      let cutCount = 4;
+      if (currentCutLayout === 'vertical') cutCount = 3;
+
+      let html = '';
+      for (let i = 1; i <= cutCount; i++) {
+        html += `
+          <div class="cut-card">
+            <div class="cut-header">장면 #${i}</div>
+            <div class="cut-image-placeholder" onclick="assignActiveDrawingToCut(${i})">
+              <i class="fa-solid fa-image" style="font-size:24px; color:#cbd5e1;"></i>
+              <span style="font-size:12px; color:#64748b; margin-top:4px;">스튜디오 스케치 가져오기</span>
+              <img id="cutImgPreview${i}" style="display:none;" />
+            </div>
+            <div class="cut-inputs">
+              <input type="text" placeholder="장면 및 구도 (예: 클로즈업)" />
+              <textarea placeholder="주요 대사 및 해설..."></textarea>
+              <input type="text" placeholder="효과음 및 연출 효과" />
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function assignActiveDrawingToCut(cutNum) {
+      const dataUrl = drawCanvas.toDataURL();
+      const img = document.getElementById(`cutImgPreview${cutNum}`);
+      img.src = dataUrl;
+      img.style.display = 'block';
+    }
+
+    function exportStoryboardInfo() {
+      alert("🎉 스토리보드 구상이 완료되었습니다! 애니메이션 스튜디오 탭으로 이동하여 본격적인 작품을 제작해보세요.");
+    }
+
+    /* ----------------------------------------------------
+       4. DRAWING & ANIMATION STUDIO LOGIC
+       ---------------------------------------------------- */
+    let drawCanvas, drawCtx, onionCanvas, onionCtx;
+    let isDrawing = false;
+    let currentTool = 'pencil'; // pencil, eraser, line, rect
+    let currentColor = '#000000';
+    let currentOpacity = 1.0;
+    let currentLineWidth = 5;
+
+    // Animation Frame Storage
+    let frames = []; // Array of ImageData or DataURLs
+    let activeFrameIndex = 0;
+    let copiedFrameData = null;
+    let isPlaying = false;
+    let animInterval = null;
+    let targetFPS = 12;
+    let undoStack = [];
+
+    // Initialize 100+ Organized Colors
+    const colorFamilies = {
+      "빨강 & 핑크": ["#ffe4e6", "#fecdd3", "#fda4af", "#fb7185", "#f43f5e", "#e11d48", "#be123c", "#881337", "#fff1f2", "#ffe4e6", "#f87171", "#dc2626"],
+      "주황 & 노랑": ["#fef3c7", "#fde047", "#facc15", "#eab308", "#ca8a04", "#854d0e", "#ffedd5", "#fed7aa", "#fb923c", "#f97316", "#ea580c", "#c2410c"],
+      "초록 & 연두": ["#f0fdf4", "#dcfce7", "#bbf7d0", "#86efac", "#4ade80", "#22c55e", "#16a34a", "#15803d", "#166534", "#14532d", "#a3e635", "#65a30d"],
+      "파랑 & 청록": ["#ecfeff", "#cffafe", "#a5f3fc", "#67e8f9", "#22d3ee", "#06b6d4", "#0891b2", "#0e7490", "#eff6ff", "#dbeafe", "#60a5fa", "#2563eb"],
+      "보라 & 자주": ["#faf5ff", "#f3e8ff", "#e9d5ff", "#d8b4fe", "#c084fc", "#a855f7", "#9333ea", "#7e22ce", "#fdf4ff", "#f5d0fe", "#e879f9", "#c026d3"],
+      "갈색 & 베이지": ["#fdf8f6", "#f5ebe6", "#e6d5cc", "#d4bbaf", "#bc9c8d", "#a17e6b", "#87634f", "#6e4b37", "#543828", "#3b251a", "#b45309", "#78350f"],
+      "무채색 & 스케치": ["#ffffff", "#f8fafc", "#f1f5f9", "#e2e8f0", "#cbd5e1", "#94a3b8", "#64748b", "#475569", "#334155", "#1e293b", "#0f172a", "#000000"],
+      "파스텔 스페셜": ["#fce7f3", "#fbcfe8", "#f472b6", "#db2777", "#ede9fe", "#ddd6fe", "#c4b5fd", "#a78bfa", "#ccfbf1", "#99f6e4", "#5eead4", "#14b8a6"]
+    };
+
+    function initPalette() {
+      const container = document.getElementById('paletteAccordion');
+      let html = '';
+
+      for (const [family, colors] of Object.entries(colorFamilies)) {
+        html += `<div class="palette-group-title">${family}</div><div class="color-grid">`;
+        colors.forEach(col => {
+          html += `<div class="color-swatch" style="background:${col};" onclick="selectColor('${col}', this)"></div>`;
+        });
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function selectColor(hex, swatchEl) {
+      currentColor = hex;
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      if (swatchEl) swatchEl.classList.add('selected');
+
+      if (currentTool === 'eraser') {
+        setTool('pencil');
+      }
+    }
+
+    function selectCustomColor(hex) {
+      selectColor(hex, null);
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('#studioTab .tool-panel .btn-group .btn').forEach(b => b.classList.remove('btn-active'));
+      
+      if (tool === 'pencil') document.getElementById('toolPencil').classList.add('btn-active');
+      if (tool === 'eraser') document.getElementById('toolEraser').classList.add('btn-active');
+      if (tool === 'line') document.getElementById('toolLine').classList.add('btn-active');
+      if (tool === 'rect') document.getElementById('toolRect').classList.add('btn-active');
+    }
+
+    function updateBrushSettings() {
+      currentLineWidth = document.getElementById('brushSizeSlider').value;
+      document.getElementById('brushSizeVal').innerText = `${currentLineWidth}px`;
+
+      currentOpacity = document.getElementById('brushOpacitySlider').value / 100;
+      document.getElementById('brushOpacityVal').innerText = `${Math.round(currentOpacity * 100)}%`;
+    }
+
+    // Canvas Mouse / Touch Drawing Logic
+    let startX = 0, startY = 0;
+    let snapshotData = null;
+
+    function initCanvas() {
+      drawCanvas = document.getElementById('drawCanvas');
+      drawCtx = drawCanvas.getContext('2d');
+      onionCanvas = document.getElementById('onionCanvas');
+      onionCtx = onionCanvas.getContext('2d');
+
+      // Add mouse listeners
+      drawCanvas.addEventListener('mousedown', startDrawing);
+      drawCanvas.addEventListener('mousemove', draw);
+      drawCanvas.addEventListener('mouseup', stopDrawing);
+      drawCanvas.addEventListener('mouseleave', stopDrawing);
+
+      // Add touch listeners for mobile
+      drawCanvas.addEventListener('touchstart', handleTouchStart);
+      drawCanvas.addEventListener('touchmove', handleTouchMove);
+      drawCanvas.addEventListener('touchend', stopDrawing);
+
+      // Add initial blank frame
+      addNewFrame();
+    }
+
+    function getCanvasCoords(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      const scaleX = drawCanvas.width / rect.width;
+      const scaleY = drawCanvas.height / rect.height;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function startDrawing(e) {
+      if (isPlaying) return;
+      isDrawing = true;
+      const coords = getCanvasCoords(e);
+      startX = coords.x;
+      startY = coords.y;
+
+      saveUndoState();
+
+      drawCtx.beginPath();
+      drawCtx.moveTo(startX, startY);
+
+      snapshotData = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+    }
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      startDrawing(e);
+    }
+
+    function draw(e) {
+      if (!isDrawing || isPlaying) return;
+      const coords = getCanvasCoords(e);
+
+      drawCtx.globalAlpha = currentOpacity;
+      drawCtx.lineWidth = currentLineWidth;
+      drawCtx.lineCap = 'round';
+      drawCtx.lineJoin = 'round';
+
+      if (currentTool === 'eraser') {
+        drawCtx.strokeStyle = '#ffffff';
+      } else {
+        drawCtx.strokeStyle = currentColor;
+      }
+
+      if (currentTool === 'pencil' || currentTool === 'eraser') {
+        drawCtx.lineTo(coords.x, coords.y);
+        drawCtx.stroke();
+      } else if (currentTool === 'line') {
+        drawCtx.putImageData(snapshotData, 0, 0);
+        drawCtx.beginPath();
+        drawCtx.moveTo(startX, startY);
+        drawCtx.lineTo(coords.x, coords.y);
+        drawCtx.stroke();
+      } else if (currentTool === 'rect') {
+        drawCtx.putImageData(snapshotData, 0, 0);
+        drawCtx.beginPath();
+        drawCtx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+      }
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      draw(e);
+    }
+
+    function stopDrawing() {
+      if (isDrawing) {
+        isDrawing = false;
+        drawCtx.closePath();
+        saveCurrentFrameData();
+      }
+    }
+
+    /* Undo Management */
+    function saveUndoState() {
+      undoStack.push(drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height));
+      if (undoStack.length > 15) undoStack.shift();
+    }
+
+    function undoCanvas() {
+      if (undoStack.length > 0) {
+        const state = undoStack.pop();
+        drawCtx.putImageData(state, 0, 0);
+        saveCurrentFrameData();
+      }
+    }
+
+    function clearActiveCanvas() {
+      saveUndoState();
+      drawCtx.fillStyle = "#ffffff";
+      drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+      saveCurrentFrameData();
+    }
+
+    /* Animation Frame Management */
+    function addNewFrame() {
+      const dataUrl = createBlankDataURL();
+      frames.push(dataUrl);
+      activeFrameIndex = frames.length - 1;
+      loadFrameToCanvas(activeFrameIndex);
+      renderTimeline();
+    }
+
+    function createBlankDataURL() {
+      const tempC = document.createElement('canvas');
+      tempC.width = 560;
+      tempC.height = 420;
+      const tCtx = tempC.getContext('2d');
+      tCtx.fillStyle = '#ffffff';
+      tCtx.fillRect(0, 0, 560, 420);
+      return tempC.toDataURL();
+    }
+
+    function saveCurrentFrameData() {
+      frames[activeFrameIndex] = drawCanvas.toDataURL();
+      updateTimelineThumbnail(activeFrameIndex);
+    }
+
+    function loadFrameToCanvas(index) {
+      activeFrameIndex = index;
+      const img = new Image();
+      img.onload = function() {
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        drawCtx.drawImage(img, 0, 0);
+        updateOnionSkin();
+      };
+      img.src = frames[index];
+    }
+
+    function updateOnionSkin() {
+      onionCtx.clearRect(0, 0, onionCanvas.width, onionCanvas.height);
+      const isToggleOn = document.getElementById('onionSkinToggle').checked;
+
+      if (isToggleOn && activeFrameIndex > 0) {
+        const prevImg = new Image();
+        prevImg.onload = function() {
+          onionCtx.drawImage(prevImg, 0, 0);
+        };
+        prevImg.src = frames[activeFrameIndex - 1];
+      }
+    }
+
+    function toggleOnionSkin(checked) {
+      updateOnionSkin();
+    }
+
+    function selectFrame(index) {
+      if (isPlaying) return;
+      saveCurrentFrameData();
+      activeFrameIndex = index;
+      loadFrameToCanvas(index);
+      renderTimeline();
+    }
+
+    function deleteCurrentFrame() {
+      if (frames.length <= 1) {
+        alert("최소 1개의 프레임은 유지되어야 합니다.");
+        return;
+      }
+      frames.splice(activeFrameIndex, 1);
+      if (activeFrameIndex >= frames.length) {
+        activeFrameIndex = frames.length - 1;
+      }
+      loadFrameToCanvas(activeFrameIndex);
+      renderTimeline();
+    }
+
+    function copyActiveFrame() {
+      copiedFrameData = drawCanvas.toDataURL();
+      alert("현재 프레임이 복사되었습니다.");
+    }
+
+    function pasteActiveFrame() {
+      if (!copiedFrameData) {
+        alert("복사된 프레임 데이터가 없습니다.");
+        return;
+      }
+      saveUndoState();
+      const img = new Image();
+      img.onload = function() {
+        drawCtx.drawImage(img, 0, 0);
+        saveCurrentFrameData();
+      };
+      img.src = copiedFrameData;
+    }
+
+    function renderTimeline() {
+      const scrollEl = document.getElementById('framesScroll');
+      let html = '';
+
+      frames.forEach((frameData, idx) => {
+        const isActive = idx === activeFrameIndex ? 'active' : '';
+        html += `
+          <div class="frame-thumb ${isActive}" onclick="selectFrame(${idx})">
+            <img src="${frameData}" />
+            <span class="frame-num">${idx + 1}</span>
+          </div>
+        `;
+      });
+
+      scrollEl.innerHTML = html;
+    }
+
+    function updateTimelineThumbnail(idx) {
+      const thumbs = document.querySelectorAll('.frame-thumb img');
+      if (thumbs[idx]) {
+        thumbs[idx].src = frames[idx];
+      }
+    }
+
+    function updateFPS(val) {
+      targetFPS = parseInt(val);
+      document.getElementById('fpsVal').innerText = `${targetFPS} FPS`;
+
+      if (isPlaying) {
+        togglePlayAnimation(); // restart with new speed
+        togglePlayAnimation();
+      }
+    }
+
+    function togglePlayAnimation() {
+      const playBtn = document.getElementById('playAnimBtn');
+
+      if (isPlaying) {
+        isPlaying = false;
+        clearInterval(animInterval);
+        playBtn.innerHTML = '<i class="fa-solid fa-play"></i> 재생';
+        loadFrameToCanvas(activeFrameIndex);
+      } else {
+        if (frames.length <= 1) {
+          alert("애니메이션을 재생하려면 최소 2개 이상의 프레임이 필요합니다.");
+          return;
+        }
+        isPlaying = true;
+        playBtn.innerHTML = '<i class="fa-solid fa-stop"></i> 정지';
+
+        let animIndex = 0;
+        const intervalMs = 1000 / targetFPS;
+
+        animInterval = setInterval(() => {
+          const img = new Image();
+          img.onload = function() {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            drawCtx.drawImage(img, 0, 0);
+          };
+          img.src = frames[animIndex];
+
+          animIndex = (animIndex + 1) % frames.length;
+        }, intervalMs);
+      }
+    }
+
+    function resizeCanvas() {
+      // Ensure canvas maintains aspect ratio and clarity
+      saveCurrentFrameData();
+      loadFrameToCanvas(activeFrameIndex);
+    }
+
+    /* ----------------------------------------------------
+       5. QUIZ LOGIC
+       ---------------------------------------------------- */
+    const quizAnswers = {
+      1: 1, // SD 캐릭터
+      2: 2, // 미디엄샷
+      3: 0  // 애니메이션
+    };
+
+    function checkAnswer(qNum, selectedOpt, btn) {
+      const card = btn.closest('.quiz-card');
+      const feedback = card.querySelector('.quiz-feedback');
+      const btns = card.querySelectorAll('.quiz-opt-btn');
+
+      btns.forEach(b => {
+        b.classList.remove('correct', 'wrong');
+        b.disabled = true;
+      });
+
+      if (selectedOpt === quizAnswers[qNum]) {
+        btn.classList.add('correct');
+        feedback.className = 'quiz-feedback show';
+        feedback.style.background = '#dcfce7';
+        feedback.style.color = '#15803d';
+        feedback.innerText = "정답입니다! 👏 핵심 개념을 정확하게 이해하고 있군요.";
+      } else {
+        btn.classList.add('wrong');
+        btns[quizAnswers[qNum]].classList.add('correct');
+        feedback.className = 'quiz-feedback show';
+        feedback.style.background = '#fee2e2';
+        feedback.style.color = '#b91c1c';
+        feedback.innerText = "아쉽네요! 정답을 다시 한번 확인해보세요.";
+      }
+    }
+
+    /* ----------------------------------------------------
+       INITIALIZATION ON LOAD
+       ---------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      updateRatioSim();
+      updateShadingSim();
+      updateEffectSim();
+      renderStoryboard();
+      initPalette();
+      initCanvas();
+    });
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"e3c1c9af36de41759418005494a48906","r":1}' crossorigin="anonymous"></script>
+</body>
+</html>
+```eof
+
+Your middle school art interactive learning webpage for "Manga & Animation" is complete and saved into a single HTML file. Feel free to take a look and let me know if you would like to make any adjustments!

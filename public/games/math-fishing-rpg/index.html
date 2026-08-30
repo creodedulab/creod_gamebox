@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수학 낚시 & 30+ 보스 RPG</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-gold: #f39c12;
+            --accent-blue: #3498db;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --accent-purple: #9b59b6;
+            --text-color: #ecf0f1;
+            --text-muted: #a0a0a0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 950px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            font-size: 26px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Content Area */
+        .content-section {
+            display: none;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Fishing Section */
+        .math-quiz-box {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid var(--accent-blue);
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .math-problem {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+
+        .math-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .math-input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #222;
+            color: #fff;
+            font-size: 18px;
+            width: 120px;
+            text-align: center;
+        }
+
+        /* Scrollable Grid List */
+        .list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 14px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .item-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .buy-btn {
+            padding: 8px 14px;
+            background: var(--accent-gold);
+            border: none;
+            border-radius: 4px;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .buy-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Boss Section */
+        .boss-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 14px 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-red);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .boss-info h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .boss-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .challenge-btn {
+            padding: 8px 16px;
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Log Screen */
+        .log-container {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            height: 130px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+            line-height: 1.5;
+        }
+
+        .log-entry { margin-bottom: 4px; }
+        .log-entry.gold { color: var(--accent-gold); }
+        .log-entry.battle { color: var(--accent-red); }
+        .log-entry.fish { color: var(--accent-blue); }
+        .log-entry.sys { color: var(--text-muted); }
+
+        /* Grade Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+        .badge-일반 { background: #7f8c8d; color: white; }
+        .badge-고급 { background: #2ecc71; color: black; }
+        .badge-희귀 { background: #3498db; color: white; }
+        .badge-전설 { background: #f1c40f; color: black; }
+        .badge-신화 { background: #9b59b6; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🎣 일차방정식 낚시 & 30+ 보스 RPG ⚔️</h1>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">체력 (HP)</span>
+            <span class="status-value" id="hp-text">100 / 100</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">보유 골드</span>
+            <span class="status-value" id="gold-text" style="color: var(--accent-gold);">0 G</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">무기 (공격력 / 내구도)</span>
+            <span class="status-value" id="weapon-text">목검 (+8) [15/15]</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">방어구 (방어력 / 내구도)</span>
+            <span class="status-value" id="armor-text">천옷 (+2) [15/15]</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('fishing', event)">🎣 낚시터 (수학 퀴즈)</button>
+        <button class="tab-btn" onclick="switchTab('shop', event)">🏪 상점 (검 35종)</button>
+        <button class="tab-btn" onclick="switchTab('boss', event)">👹 보스 토벌 (보스 34종)</button>
+    </div>
+
+    <!-- Fishing Section -->
+    <div id="section-fishing" class="content-section active">
+        <div class="math-quiz-box">
+            <h3>📐 물고기가 찌를 물었습니다! 일차방정식을 풀어 낚아채세요!</h3>
+            <div class="math-problem" id="math-problem-text">a * x + b = c</div>
+            <div class="math-input-group">
+                <input type="number" id="math-answer-input" class="math-input" placeholder="x 값 입력" onkeydown="if(event.key==='Enter') submitMathAnswer()">
+                <button class="buy-btn" onclick="submitMathAnswer()">낚아채기!</button>
+            </div>
+            <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">* 일차방정식의 해(x)를 맞추면 낚시 성공! (최고가 물고기: 150 G)</p>
+        </div>
+
+        <div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px;">
+            <strong>🎒 물고기 가방: </strong><span id="inventory-count">0</span>마리 보유 중
+            <button style="float: right; padding: 6px 12px; background: #e67e22; border:none; color:white; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="sellAllFish()">모두 팔기</button>
+        </div>
+    </div>
+
+    <!-- Shop Section -->
+    <div id="section-shop" class="content-section">
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; color: var(--accent-gold);">⚔️ 무기 상점 (총 35종)</span>
+            <button style="padding: 8px 16px; background: #9b59b6; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer;" onclick="repairEquipment()">🔧 전 장비 수리 (50 G)</button>
+        </div>
+        <div class="list-grid" id="weapon-shop-list"></div>
+    </div>
+
+    <!-- Boss Section -->
+    <div id="section-boss" class="content-section">
+        <h3 style="margin-bottom: 15px; color: var(--accent-red);">👹 보스 던전 (총 34종)</h3>
+        <div class="list-grid" id="boss-list" style="grid-template-columns: 1fr;"></div>
+    </div>
+
+    <!-- System Log -->
+    <div class="log-container" id="log-box">
+        <div class="log-entry sys">게임에 접속하였습니다. 낚시터에서 일차방정식을 풀어 물고기를 낚아보세요!</div>
+    </div>
+</div>
+
+<script>
+    // Game State
+    const state = {
+        hp: 100,
+        maxHp: 100,
+        gold: 0,
+        weapon: { name: "목검", grade: "일반", atk: 8, dur: 15, maxDur: 15 },
+        armor: { name: "천옷", grade: "일반", def: 2, dur: 15, maxDur: 15 },
+        inventory: []
+    };
+
+    let currentXAnswer = 0;
+
+    const fishList = [{"name": "피라미", "price": 10}, {"name": "붕어", "price": 25}, {"name": "메기", "price": 45}, {"name": "배스", "price": 70}, {"name": "연어", "price": 100}, {"name": "장어", "price": 125}, {"name": "전설의 황금물고기", "price": 150}];
+    const shopWeapons = [{"name": "목검", "grade": "일반", "atk": 13, "dur": 15, "price": 60}, {"name": "녹슨 단검", "grade": "일반", "atk": 16, "dur": 17, "price": 120}, {"name": "초보자의 검", "grade": "일반", "atk": 26, "dur": 19, "price": 180}, {"name": "훈련용 목검", "grade": "일반", "atk": 36, "dur": 21, "price": 240}, {"name": "돌 칼", "grade": "일반", "atk": 40, "dur": 23, "price": 300}, {"name": "동검", "grade": "일반", "atk": 53, "dur": 25, "price": 360}, {"name": "철검", "grade": "일반", "atk": 56, "dur": 27, "price": 420}, {"name": "용병의 검", "grade": "고급", "atk": 66, "dur": 29, "price": 480}, {"name": "강철 장검", "grade": "고급", "atk": 74, "dur": 31, "price": 540}, {"name": "기사의 대검", "grade": "고급", "atk": 81, "dur": 33, "price": 600}, {"name": "은빛 검", "grade": "고급", "atk": 88, "dur": 35, "price": 660}, {"name": "정제된 강철검", "grade": "고급", "atk": 101, "dur": 37, "price": 720}, {"name": "바람의 단검", "grade": "고급", "atk": 105, "dur": 39, "price": 780}, {"name": "화염의 검", "grade": "고급", "atk": 116, "dur": 41, "price": 840}, {"name": "얼음의 가시", "grade": "희귀", "atk": 122, "dur": 43, "price": 900}, {"name": "번개의 라피에르", "grade": "희귀", "atk": 130, "dur": 45, "price": 960}, {"name": "빛의 성검", "grade": "희귀", "atk": 136, "dur": 47, "price": 1020}, {"name": "어둠의 칠지도", "grade": "희귀", "atk": 146, "dur": 49, "price": 1080}, {"name": "용비늘 칼", "grade": "희귀", "atk": 153, "dur": 51, "price": 1140}, {"name": "미스릴 숏소드", "grade": "희귀", "atk": 161, "dur": 53, "price": 1200}, {"name": "오리하르콘 메이스", "grade": "희귀", "atk": 170, "dur": 55, "price": 1260}, {"name": "태양의 레이피어", "grade": "전설", "atk": 178, "dur": 57, "price": 1320}, {"name": "달빛의 대검", "grade": "전설", "atk": 187, "dur": 59, "price": 1380}, {"name": "영혼의 베기검", "grade": "전설", "atk": 196, "dur": 61, "price": 1440}, {"name": "파멸의 자루", "grade": "전설", "atk": 204, "dur": 63, "price": 1500}, {"name": "시공의 단도", "grade": "전설", "atk": 211, "dur": 65, "price": 1560}, {"name": "멸망의 대검", "grade": "전설", "atk": 218, "dur": 67, "price": 1620}, {"name": "신성한 엑스칼리버", "grade": "전설", "atk": 227, "dur": 69, "price": 1680}, {"name": "황혼의 카타나", "grade": "신화", "atk": 234, "dur": 71, "price": 1740}, {"name": "드래곤 슬레이어", "grade": "신화", "atk": 240, "dur": 73, "price": 1800}, {"name": "천상의 검", "grade": "신화", "atk": 251, "dur": 75, "price": 1860}, {"name": "신살자의 검", "grade": "신화", "atk": 257, "dur": 77, "price": 1920}, {"name": "종말의 블레이드", "grade": "신화", "atk": 268, "dur": 79, "price": 1980}, {"name": "창조의 칼날", "grade": "신화", "atk": 272, "dur": 81, "price": 2040}, {"name": "절대자의 무기", "grade": "신화", "atk": 285, "dur": 83, "price": 2100}];
+    const bosses = [{"name": "슬라임", "hp": 62, "maxHp": 62, "atk": 11, "reward": 68}, {"name": "대왕 슬라임", "hp": 98, "maxHp": 98, "atk": 16, "reward": 114}, {"name": "고블린 병사", "hp": 158, "maxHp": 158, "atk": 21, "reward": 151}, {"name": "고블린 주술사", "hp": 242, "maxHp": 242, "atk": 26, "reward": 206}, {"name": "고블린 족장", "hp": 350, "maxHp": 350, "atk": 31, "reward": 257}, {"name": "숲의 늑대", "hp": 482, "maxHp": 482, "atk": 36, "reward": 305}, {"name": "우두머리 늑대", "hp": 638, "maxHp": 638, "atk": 41, "reward": 368}, {"name": "코볼트 광부", "hp": 818, "maxHp": 818, "atk": 46, "reward": 409}, {"name": "코볼트 전사", "hp": 1022, "maxHp": 1022, "atk": 51, "reward": 455}, {"name": "해골 병사", "hp": 1250, "maxHp": 1250, "atk": 56, "reward": 516}, {"name": "해골 궁수", "hp": 1502, "maxHp": 1502, "atk": 61, "reward": 557}, {"name": "해골 기사", "hp": 1778, "maxHp": 1778, "atk": 66, "reward": 602}, {"name": "오크 전사", "hp": 2078, "maxHp": 2078, "atk": 71, "reward": 657}, {"name": "오크 대장", "hp": 2402, "maxHp": 2402, "atk": 76, "reward": 709}, {"name": "가고일", "hp": 2750, "maxHp": 2750, "atk": 81, "reward": 758}, {"name": "미노타우로스", "hp": 3122, "maxHp": 3122, "atk": 86, "reward": 801}, {"name": "리치 하급마법사", "hp": 3518, "maxHp": 3518, "atk": 91, "reward": 853}, {"name": "더스트 엘리멘탈", "hp": 3938, "maxHp": 3938, "atk": 96, "reward": 920}, {"name": "아이스 골렘", "hp": 4382, "maxHp": 4382, "atk": 101, "reward": 963}, {"name": "파이어 골렘", "hp": 4850, "maxHp": 4850, "atk": 106, "reward": 1018}, {"name": "어둠의 나이트", "hp": 5342, "maxHp": 5342, "atk": 111, "reward": 1055}, {"name": "데스 나이트", "hp": 5858, "maxHp": 5858, "atk": 116, "reward": 1109}, {"name": "키메라", "hp": 6398, "maxHp": 6398, "atk": 121, "reward": 1166}, {"name": "히드라", "hp": 6962, "maxHp": 6962, "atk": 126, "reward": 1204}, {"name": "베히모스", "hp": 7550, "maxHp": 7550, "atk": 131, "reward": 1268}, {"name": "와이번", "hp": 8162, "maxHp": 8162, "atk": 136, "reward": 1309}, {"name": "화염 드래곤", "hp": 8798, "maxHp": 8798, "atk": 141, "reward": 1355}, {"name": "빙설 드래곤", "hp": 9458, "maxHp": 9458, "atk": 146, "reward": 1418}, {"name": "뇌전 드래곤", "hp": 10142, "maxHp": 10142, "atk": 151, "reward": 1452}, {"name": "암흑 드래곤", "hp": 10850, "maxHp": 10850, "atk": 156, "reward": 1516}, {"name": "마왕 수호자", "hp": 11582, "maxHp": 11582, "atk": 161, "reward": 1563}, {"name": "마왕의 환영", "hp": 12338, "maxHp": 12338, "atk": 166, "reward": 1612}, {"name": "심연의 마왕", "hp": 13118, "maxHp": 13118, "atk": 171, "reward": 1669}, {"name": "최종 멸망의 신", "hp": 13922, "maxHp": 13922, "atk": 176, "reward": 1709}];
+
+    function addLog(msg, classType = "sys") {
+        const logBox = document.getElementById('log-box');
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${classType}`;
+        entry.innerText = `> ${msg}`;
+        logBox.appendChild(entry);
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function updateUI() {
+        document.getElementById('hp-text').innerText = `${state.hp} / ${state.maxHp}`;
+        document.getElementById('gold-text').innerText = `${state.gold.toLocaleString()} G`;
+        
+        const w = state.weapon;
+        document.getElementById('weapon-text').innerText = `${w.name} (+${w.atk}) [${w.dur}/${w.maxDur}]`;
+        
+        const a = state.armor;
+        document.getElementById('armor-text').innerText = `${a.name} (+${a.def}) [${a.dur}/${a.maxDur}]`;
+        
+        document.getElementById('inventory-count').innerText = state.inventory.length;
+    }
+
+    function switchTab(tabName, evt) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+        
+        evt.target.classList.add('active');
+        document.getElementById(`section-${tabName}`).classList.add('active');
+    }
+
+    function checkDurability() {
+        if (state.weapon.dur <= 0 && state.weapon.name !== "맨손") {
+            addLog(`⚠️ [${state.weapon.name}]의 내구도가 다하여 파괴되었습니다!`, "battle");
+            state.weapon = { name: "맨손", grade: "일반", atk: 2, dur: 999, maxDur: 999 };
+        }
+        if (state.armor.dur <= 0 && state.armor.name !== "맨몸") {
+            addLog(`⚠️ [${state.armor.name}]의 내구도가 다하여 파괴되었습니다!`, "battle");
+            state.armor = { name: "맨몸", grade: "일반", def: 0, dur: 999, maxDur: 999 };
+        }
+    }
+
+    // Generate Linear Equation (ax + b = c or ax - b = c)
+    function generateMathProblem() {
+        const a = Math.floor(Math.random() * 8) + 2; // 2 to 9
+        const x = Math.floor(Math.random() * 15) + 1; // 1 to 15
+        const b = Math.floor(Math.random() * 20) + 1; // 1 to 20
+        const isPlus = Math.random() > 0.3;
+        
+        let c = 0;
+        let problemStr = "";
+        
+        if (isPlus) {
+            c = a * x + b;
+            problemStr = `${a}x + ${b} = ${c}`;
+        } else {
+            c = a * x - b;
+            problemStr = `${a}x - ${b} = ${c}`;
+        }
+        
+        currentXAnswer = x;
+        document.getElementById('math-problem-text').innerText = problemStr;
+        document.getElementById('math-answer-input').value = '';
+        document.getElementById('math-answer-input').focus();
+    }
+
+    function submitMathAnswer() {
+        const userAns = parseInt(document.getElementById('math-answer-input').value);
+        if (isNaN(userAns)) {
+            addLog("x 값을 숫자로 입력해주세요!", "sys");
+            return;
+        }
+
+        if (userAns === currentXAnswer) {
+            const caught = fishList[Math.floor(Math.random() * fishList.length)];
+            state.inventory.push(caught);
+            addLog(`🎉 정답(x=${currentXAnswer})! [${caught.name}]을(를) 낚았습니다! (가치: ${caught.price} G)`, "fish");
+            updateUI();
+            generateMathProblem();
+        } else {
+            addLog(`❌ 오답입니다! (입력값: ${userAns}) 물고기가 도망쳤습니다.`, "battle");
+            generateMathProblem();
+        }
+    }
+
+    function sellAllFish() {
+        if (state.inventory.length === 0) {
+            addLog("팔 수 있는 물고기가 없습니다.", "sys");
+            return;
+        }
+        let total = 0;
+        state.inventory.forEach(f => total += f.price);
+        state.gold += total;
+        addLog(`💰 물고기 ${state.inventory.length}마리를 팔아 총 ${total.toLocaleString()} G를 획득했습니다!`, "gold");
+        state.inventory = [];
+        updateUI();
+    }
+
+    function renderShop() {
+        const wList = document.getElementById('weapon-shop-list');
+        wList.innerHTML = '';
+        shopWeapons.forEach((w, idx) => {
+            wList.innerHTML += `
+                <div class="item-card">
+                    <div class="item-info">
+                        <span class="item-name">${w.name} <span class="badge badge-${w.grade}">${w.grade}</span></span>
+                        <span class="item-desc">공격력 +${w.atk} | 내구도 ${w.dur}</span>
+                    </div>
+                    <button class="buy-btn" onclick="buyWeapon(${idx})">${w.price.toLocaleString()} G</button>
+                </div>
+            `;
+        });
+    }
+
+    function buyWeapon(idx) {
+        const item = shopWeapons[idx];
+        if (state.gold < item.price) {
+            addLog("골드가 부족합니다!", "sys");
+            return;
+        }
+        state.gold -= item.price;
+        state.weapon = { name: item.name, grade: item.grade, atk: item.atk, dur: item.dur, maxDur: item.dur };
+        addLog(`⚔️ [${item.name}]을(를) 구입하여 장착했습니다!`, "gold");
+        updateUI();
+    }
+
+    function repairEquipment() {
+        if (state.gold < 50) {
+            addLog("수리비(50 G)가 부족합니다.", "sys");
+            return;
+        }
+        state.gold -= 50;
+        state.weapon.dur = state.weapon.maxDur;
+        state.armor.dur = state.armor.maxDur;
+        addLog("🔧 모든 장비의 내구도를 완전히 수리했습니다!", "gold");
+        updateUI();
+    }
+
+    function renderBosses() {
+        const bList = document.getElementById('boss-list');
+        bList.innerHTML = '';
+        bosses.forEach((b, idx) => {
+            bList.innerHTML += `
+                <div class="boss-card">
+                    <div class="boss-info">
+                        <h4>👹 ${idx + 1}. ${b.name}</h4>
+                        <p>체력: ${b.hp.toLocaleString()} | 공격력: ${b.atk} | 보상: ${b.reward.toLocaleString()} G</p>
+                    </div>
+                    <button class="challenge-btn" onclick="fightBoss(${idx})">토벌하기</button>
+                </div>
+            `;
+        });
+    }
+
+    function fightBoss(idx) {
+        const boss = { ...bosses[idx] };
+        addLog(`⚔️ [${boss.name}] 토벌을 시작합니다!`, "battle");
+
+        while (boss.hp > 0 && state.hp > 0) {
+            const playerDmg = state.weapon.atk;
+            boss.hp -= playerDmg;
+            state.weapon.dur -= 1;
+
+            if (boss.hp <= 0) {
+                addLog(`🎉 [${boss.name}]을(를) 격퇴했습니다! 보상: +${boss.reward.toLocaleString()} G`, "gold");
+                state.gold += boss.reward;
+                state.hp = state.maxHp;
+                checkDurability();
+                updateUI();
+                return;
+            }
+
+            const bossDmg = Math.max(1, boss.atk - state.armor.def);
+            state.hp -= bossDmg;
+            state.armor.dur -= 1;
+
+            checkDurability();
+
+            if (state.hp <= 0) {
+                addLog(`💀 [${boss.name}]에게 패배했습니다... (마을에서 치료 완료)`, "battle");
+                state.hp = state.maxHp;
+                updateUI();
+                return;
+            }
+        }
+    }
+
+    generateMathProblem();
+    renderShop();
+    renderBosses();
+    updateUI();
+</script>
+
+</body>
+</html>

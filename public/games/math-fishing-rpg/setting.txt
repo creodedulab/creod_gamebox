@@ -1,0 +1,4 @@
+1.kor_name=[수학낚시RPG]
+2.eng_name=[The Mathatic Fishing]
+3.maker=[세종 승현]
+4.genre=[*]

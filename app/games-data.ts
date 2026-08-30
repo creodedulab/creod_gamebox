@@ -112,7 +112,7 @@ export const games: Game[] = [
     "description": "\ub0a8\uc0b0\ud0c0\uc6cc \ubcf4\ubb3c\ucc3e\uae30\uc740 \uaddc\uce59\uc744 \ud30c\uc545\ud558\uace0 \ubb38\uc81c\ub97c \ud574\uacb0\ud558\uba70 \ubaa9\ud45c\uc5d0 \ub3c4\ub2ec\ud558\ub294 \ud37c\uc990 \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\ubc29\ud5a5\ud0a4, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/ntower-tresure/index.html",
-    "accent": "#06b6d4"
+    "accent": "#46a3ff"
   },
   {
     "id": "nunchi-league",
@@ -131,7 +131,7 @@ export const games: Game[] = [
     "description": "\ub208\uce58\ub9ac\uadf8\uc740 \ud559\uc0dd\uc774 \uc9c1\uc811 \uc124\uacc4\ud558\uace0 \uad6c\ud604\ud55c HTML \uac8c\uc784\uc785\ub2c8\ub2e4. \ud654\uba74\uc758 \uaddc\uce59\uc744 \uc775\ud788\uba70 \ubaa9\ud45c \ub2ec\uc131\uc5d0 \ub3c4\uc804\ud574\ubcf4\uc138\uc694.",
     "controls": "\ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/nunchi-league/index.html",
-    "accent": "#46a3ff"
+    "accent": "#f5a524"
   },
   {
     "id": "dungdino-game",
@@ -169,7 +169,7 @@ export const games: Game[] = [
     "description": "\ub7ec\ub2dd \ub514\ub178\uc740 \uc810\ud504\uc640 \ub300\uc2dc, \uc808\ub2e8 \uc561\uc158\uc744 \ud65c\uc6a9\ud574 \uc7a5\uc560\ubb3c\uc744 \ub3cc\ud30c\ud558\uba70 \ub192\uc740 \uae30\ub85d\uc5d0 \ub3c4\uc804\ud558\ub294 \uc561\uc158 \uc544\ucf00\uc774\ub4dc \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/running-dino/index.html",
-    "accent": "#22c55e"
+    "accent": "#ef4444"
   },
   {
     "id": "infinite-stairs-roblox",
@@ -245,7 +245,7 @@ export const games: Game[] = [
     "description": "\ubb34\uae30 \uc11c\ubc14\uc774\ubc84\uc740 \uc810\ud504\uc640 \ub300\uc2dc, \uc808\ub2e8 \uc561\uc158\uc744 \ud65c\uc6a9\ud574 \uc7a5\uc560\ubb3c\uc744 \ub3cc\ud30c\ud558\uba70 \ub192\uc740 \uae30\ub85d\uc5d0 \ub3c4\uc804\ud558\ub294 \uc561\uc158 \uc544\ucf00\uc774\ub4dc \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\ubc29\ud5a5\ud0a4, WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/weapon-surviver/index.html",
-    "accent": "#f5a524"
+    "accent": "#ef4444"
   },
   {
     "id": "infinite-dino",
@@ -288,6 +288,25 @@ export const games: Game[] = [
     "accent": "#f5a524"
   },
   {
+    "id": "math-fishing-rpg",
+    "korName": "\uc218\ud559\ub09a\uc2dcRPG",
+    "engName": "The Mathatic Fishing",
+    "maker": "\uc138\uc885 \uc2b9\ud604",
+    "genres": [
+      "\uaca9\ud22c",
+      "\ub864\ud50c\ub808\uc789",
+      "1\uc778\uc6a9",
+      "3\uc778\uce6d"
+    ],
+    "genre": "\uaca9\ud22c",
+    "poster": "/games/math-fishing-rpg/poster.png",
+    "posterAlt": "\uc218\ud559\ub09a\uc2dcRPG \uac8c\uc784 \ud3ec\uc2a4\ud130",
+    "description": "\uc218\ud559\ub09a\uc2dcRPG\uc740 \ud559\uc0dd\uc774 \uc9c1\uc811 \uc124\uacc4\ud558\uace0 \uad6c\ud604\ud55c HTML \uac8c\uc784\uc785\ub2c8\ub2e4. \ud654\uba74\uc758 \uaddc\uce59\uc744 \uc775\ud788\uba70 \ubaa9\ud45c \ub2ec\uc131\uc5d0 \ub3c4\uc804\ud574\ubcf4\uc138\uc694.",
+    "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
+    "gameUrl": "/games/math-fishing-rpg/index.html",
+    "accent": "#06b6d4"
+  },
+  {
     "id": "sky_bird_adventure",
     "korName": "\uc2a4\uce74\uc774 \ubc84\ub4dc \uc5b4\ub4dc\ubca4\ucc98",
     "engName": "Sky Bird Adventure",
@@ -304,7 +323,7 @@ export const games: Game[] = [
     "description": "\uc2a4\uce74\uc774 \ubc84\ub4dc \uc5b4\ub4dc\ubca4\ucc98\uc740 \uc801\uacfc \uc7a5\uc560\ubb3c\uc744 \ud53c\ud558\uac70\ub098 \uacf5\uaca9\ud558\uba70 \uc810\uc218\ub97c \uc313\ub294 \uc288\ud305 \uc911\uc2ec \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/sky_bird_adventure/index.html",
-    "accent": "#ef4444"
+    "accent": "#8b5cf6"
   },
   {
     "id": "space-defender-carrot",
@@ -322,7 +341,7 @@ export const games: Game[] = [
     "description": "\uc2a4\ud398\uc774\uc2a4 \ub514\ud39c\ud130 \uce90\ub7ff\uc740 \uc801\uacfc \uc7a5\uc560\ubb3c\uc744 \ud53c\ud558\uac70\ub098 \uacf5\uaca9\ud558\uba70 \uc810\uc218\ub97c \uc313\ub294 \uc288\ud305 \uc911\uc2ec \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\ubc29\ud5a5\ud0a4, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/space-defender-carrot/index.html",
-    "accent": "#8b5cf6"
+    "accent": "#06b6d4"
   },
   {
     "id": "aim-speed-test",
@@ -376,7 +395,7 @@ export const games: Game[] = [
     "description": "\uc720\ub2db \ud06c\ub798\ud504\ud2b8 \uacfc\ud559 \uae30\ud638\uc740 \uaddc\uce59\uc744 \ud30c\uc545\ud558\uace0 \ubb38\uc81c\ub97c \ud574\uacb0\ud558\uba70 \ubaa9\ud45c\uc5d0 \ub3c4\ub2ec\ud558\ub294 \ud37c\uc990 \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/unit-craft-science-code/index.html",
-    "accent": "#46a3ff"
+    "accent": "#22c55e"
   },
   {
     "id": "insungmap",
@@ -417,6 +436,25 @@ export const games: Game[] = [
     "accent": "#46a3ff"
   },
   {
+    "id": "toon-and-anime-studio",
+    "korName": "\uc911\ud559\uad50 \ubbf8\uc220 \ub9cc\ud654\uc640 \uc560\ub2c8\uba54\uc774\uc158 \uc2a4\ud29c\ub514\uc624",
+    "engName": "Catoon&Anime Studio",
+    "maker": "\uc138\uc885 \uc724\ud6c4",
+    "genres": [
+      "\uc810\ud504",
+      "\uc2ac\ub798\uc2dc",
+      "2D",
+      "3D"
+    ],
+    "genre": "\uc810\ud504",
+    "poster": "/games/toon-and-anime-studio/poster.png",
+    "posterAlt": "\uc911\ud559\uad50 \ubbf8\uc220 \ub9cc\ud654\uc640 \uc560\ub2c8\uba54\uc774\uc158 \uc2a4\ud29c\ub514\uc624 \uac8c\uc784 \ud3ec\uc2a4\ud130",
+    "description": "\uc911\ud559\uad50 \ubbf8\uc220 \ub9cc\ud654\uc640 \uc560\ub2c8\uba54\uc774\uc158 \uc2a4\ud29c\ub514\uc624\uc740 \uc810\ud504\uc640 \ub300\uc2dc, \uc808\ub2e8 \uc561\uc158\uc744 \ud65c\uc6a9\ud574 \uc7a5\uc560\ubb3c\uc744 \ub3cc\ud30c\ud558\uba70 \ub192\uc740 \uae30\ub85d\uc5d0 \ub3c4\uc804\ud558\ub294 \uc561\uc158 \uc544\ucf00\uc774\ub4dc \uac8c\uc784\uc785\ub2c8\ub2e4.",
+    "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
+    "gameUrl": "/games/toon-and-anime-studio/index.html",
+    "accent": "#f5a524"
+  },
+  {
     "id": "rasing-cho-rok",
     "korName": "\ucd08\ub85d\uc774 \ud0a4\uc6b0\uae30",
     "engName": "Rasing Cho-Rok",
@@ -433,7 +471,7 @@ export const games: Game[] = [
     "description": "\ucd08\ub85d\uc774 \ud0a4\uc6b0\uae30\uc740 \uaddc\uce59\uc744 \ud30c\uc545\ud558\uace0 \ubb38\uc81c\ub97c \ud574\uacb0\ud558\uba70 \ubaa9\ud45c\uc5d0 \ub3c4\ub2ec\ud558\ub294 \ud37c\uc990 \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "\uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/rasing-cho-rok/index.html",
-    "accent": "#f5a524"
+    "accent": "#22c55e"
   },
   {
     "id": "cat-tower-high-high",
@@ -490,7 +528,7 @@ export const games: Game[] = [
     "description": "\ud0c0\uc774\ud0c4 \ucf54\uc5b4\uc740 \uc801\uacfc \uc7a5\uc560\ubb3c\uc744 \ud53c\ud558\uac70\ub098 \uacf5\uaca9\ud558\uba70 \uc810\uc218\ub97c \uc313\ub294 \uc288\ud305 \uc911\uc2ec \uac8c\uc784\uc785\ub2c8\ub2e4.",
     "controls": "WASD, \uc2a4\ud398\uc774\uc2a4\ubc14, \ub9c8\uc6b0\uc2a4/\ud130\uce58",
     "gameUrl": "/games/titan-core/index.html",
-    "accent": "#06b6d4"
+    "accent": "#46a3ff"
   },
   {
     "id": "bird-that-loves-soil",
