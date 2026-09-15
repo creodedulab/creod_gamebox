@@ -13,7 +13,7 @@ type PageState =
 type HistoryState = PageState & { creodGamebox: true };
 
 const STUDENT_PASSWORD = "띵쌤";
-const ADMIN_PASSWORD = "961229";
+const ADMIN_PASSWORD = "dkzkfl!30617";
 const INSTAGRAM_URL = "https://www.instagram.com/tting_ssam/";
 const HOMEPAGE_URL = "https://creodedulab.github.io/";
 const COPYRIGHT_WARNING =
@@ -26,7 +26,7 @@ export default function Home() {
   const [adminError, setAdminError] = useState("");
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [currentPage, setCurrentPage] = useState<PageState>({ page: "gate" });
+  const [currentPage, setCurrentPage] = useState<PageState>({ page: "list" });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("전체");
 
@@ -57,14 +57,14 @@ export default function Home() {
       : null;
 
   useEffect(() => {
-    const initialState: HistoryState = { creodGamebox: true, page: "gate" };
-    window.history.replaceState(initialState, "", "#gate");
+    const initialState: HistoryState = { creodGamebox: true, page: "list" };
+    window.history.replaceState(initialState, "", "#games");
 
     function handlePopState(event: PopStateEvent) {
       const state = event.state as HistoryState | null;
 
       if (!state?.creodGamebox) {
-        setCurrentPage({ page: "gate" });
+        setCurrentPage({ page: "list" });
         return;
       }
 
@@ -118,6 +118,7 @@ export default function Home() {
 
     if (adminPassword === ADMIN_PASSWORD) {
       setAdminError("");
+      setIsAdminLoginOpen(false);
       setIsAdminMode(true);
       pushPage({ page: "list" });
       return;
@@ -188,7 +189,7 @@ export default function Home() {
 
   if (currentPage.page === "detail" && currentGame) {
     return (
-      <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })}>
+      <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })} onAdminLogin={() => setIsAdminLoginOpen(true)}>
         <GameDetail
           game={currentGame}
           isAdminMode={isAdminMode}
@@ -201,14 +202,14 @@ export default function Home() {
 
   if (currentPage.page === "play" && currentGame) {
     return (
-      <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })}>
+      <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })} onAdminLogin={() => setIsAdminLoginOpen(true)}>
         <GamePlayer game={currentGame} isAdminMode={isAdminMode} onBack={() => window.history.back()} />
       </AppFrame>
     );
   }
 
   return (
-    <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })}>
+    <AppFrame isAdminMode={isAdminMode} onHome={() => pushPage({ page: "list" })} onAdminLogin={() => setIsAdminLoginOpen(true)}>
       <section className="search-panel" aria-label="게임 검색">
         <div className="search-field">
           <label htmlFor="game-search">게임 또는 장르 검색</label>
@@ -237,6 +238,23 @@ export default function Home() {
         <span className="result-count">{filteredGames.length} games</span>
       </section>
 
+      {isAdminLoginOpen ? (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setIsAdminLoginOpen(false)}>
+          <section className="modal-content admin-login-modal" role="dialog" aria-modal="true" aria-labelledby="admin-login-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="icon-button" type="button" aria-label="닫기" onClick={() => setIsAdminLoginOpen(false)}>×</button>
+            <h2 id="admin-login-title">MASTER LOGIN</h2>
+            <form className="gate-form" onSubmit={handleAdminEnter}>
+              <label htmlFor="admin-password-modal">관리자 비밀번호</label>
+              <div className="password-row">
+                <input id="admin-password-modal" type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} autoComplete="current-password" autoFocus />
+                <button type="submit">입장</button>
+              </div>
+              {adminError ? <p className="form-error">{adminError}</p> : null}
+            </form>
+          </section>
+        </div>
+      ) : null}
+
       {filteredGames.length ? (
         <section className="game-grid" aria-label="등록된 게임 목록">
           {filteredGames.map((game) => (
@@ -262,10 +280,12 @@ function AppFrame({
   children,
   isAdminMode,
   onHome,
+  onAdminLogin,
 }: {
   children: ReactNode;
   isAdminMode: boolean;
   onHome: () => void;
+  onAdminLogin: () => void;
 }) {
   return (
     <main className="app-shell">
@@ -276,16 +296,17 @@ function AppFrame({
         {isAdminMode ? <span className="admin-mode-badge">관리자모드</span> : null}
       </header>
       {children}
-      <SiteFooter />
+      <SiteFooter onAdminLogin={onAdminLogin} />
     </main>
   );
 }
 
-function SiteFooter() {
+function SiteFooter({ onAdminLogin }: { onAdminLogin: () => void }) {
   return (
     <footer className="site-footer">
       <p>{COPYRIGHT_WARNING}</p>
       <div className="footer-meta">
+        <button className="secondary-action master-login-button" type="button" onClick={onAdminLogin}>MASTER LOGIN</button>
         <span>Copyright 2026 크레오디교육연구소</span>
         <IconLink href={HOMEPAGE_URL} label="크레오디교육연구소 홈페이지 열기" icon="home" />
         <IconLink href={INSTAGRAM_URL} label="띵쌤 인스타그램 열기" icon="instagram" />

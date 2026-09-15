@@ -676,6 +676,15 @@ textarea {
   padding-right: 22px;
 }
 
+.admin-login-modal {
+  width: min(100%, 480px);
+  padding: 32px;
+}
+
+.admin-login-modal h2 {
+  margin-bottom: 24px;
+}
+
 .modal-content h2 {
   font-size: 34px;
 }
